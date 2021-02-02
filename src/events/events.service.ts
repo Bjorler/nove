@@ -59,16 +59,38 @@ export class EventsService {
         return events;
     }
 
-    async totalPages(limit:number){
-        const count = await this.knex.table(this.TABLE).count("id",{as:'total'}).where({is_deleted:0})
-        
+    private async getQueryTotalPages(filter:string,  init_date:string, final_date:string){
+        let events = []
+        events = await this.knex.table(this.TABLE).count("id",{as:'total'})
+        .where((builder) => {
+            if(filter){
+                if(isNaN(parseInt(filter))){
+                    builder.where('name', 'like',`%${filter}%`)
+                    .orWhere('address', 'like', `%${filter}%`)
+                }else{
+                    builder.where('assistants', '=',parseInt(filter))
+                }
+            }
+            if(init_date && final_date){
+                builder.where("event_date",'>=', init_date).andWhere("event_date", '<=', final_date)
+            }
+        }).andWhere({is_deleted:0})
+
+
+        return events;
+    }
+
+    async totalPages(pagination:EventsPaginationDto){
+        const limit = parseInt(pagination.page_size);
+        //const count = await this.knex.table(this.TABLE).count("id",{as:'total'}).where({is_deleted:0})
+        const count = await this.getQueryTotalPages(pagination.search_item, pagination.date_init, pagination.date_final)
         const total = count[0].total;
         //@ts-ignore
         let module = total % limit;
         //@ts-ignore
         let div = Math.floor(total/limit)
         let pages = div + ( module > 0 ? 1: 0 )
-        return pages
+        return {pages, total}
     }
 
     async findById(eventId:number){

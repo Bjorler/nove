@@ -10,6 +10,7 @@ import { SECRET } from '../config';
   providers: [EventsService, LogServices],
   imports:[
     JwtModule.register({secret:SECRET})
-  ]
+  ],
+  exports:[EventsService]
 })
 export class EventsModule {}

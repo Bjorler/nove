@@ -7,6 +7,7 @@ import { UsersModule } from './users/users.module';
 import { HOST, USER, PASSWORD, DATABASE, SECRET } from './config';
 import { AuthenticateModule } from './authenticate/authenticate.module';
 import { EventsModule } from './events/events.module';
+import { AttendessModule } from './attendess/attendess.module';
 
 
 @Module({
@@ -27,7 +28,8 @@ import { EventsModule } from './events/events.module';
     }),
     UsersModule,
     AuthenticateModule,
-    EventsModule
+    EventsModule,
+    AttendessModule
   ],
   controllers: [],
   providers: [],

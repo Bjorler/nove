@@ -4,7 +4,7 @@ import { Controller, Post, Get, Put, Delete, Body, Query, Param,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiResponse, ApiTags, ApiHeader, ApiInternalServerErrorResponse,
-         ApiUnauthorizedResponse, ApiForbiddenResponse, ApiNotFoundResponse   
+         ApiUnauthorizedResponse, ApiForbiddenResponse, ApiNotFoundResponse, ApiBadRequestResponse   
 } from '@nestjs/swagger';
 import { diskStorage } from 'multer';
 import * as path from 'path';
@@ -16,7 +16,8 @@ import { MasterGuard, TokenGuard } from '../commons/guards'
 import { User } from '../commons/decoratos/user.decorator';
 import { EventsCreateDto } from './DTO/events-create.dto';
 import { LogDto, InternalServerErrrorDto, UnauthorizedDto, ForbiddenDto, ImageErrorDto,
-         DateErrorDto, EventNotFound, ImageNotFoundDto, EvetnDateErrorDto, FilterDateErrorDto   
+         DateErrorDto, EventNotFound, ImageNotFoundDto, EvetnDateErrorDto, FilterDateErrorDto,
+         ErrorDto   
 } from '../commons/DTO';
 import { EventsPaginationDto } from './DTO/events-pagination.dto';
 import { EventsDto } from './DTO/events.dto';
@@ -48,6 +49,7 @@ export class EventsController {
     @ApiResponse({status:201,type:EventsCreateDto})
     @ApiResponse({status:413, type:ImageErrorDto})
     @ApiResponse({status:415, type:EvetnDateErrorDto})
+    @ApiBadRequestResponse({type:ErrorDto})
     @ApiUnauthorizedResponse({type:UnauthorizedDto})
     @ApiForbiddenResponse({type:ForbiddenDto})
     @ApiInternalServerErrorResponse({type:InternalServerErrrorDto})
@@ -116,6 +118,7 @@ export class EventsController {
     @ApiResponse({status:200, type:EventsDto})
     @ApiResponse({status:414, type:DateErrorDto})
     @ApiResponse({status:416, type:FilterDateErrorDto})
+    @ApiBadRequestResponse({type:ErrorDto})
     @ApiUnauthorizedResponse({type:UnauthorizedDto})
     @ApiForbiddenResponse({type:ForbiddenDto})
     @ApiInternalServerErrorResponse({type:InternalServerErrrorDto})
@@ -134,13 +137,13 @@ export class EventsController {
 
 
 
-        const pages = await this.eventService.totalPages(parseInt(pagination.page_size))
+        const {pages, total} = await this.eventService.totalPages(pagination)
         const events = await this.eventService.findAll(pagination);
         
         let response = new EventsDto();
         response.pages = pages;
         response.items = events;
-        response.totalFound = events.length;
+        response.totalFound = total;
 
         return response;
     }
@@ -154,6 +157,7 @@ export class EventsController {
     })
     @ApiResponse({status:200, type:EventsDeleteDto})
     @ApiNotFoundResponse({type:EventNotFound})
+    @ApiBadRequestResponse({type:ErrorDto})
     @ApiUnauthorizedResponse({type:UnauthorizedDto})
     @ApiForbiddenResponse({type:ForbiddenDto})
     @ApiInternalServerErrorResponse({type:InternalServerErrrorDto})
@@ -223,6 +227,7 @@ export class EventsController {
     })
     @ApiResponse({status:200, type:EventsUpdateDto})
     @ApiResponse({status:415, type:EvetnDateErrorDto})
+    @ApiBadRequestResponse({type:ErrorDto})
     @ApiNotFoundResponse({type:EventNotFound})
     @ApiUnauthorizedResponse({type:UnauthorizedDto})
     @ApiForbiddenResponse({type:ForbiddenDto})
@@ -294,6 +299,7 @@ export class EventsController {
         example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlX2lkIjoyLCJpZCI6MTUsInBhc3N3b3JkIjoiJDJiJDEwJGE0dmI4azBQMDllSHk1b0FrUzlmRGViNmc4M1NZaWtCTGNJYll1SDQwTm9JMnhoU1FXTW8yIiwiZW1haWwiOiJkYXZpZEBnbWFpbC5jb20iLCJwZXJtaXNzaW9ucyI6eyJldmVudHMiOiJDIn0sImlhdCI6MTYxMTg2MTU4Nn0.KDX947q2WhlGlcZxtjUDZDh_vQ3HDPvxzuvShr-ptWo"
     })
     @ApiResponse({status:201, type:EventsInfoDto})
+    @ApiBadRequestResponse({type:ErrorDto})
     @ApiNotFoundResponse({type:EventNotFound})
     @ApiUnauthorizedResponse({type:UnauthorizedDto})
     @ApiForbiddenResponse({type:ForbiddenDto})

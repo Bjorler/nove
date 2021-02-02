@@ -13,3 +13,5 @@ export { DateErrorDto } from './date-error.dto';
 export { EventNotFound } from './event-notfound.dto';
 export { EvetnDateErrorDto } from './evet-date-error.dto';
 export { FilterDateErrorDto } from './filter-date-erro.dto';
+export { SignatureErrorDto } from './signature-error.dto';
+export { AttendeesNotFoundDto } from './attendees-notfound.dto';
