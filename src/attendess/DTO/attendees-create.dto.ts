@@ -1,24 +1,22 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsEmail, IsNumber, IsNotEmpty, IsObject } from 'class-validator';
-
+import { IsString, IsEmail, IsNumber, IsNotEmpty, IsObject, IsBoolean, IsEnum, IsOptional } from 'class-validator';
+import { TypeOfInstitution } from './attedees-institution.dto';
 export class AttendeesCreateDto{
 
     @ApiProperty({
-        type:String,
+        type:Number,
         example:1
     })
-    @IsString()
-    @IsNotEmpty()
-    eventId:string;
+    @IsNumber()
+    eventId:number;
 
     @ApiProperty({
         type:Number,
-        example:"7345678923",
+        example:7345678923,
         required:true
     })
-    @IsString()
-    @IsNotEmpty()
-    cedula:string;
+    @IsNumber()
+    cedula:number;
 
     @ApiProperty({
         type:String,
@@ -29,14 +27,6 @@ export class AttendeesCreateDto{
     @IsNotEmpty()
     name:string;
     
-    @ApiProperty({
-        type:String,
-        example:"Alonso Contreras",
-        required:true
-    })
-    @IsString()
-    @IsNotEmpty()
-    lastname:string;
 
     @ApiProperty({
         type:String,
@@ -66,23 +56,68 @@ export class AttendeesCreateDto{
     register_type:string;
 
 
-    @ApiProperty({
-        type:Object,
-        description:"Image",
-        properties:{
-            file:{
-                type:"string",
-                format:"binary"
-            }
-        },
-        required:true
-    })
-    signature:any
 
     @ApiProperty({
-        type:Object,
-        description:"Pending"
+        type:Boolean,
+        example:true,
+        description:`¿Tiene usted autoridad en alguna organización para tomar o influenciar decisiones o recomendaciones respecto de los productos de Novo
+        Nordisk en cuanto a: precio, reembolso, situación en algún formulario, comercialización, compra institucional, otorgamiento de autorizaciones
+        relacionadas con la comercialización de los productos de Novo Nordisk?`
     })
-    questions:any
+    @IsBoolean()
+    question1:boolean;
+
+    @ApiProperty({
+        type:Boolean,
+        example:true,
+        description:` ¿Está usted contratado como servidor público o actúa ejerciendo una función oficial o en representación de una entidad pública como un instituto,
+        hospital o universidad del estado, cualquier entidad propiedad de o controlada por el estado, es miembro de un partido político, o candidato para
+        puestos públicos, empleado de una organización internacional pública como las Naciones Unidas, el Fondo Monetario Internacional, la Organización
+        Mundial de la Salud o similares, con o sin remuneración económica?`
+    })
+    @IsBoolean()
+    question2:boolean;
+
+
+    @ApiProperty({
+        enum:TypeOfInstitution,
+        example:TypeOfInstitution.PRIVATE,
+    })
+    @IsEnum(TypeOfInstitution)
+    typeOfInstitution:string
+
+    @ApiProperty({
+        type:String,
+        example:"Instituto Nacional de Cardiología",
+        description:"Nombre de la Entidad Pública"
+    })
+    @IsString()
+    @IsNotEmpty()
+    institutionName:string;
+
+    @ApiProperty({
+        type:String,
+        example:"José Manuel Hernández Melendéz, Director área de cardiología",
+        description:"Nombre y Título del representante de la Entidad Pública"
+    })
+    @IsString()
+    @IsNotEmpty()
+    nameAndTitle:string;
+
+    @ApiProperty({
+        type:Boolean,
+        example:true,
+        description:"Authorizo a Novo Nordisk utilizr esta informción"
+    })
+    @IsBoolean()
+    authorization:boolean;
+    
+    @ApiProperty({
+        type:String,
+        example:"",
+        description:"Si contestó afirmativamente en alguna de las anteriores, explique:"
+    })
+    @IsOptional()
+    description:string
 
 }

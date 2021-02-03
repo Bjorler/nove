@@ -1,14 +1,16 @@
-import { Module } from '@nestjs/common';
+import { Module, HttpModule } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { EventsModule } from '../events/events.module';
+import { DatabaseModule } from '../database/database.module';
 import { AttendessController } from './attendess.controller';
 import { AttendessService } from './attendess.service';
+import { EmailServices } from '../commons/services/email.service';
 import { LogServices } from '../commons/services/log.service';
 import { SECRET } from '../config';
-import { from } from 'rxjs';
+
 @Module({
   controllers: [AttendessController],
-  providers: [AttendessService, LogServices],
-  imports:[ JwtModule.register({ secret:SECRET }), EventsModule ]
+  providers: [AttendessService, LogServices, EmailServices],
+  imports:[ JwtModule.register({ secret:SECRET }), EventsModule, HttpModule, DatabaseModule ]
 })
 export class AttendessModule {}

@@ -6,3 +6,5 @@ export const SECRET = "0c7Op12o2L$n0v3vE"
 export const METHOD = "http";
 export const DOMAIN = "localhost";
 export const PORT = 4057;
+export const  USER_EMAIL = "";
+export const PASSWORD_EMAIL = "";

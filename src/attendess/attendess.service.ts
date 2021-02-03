@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectKnex, Knex } from 'nestjs-knex';
 import * as moment from 'moment';
 import * as fs from 'fs';
+import * as path from 'path';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import { AttendeesCreateDto } from './DTO/attendees-create.dto';
 import { AttendeesListDto } from './DTO/attendees-list.dto';
@@ -18,7 +19,7 @@ export class AttendessService {
     ){}
 
 
-    async create(attendees:AttendeesCreateDto){
+    async create(attendees){
         const attendee = await this.knex.table(this.TABLE).insert(attendees);
         return attendee;
     }
@@ -151,5 +152,117 @@ export class AttendessService {
         })    
 
         return page;
+    }
+
+
+    async setPdf(attendeesId:number, pdf_path:string){
+        const result = await this.knex.table(this.TABLE).update({pdf_path}).where({id:attendeesId})
+        return result;
+    }
+
+    async fillPDFFisrtPart(questions,doctor_name:string, event){
+        const RUTA = "./pdf/nordisk.pdf";
+        //carga el archivo
+        const pdfDoc = await PDFDocument.load(fs.readFileSync(RUTA));
+        const pages = pdfDoc.getPages();
+        const page = pages[0];
+
+        //carga los campos llenables
+        const form = pdfDoc.getForm()
+
+        const NAME = "Campo de texto 2";
+        const EVENT = "Campo de texto 4";
+        const EVENT_DATE = "Campo de texto 5";
+        const QUESTION_1_YES = "Casilla de verificación 1";
+        const QUESTION_1_NO = "Casilla de verificación 2";
+        const QUESTION_2_YES = "Casilla de verificación 3";
+        const QUESTION_2_NO = "Casilla de verificación 4";
+        const EXPLANATION = "Campo de texto 6";
+        const PUBLIC_ENTITY = "Campo de texto 7";
+        const REPRESENTATIVE = "Campo de texto 8";
+        const EVENT_NAME_2 = "Campo de texto 9";
+        const DATE = "Campo de texto 10";
+        
+
+        let nameField = form.getTextField(NAME);
+        nameField.setText(doctor_name);
+        
+        let eventnameField = form.getTextField(EVENT);
+        eventnameField.setText(event[0].name);
+
+        let dateField = form.getTextField(EVENT_DATE);
+        dateField.setText(moment(event[0].event_date).format("DD-MM-YYYY"));
+
+        if(questions.question2){
+            let question1yesField = form.getCheckBox(QUESTION_1_YES);
+            question1yesField.check();
+        }else{
+            let question1noField = form.getCheckBox(QUESTION_1_NO);
+            question1noField.check();
+        }
+
+        if(questions.question1){
+            let question2yesField = form.getCheckBox(QUESTION_2_YES);
+            question2yesField.check();
+        }else{
+            let question2noField = form.getCheckBox(QUESTION_2_NO);
+            question2noField.check();
+        }
+
+        if(questions.explication){
+            let explanationField = form.getTextField(EXPLANATION);
+            explanationField.setText(questions.explication)
+        }
+
+        if(questions.question2){
+            let publicField = form.getTextField(PUBLIC_ENTITY);
+            publicField.setText(questions.institutionName)
+
+            let representativeField = form.getTextField(REPRESENTATIVE);
+            representativeField.setText(questions.nameAndTitle)
+
+            
+        }
+        let eventname2Field = form.getTextField(EVENT_NAME_2);
+        eventname2Field.setText(event[0].name);
+
+        let date2Field = form.getTextField(DATE);
+        date2Field.setText(moment().format("DD-MM-YYYY"));
+
+        //let signatureFild = form.getSignature(SIGNATURE);
+        
+        const pdf_name = new Date().getTime();
+        const pdfBytes = await pdfDoc.save();
+        let path_result = `./pdf/${pdf_name}${doctor_name.substr(0,2).toUpperCase()}${event[0].name.substr(0,2).toUpperCase()}.pdf`
+        fs.writeFileSync(path_result, pdfBytes);
+        return path.resolve(path_result)
+    }
+
+    async signPdf(pdf_path, pdf_signature){
+        const pdfDoc = await PDFDocument.load(fs.readFileSync(pdf_path));
+        const pages = pdfDoc.getPages();
+        const page = pages[0];
+        const form = pdfDoc.getForm()
+
+        const SIGNATURE = "Campo de firma 1";
+        let img = fs.readFileSync(pdf_signature);
+        const isJPG = pdf_signature.split(".")[pdf_signature.split('.').length-1];
+        
+        let imgEmbed = isJPG == "jpg"  ?  await pdfDoc.embedJpg(img):await pdfDoc.embedPng(img)  ;
+        const { width, height } = page.getSize();
+        page.drawImage(imgEmbed, {
+            x: width-274,
+            y: height-height+73,
+            width:238,
+            height:67
+        });
+
+        const signatureForm = form.getSignature(SIGNATURE);
+        signatureForm.disableExporting()
+        signatureForm.disableRequired()
+        signatureForm.enableReadOnly()
+        fs.writeFileSync(pdf_path, await pdfDoc.save());
+        return true
+
     }
 }

@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Delete, Put, Body, Param, Query, UsePipes, UseGuards,
-         SetMetadata, UseInterceptors, UploadedFile, HttpException, HttpStatus, Response   
+         SetMetadata, UseInterceptors, UploadedFile, HttpException, HttpStatus, Response, HttpService   
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiResponse, ApiNotFoundResponse, ApiUnauthorizedResponse,
@@ -16,9 +16,11 @@ import { ValidationPipe } from '../commons/validations/validations.pipe';
 import { AttendessService } from './attendess.service';
 import { EventsService } from 'src/events/events.service';
 import { LogServices } from '../commons/services/log.service';
+import { EmailServices } from '../commons/services/email.service';
 import { User } from '../commons/decoratos/user.decorator';
 import { LogDto, ImageErrorDto, SignatureErrorDto, EventNotFound, UnauthorizedDto,
-         ForbiddenDto, InternalServerErrrorDto, ImageNotFoundDto, ErrorDto, AttendeesNotFoundDto
+         ForbiddenDto, InternalServerErrrorDto, ImageNotFoundDto, ErrorDto, AttendeesNotFoundDto,
+         PDFNotFoundDto
 } from '../commons/DTO';
 import { AttendeesCreateDto } from './DTO/attendees-create.dto';
 import { AttendeesInfoDto } from './DTO/attendees-info.dto';
@@ -26,6 +28,9 @@ import { AttendeesResponseDto } from './DTO/attendees-response.dto';
 import { AttendeesPaginationDto } from './DTO/attendees-pagination.dto';
 import { AttendeesDetailDto } from './DTO/attendees-detail.dto';
 import { AttendeesItemDto } from './DTO/attendess-item.dto';
+import { AttendeesCreateResponseDto } from './DTO/attendees-create-response.dto';
+import {  METHOD, DOMAIN, PORT  } from '../config';
+
 
 
 
@@ -36,7 +41,8 @@ export class AttendessController {
     constructor(
         private attendessService: AttendessService,
         private logService: LogServices,
-        private eventService: EventsService
+        private eventService: EventsService,
+        private emailService: EmailServices
     ){}
 
     @Post()
@@ -46,8 +52,7 @@ export class AttendessController {
         name:"token",
         example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlX2lkIjoyLCJpZCI6MTUsInBhc3N3b3JkIjoiJDJiJDEwJGE0dmI4azBQMDllSHk1b0FrUzlmRGViNmc4M1NZaWtCTGNJYll1SDQwTm9JMnhoU1FXTW8yIiwiZW1haWwiOiJkYXZpZEBnbWFpbC5jb20iLCJwZXJtaXNzaW9ucyI6eyJldmVudHMiOiJDIn0sImlhdCI6MTYxMTg2MTU4Nn0.KDX947q2WhlGlcZxtjUDZDh_vQ3HDPvxzuvShr-ptWo"
     })
-    @ApiResponse({status:413,type:ImageErrorDto})
-    @ApiResponse({ status:417, type:SignatureErrorDto })
+    @ApiResponse({status:200, type:AttendeesCreateResponseDto})
     @ApiBadRequestResponse({type:ErrorDto})
     @ApiNotFoundResponse({type:EventNotFound})
     @ApiUnauthorizedResponse({type:UnauthorizedDto})
@@ -55,38 +60,41 @@ export class AttendessController {
     @ApiInternalServerErrorResponse({type:InternalServerErrrorDto})    
     @UseGuards(TokenGuard, MasterGuard)
     @UsePipes(new ValidationPipe)
-    @UseInterceptors(FileInterceptor("signature",{
-        storage:diskStorage({
-            destination:path.join(__dirname,'../signatures'),//Si esta ruta presenta agun error remplazarla por ./images
-            filename: (req, file, callback)=>{
-                const name = new Date().getTime()
-                callback(null, `${name}_${file.originalname}`)
-            }
-        }),
-        fileFilter:(req, file ,callback)=>{
-            const authorized = new Set(["image/png","image/jpeg", 'image/gif'])
-            if(authorized.has(file.mimetype)) return callback(null, true)
-            callback( new HttpException("Only image are allowed jpg/png/gif",413), false)
-        }
-    }))
-    async create( @UploadedFile() signature ,@Body() attendees: AttendeesCreateDto, @User() session ){
-        if(!signature) throw new HttpException("The signature field is mandatory", 417)
-        
-        const eventExist = await this.eventService.findById(parseInt(attendees.eventId));
-        if(!eventExist.length) throw new HttpException("EVENT NOT FOUND",HttpStatus.NOT_FOUND);
+    
+    async create( @Body() attendees: AttendeesCreateDto, @User() session ){
 
-        let path = "";
-        path = signature.path;
-        let schema = Object.assign({}, attendees,{ 
-            path, 
-            cedula: parseInt(attendees.cedula),
+        //if(!signature) throw new HttpException("The signature field is mandatory", 417)
+        const eventExist = await this.eventService.findById(attendees.eventId);
+        if(!eventExist.length) throw new HttpException("EVENT NOT FOUND",HttpStatus.NOT_FOUND);
+        
+        let questions = {
+            question1:attendees.question1,
+            question2:attendees.question2,
+            typeOfInstitution: attendees.typeOfInstitution,
+            institutionName: attendees.institutionName,
+            nameAndTitle: attendees.nameAndTitle,
+            authorization: attendees.authorization,
+            explication: attendees.description
+        }
+        let schema = Object.assign({},{ 
+            cedula: attendees.cedula,
+            name: attendees.name,
+            speciality: attendees.speciality,
+            email:attendees.email,
             created_by: session.id,
             modified_by: session.id,
-            event_id:attendees.eventId 
+            event_id:attendees.eventId,
+            questions:JSON.stringify(questions) 
         });
-        delete schema.eventId;
         const newAttendees = await this.attendessService.create(schema);
+        const pdf = await this.attendessService.fillPDFFisrtPart(questions,attendees.name, eventExist);
+        const updated = await this.attendessService.setPdf(newAttendees[0],pdf);
         
+
+        let response = new AttendeesCreateResponseDto();
+        response.id = newAttendees[0];
+        response.path = `${METHOD}://${DOMAIN}:${PORT}/attendees/contract/${newAttendees[0]}`
+
         /** CREATE LOG */
         let log = new LogDto();
         log.new_change = "create";
@@ -97,108 +105,14 @@ export class AttendessController {
         log.modified_by = session.id;
         await this.logService.createLog(log);
 
-        return attendees;
-    }
-
-    
-
-    @Get("/contract")
-    async prepareContract(){
-        const RUTA = "./pdf/nordisk.pdf";
-        //carga el archivo
-        const pdfDoc = await PDFDocument.load(fs.readFileSync(RUTA));
-        const pages = pdfDoc.getPages();
-        const page = pages[0];
-
-        //carga los campos llenables
-        const form = pdfDoc.getForm()
-        
-        for(let item of form.getFields()){
-            console.log(item.getName())
-            
-        }
-        const NAME = "Campo de texto 2";
-        const EVENT = "Campo de texto 4";
-        const EVENT_DATE = "Campo de texto 5";
-        const QUESTION_1_YES = "Casilla de verificación 1";
-        const QUESTION_1_NO = "Casilla de verificación 2";
-        const QUESTION_2_YES = "Casilla de verificación 3";
-        const QUESTION_2_NO = "Casilla de verificación 4";
-        const EXPLANATION = "Campo de texto 6";
-        const PUBLIC_ENTITY = "Campo de texto 7";
-        const REPRESENTATIVE = "Campo de texto 8";
-        const EVENT_NAME_2 = "Campo de texto 9";
-        const DATE = "Campo de texto 10";
-        const SIGNATURE = "Campo de firma 1";
-
-        let nameField = form.getTextField(NAME);
-        nameField.setText("David Arellano Corona");
-        
-        let eventnameField = form.getTextField(EVENT);
-        eventnameField.setText("Avances Tecnologicos de genética humana");
-
-        let dateField = form.getTextField(EVENT_DATE);
-        dateField.setText(moment().format("DD-MM-YYYY"));
-
-        let question1yesField = form.getCheckBox(QUESTION_1_YES);
-        question1yesField.check();
-
-        let date2Field = form.getTextField(DATE);
-        date2Field.setText(moment().format("DD-MM-YYYY"));
-
-        let signatureFild = form.getSignature(SIGNATURE);
-        
-
-        const pdfBytes = await pdfDoc.save();
-        fs.writeFileSync('./pdf/pruebas_nuevas.pdf', pdfBytes);        
-
-        
-    }
-
-    @Get('/signature/:id')
-    @ApiResponse({status:200, description:"Download image"})
-    @ApiNotFoundResponse({type:ImageNotFoundDto})
-    @ApiInternalServerErrorResponse({type:InternalServerErrrorDto})
-    async download(@Response() res ,@Param('id') id:number){
-        const attendees = await this.attendessService.findByid(id)
-        if(!attendees.length) throw new HttpException('IMAGE NOT FOUND', HttpStatus.NOT_FOUND);
-        
-        const path = attendees[0].path;
-        res.download(path)
-    }
-
-
-    @Get("/detail/:id")
-    @SetMetadata('roles',["MASTER"])
-    @SetMetadata('permission',['R'])
-    @ApiHeader({
-        name:"token",
-        example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlX2lkIjoyLCJpZCI6MTUsInBhc3N3b3JkIjoiJDJiJDEwJGE0dmI4azBQMDllSHk1b0FrUzlmRGViNmc4M1NZaWtCTGNJYll1SDQwTm9JMnhoU1FXTW8yIiwiZW1haWwiOiJkYXZpZEBnbWFpbC5jb20iLCJwZXJtaXNzaW9ucyI6eyJldmVudHMiOiJDIn0sImlhdCI6MTYxMTg2MTU4Nn0.KDX947q2WhlGlcZxtjUDZDh_vQ3HDPvxzuvShr-ptWo"
-    })
-    @ApiResponse({status:200, type:AttendeesItemDto})
-    @ApiBadRequestResponse({type:ErrorDto})
-    @ApiNotFoundResponse({type:AttendeesNotFoundDto})
-    @ApiUnauthorizedResponse({type:UnauthorizedDto})
-    @ApiForbiddenResponse({type:ForbiddenDto})
-    @ApiInternalServerErrorResponse({type:InternalServerErrrorDto})    
-    @UseGuards(TokenGuard, MasterGuard)
-    @UsePipes(new ValidationPipe)
-    async findById(@Param() id:AttendeesDetailDto){
-        const attendees = await this.attendessService.getById(id.id);
-        if( !attendees.length ) throw new HttpException("Assistant not found", HttpStatus.NOT_FOUND);
-        
-        let response = new AttendeesItemDto();
-        response.id = attendees[0].id;
-        response.name = attendees[0].name;
-        response.lastname = attendees[0].lastname;
-        response.cedula = attendees[0].cedula;
-        response.speciality = attendees[0].speciality;
-        response.email = attendees[0].email;
-
         return response;
     }
 
-    @Get("/pdf/:eventId")
+    
+    @Get("/assists/list/:eventId")
+    @ApiResponse({status:200, description:"Download the list of attendees in pdf"})
+    @ApiNotFoundResponse({type:PDFNotFoundDto})
+    @ApiInternalServerErrorResponse({type:InternalServerErrrorDto})
     async buildPdf( @Response() res, @Param() eventId:AttendeesInfoDto ){
         const existEvent = await this.eventService.findById(parseInt(eventId.eventId));
         if(!existEvent.length) throw new HttpException("EVENT NOT FOUND", HttpStatus.NOT_FOUND);
@@ -259,7 +173,126 @@ export class AttendessController {
         fs.writeFileSync('./pdf/lista_de_asistencia.pdf', pdfBytes);
         res.download('./pdf/lista_de_asistencia.pdf');
         
+    }  
+
+    @Get("/contract/:id")
+    @ApiResponse({status:200, description:"PDF donwload"})
+    @ApiNotFoundResponse({type:PDFNotFoundDto})
+    @ApiInternalServerErrorResponse({type:InternalServerErrrorDto})
+    async prepareContract(@Param() id: AttendeesDetailDto, @Response() res){
+        console.log(id)
+        const attendess = await this.attendessService.getById(id.id);
+        if(!attendess.length) throw new  HttpException("PDF NOT FOUND", HttpStatus.NOT_FOUND)
+        
+        res.download(attendess[0].pdf_path)
     }
+    
+
+    @Put('/sign/:id')
+    @SetMetadata('roles',["MASTER","ADMIN"])
+    @SetMetadata('permission',['U'])
+    @ApiHeader({
+        name:"token",
+        example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlX2lkIjoyLCJpZCI6MTUsInBhc3N3b3JkIjoiJDJiJDEwJGE0dmI4azBQMDllSHk1b0FrUzlmRGViNmc4M1NZaWtCTGNJYll1SDQwTm9JMnhoU1FXTW8yIiwiZW1haWwiOiJkYXZpZEBnbWFpbC5jb20iLCJwZXJtaXNzaW9ucyI6eyJldmVudHMiOiJDIn0sImlhdCI6MTYxMTg2MTU4Nn0.KDX947q2WhlGlcZxtjUDZDh_vQ3HDPvxzuvShr-ptWo"
+    })
+    @ApiResponse({status:200, type:AttendeesCreateResponseDto})
+    @ApiNotFoundResponse({type: PDFNotFoundDto})
+    @ApiNotFoundResponse({type:AttendeesNotFoundDto})
+    @ApiResponse({status:413,type:ImageErrorDto})
+    @ApiResponse({status:417,type:SignatureErrorDto})
+    @ApiUnauthorizedResponse({type:UnauthorizedDto})
+    @ApiForbiddenResponse({type:ForbiddenDto})
+    @ApiInternalServerErrorResponse({type:InternalServerErrrorDto})    
+    @UseGuards(TokenGuard, MasterGuard)
+    @UsePipes(new ValidationPipe)
+    @UseInterceptors(FileInterceptor("signature",{
+        storage:diskStorage({
+            destination:path.join(__dirname,'../signatures'),//Si esta ruta presenta agun error remplazarla por ./images
+            filename: (req, file, callback)=>{
+                const name = new Date().getTime()
+                callback(null, `${name}_${file.originalname}`)
+            }
+        }),
+        fileFilter:(req, file ,callback)=>{
+            const authorized = new Set(["image/png","image/jpeg", 'image/gif'])
+            if(authorized.has(file.mimetype)) return callback(null, true)
+            callback( new HttpException("Only image are allowed jpg/png/gif",413), false)
+        }
+    }))
+    async signContract(@UploadedFile() signature,@Param() id:AttendeesDetailDto, @User() session ){
+        if(!signature) throw new HttpException("The signature field is mandatory", 417); 
+        
+        const existAttendees = await this.attendessService.getById(id.id);
+        if(!existAttendees.length) throw new HttpException("ATTENDEES NOT FOUND",HttpStatus.NOT_FOUND)
+
+        const hasPDF = existAttendees[0].pdf_path;
+        if(!hasPDF) throw new HttpException("PDF NOT FOUND", HttpStatus.NOT_FOUND)
+        await this.attendessService.signPdf(existAttendees[0].pdf_path, signature.path)
+
+        await this.emailService.sendEmail(`Registro de asistencia`,
+        existAttendees[0].email,{path:existAttendees[0].pdf_path})
+        /** CREATE LOG */
+        let log = new LogDto();
+        log.new_change = "sign_pdf";
+        log.type = "sign_pdf";
+        log.element = 0;
+        log.db_table = this.TABLE;
+        log.created_by = session.id;
+        log.modified_by = session.id;
+        await this.logService.createLog(log);
+
+
+        let response = new AttendeesCreateResponseDto()
+        response.id = id.id;
+        response.path = `${METHOD}://${DOMAIN}:${PORT}/attendees/contract/${id.id}`;
+        return response;
+
+    }
+
+    @Get('/signature/:id')
+    @ApiResponse({status:200, description:"Download signature"})
+    @ApiNotFoundResponse({type:ImageNotFoundDto})
+    @ApiInternalServerErrorResponse({type:InternalServerErrrorDto})
+    async download(@Response() res ,@Param('id') id:number){
+        const attendees = await this.attendessService.findByid(id)
+        if(!attendees.length) throw new HttpException('IMAGE NOT FOUND', HttpStatus.NOT_FOUND);
+        
+        const path = attendees[0].path;
+        res.download(path)
+    }
+
+
+    @Get("/detail/:id")
+    @SetMetadata('roles',["MASTER"])
+    @SetMetadata('permission',['R'])
+    @ApiHeader({
+        name:"token",
+        example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlX2lkIjoyLCJpZCI6MTUsInBhc3N3b3JkIjoiJDJiJDEwJGE0dmI4azBQMDllSHk1b0FrUzlmRGViNmc4M1NZaWtCTGNJYll1SDQwTm9JMnhoU1FXTW8yIiwiZW1haWwiOiJkYXZpZEBnbWFpbC5jb20iLCJwZXJtaXNzaW9ucyI6eyJldmVudHMiOiJDIn0sImlhdCI6MTYxMTg2MTU4Nn0.KDX947q2WhlGlcZxtjUDZDh_vQ3HDPvxzuvShr-ptWo"
+    })
+    @ApiResponse({status:200, type:AttendeesItemDto})
+    @ApiBadRequestResponse({type:ErrorDto})
+    @ApiNotFoundResponse({type:AttendeesNotFoundDto})
+    @ApiUnauthorizedResponse({type:UnauthorizedDto})
+    @ApiForbiddenResponse({type:ForbiddenDto})
+    @ApiInternalServerErrorResponse({type:InternalServerErrrorDto})    
+    @UseGuards(TokenGuard, MasterGuard)
+    @UsePipes(new ValidationPipe)
+    async findById(@Param() id:AttendeesDetailDto){
+        const attendees = await this.attendessService.getById(id.id);
+        if( !attendees.length ) throw new HttpException("Assistant not found", HttpStatus.NOT_FOUND);
+        
+        let response = new AttendeesItemDto();
+        response.id = attendees[0].id;
+        response.name = attendees[0].name;
+        response.lastname = attendees[0].lastname;
+        response.cedula = attendees[0].cedula;
+        response.speciality = attendees[0].speciality;
+        response.email = attendees[0].email;
+
+        return response;
+    }
+
+    
 
 
     @Get('/:eventId')

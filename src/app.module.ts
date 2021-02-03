@@ -8,6 +8,7 @@ import { HOST, USER, PASSWORD, DATABASE, SECRET } from './config';
 import { AuthenticateModule } from './authenticate/authenticate.module';
 import { EventsModule } from './events/events.module';
 import { AttendessModule } from './attendess/attendess.module';
+import { DatabaseModule } from './database/database.module';
 
 
 @Module({
@@ -29,7 +30,8 @@ import { AttendessModule } from './attendess/attendess.module';
     UsersModule,
     AuthenticateModule,
     EventsModule,
-    AttendessModule
+    AttendessModule,
+    DatabaseModule
   ],
   controllers: [],
   providers: [],
