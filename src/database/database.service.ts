@@ -112,7 +112,7 @@ export class DatabaseService {
         result.id = last[0].id;
         result.file_name = last[0].file_name;
         result.created_on = moment(last[0].created_on).format("DD-MM-YYYY");
-        result.download_file = `${METHOD}://${DOMAIN}:${PORT}/database/excel/${last[0].id}`
+        result.download_file = `${METHOD}://${DOMAIN}/database/excel/`
       }
 
       return result;

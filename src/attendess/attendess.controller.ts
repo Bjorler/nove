@@ -102,7 +102,7 @@ export class AttendessController {
 
         let response = new AttendeesCreateResponseDto();
         response.id = newAttendees[0];
-        response.path = `${METHOD}://${DOMAIN}:${PORT}/attendees/contract/${newAttendees[0]}`
+        response.path = `${METHOD}://${DOMAIN}/attendees/contract/${newAttendees[0]}`
 
         /** CREATE LOG */
         let log = new LogDto();
@@ -139,7 +139,9 @@ export class AttendessController {
 
 
         const pdfDoc = await PDFDocument.create();
-        
+        /*const RUTA = "./pdf/Formato_asistencia_template.pdf";
+        const pdfDoc = await PDFDocument.load(fs.readFileSync(RUTA));
+        */
 
         const array = await this.attendessService.findAttendessByEvent(parseInt(eventId.eventId));
         if(!array.length) throw new HttpException("EVENT NOT FOUND", HttpStatus.NOT_FOUND);
@@ -147,53 +149,71 @@ export class AttendessController {
         let result = [];
 
         for(let item of array){
-            //if(item.path){
-                let info = {
-                    cedula:`${item.cedula}`,
-                    name:`${item.name}`,
-                    signature:item.path
-                }
-                result.push(info)
-            //}
+            let id_string = `000${item.id}`
+            let info = {
+                id: item.id < 1000 ? id_string.substring(id_string.length-3, id_string.length): `${item.id}`,
+                cedula:`${item.cedula}`,
+                name:`${item.name}`,
+                signature:item.path,
+                email: item.email,
+                speciality: item.speciality
+            }
+            result.push(info)
         }
-        
         const arrayPage = [];
-        let numberOfPages = Math.ceil(result.length /30)
-        for(let i=0; i<numberOfPages; i++){
-            let newPage =  await  this.attendessService.preparePDF(pdfDoc, existEvent[0].name) //pdfDoc.addPage();
-            
-            arrayPage.push(newPage);
-        }
+        const MAX_ROW_TO_DISPLAY = 14;
+        let numberOfPages = Math.ceil(result.length /MAX_ROW_TO_DISPLAY);
+        console.log({numberOfPages})
+        
         const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
         const RGB_PARSE = 1/255;
         const DARK_GRAY = rgb((RGB_PARSE*217),(RGB_PARSE*217),(RGB_PARSE*217));
         const LIGHT_GRAY = rgb((RGB_PARSE*242),(RGB_PARSE*242),(RGB_PARSE*242));
         const BLUE = rgb((RGB_PARSE*53),(RGB_PARSE*71),(RGB_PARSE*140));
         const BLACK_GARY = rgb((RGB_PARSE*115),(RGB_PARSE*115),(RGB_PARSE*115));
-        
-       const MAX_ROW_TO_DISPLAY = 25;
+        const LIGHT_BLUE = rgb((RGB_PARSE*0),(RGB_PARSE*159),(RGB_PARSE*218));
+        const DARK_BLUE = rgb((RGB_PARSE*0),(RGB_PARSE*25),(RGB_PARSE*101));
+        const AEA99F = rgb((RGB_PARSE*174),(RGB_PARSE*169),(RGB_PARSE*159));
+        const WHITE = rgb((RGB_PARSE*255),(RGB_PARSE*255),(RGB_PARSE*255));
+       
        let pagina = 1;
-        for(let page of arrayPage){
+       for(let i=0; i<numberOfPages; i++){
+           let preparedPDF = await  this.attendessService.preparePDF( existEvent[0].name)
+            const [page] = await pdfDoc.copyPages(preparedPDF,[0]);
+            
+        //for(let page of arrayPage){
             const { width, height } = page.getSize()
-            const TABLE_HEADER_Y = height-180;
-            const CEDULA_X = 40;
-            const NAME_X = (width/2)-40;
+            const TABLE_HEADER_Y = height-123;
+            const CEDULA_X = 100 ;
+            const NAME_X = 200;
             const FIRMA_X = width-75;
-            let INIT_POSITION_Y = TABLE_HEADER_Y - 30;
+            const ID_X = 50
+            const EMAIL_X = 400
+            const SPECIALITY_X = 550
+            let INIT_POSITION_Y = TABLE_HEADER_Y - 27;
+            
             
             let current_row = 0
+            const Y_POSITIONS = [INIT_POSITION_Y, INIT_POSITION_Y-27, INIT_POSITION_Y-57, INIT_POSITION_Y-87, INIT_POSITION_Y-114, INIT_POSITION_Y-143,
+            INIT_POSITION_Y-174, INIT_POSITION_Y-200, INIT_POSITION_Y-229, INIT_POSITION_Y-261, INIT_POSITION_Y-287, INIT_POSITION_Y-313,
+            INIT_POSITION_Y-346, INIT_POSITION_Y-373, INIT_POSITION_Y-401
+            ]
+            let count = 0;
             for(let item of result){
                 try{
-                    page.drawText(item.cedula,{y:INIT_POSITION_Y, x:CEDULA_X, size:11, font:helveticaBold, color:BLUE})    
-                    page.drawText(item.name,{y:INIT_POSITION_Y, x:NAME_X-10, size:11, font:helveticaBold, color:BLUE})  
+                    page.drawText(item.id,{y:Y_POSITIONS[count], x:ID_X, size:8, font:helveticaBold, color:LIGHT_BLUE})
+                    page.drawText(item.cedula,{y:Y_POSITIONS[count], x:CEDULA_X, size:8, font:helveticaBold, color:LIGHT_BLUE})    
+                    page.drawText(item.name,{y:Y_POSITIONS[count], x:NAME_X-10, size:8,maxWidth:160, lineHeight:37, font:helveticaBold, color:DARK_BLUE})  
+                    page.drawText(item.email,{y:Y_POSITIONS[count], x:EMAIL_X, size:8, font:helveticaBold, color:DARK_BLUE})
+                    page.drawText(item.speciality,{y:Y_POSITIONS[count], x:SPECIALITY_X, maxWidth:120, lineHeight:37 ,size:8, font:helveticaBold, color:DARK_BLUE})
                     if(item.signature){
-                    const SIGNATURE = fs.readFileSync(item.signature);
-                    let mimetype = item.signature.split(".")
-                    mimetype = mimetype[mimetype.length-1]
-                    const EMBEDDED_SIGNATURE =  mimetype == "jpg" ? await pdfDoc.embedJpg(SIGNATURE): pdfDoc.embedPng(SIGNATURE)  
-                    page.drawImage(EMBEDDED_SIGNATURE,{y:INIT_POSITION_Y, x:FIRMA_X-25, width:60, height:15})
+                        const SIGNATURE = fs.readFileSync(item.signature);
+                        let mimetype = item.signature.split(".")
+                        mimetype = mimetype[mimetype.length-1]
+                        const EMBEDDED_SIGNATURE =  mimetype == "jpg" ? await pdfDoc.embedJpg(SIGNATURE): await pdfDoc.embedPng(SIGNATURE)  
+                        page.drawImage(EMBEDDED_SIGNATURE,{y:Y_POSITIONS[count], x:FIRMA_X-25, width:60, height:15})
                     }   
-                    INIT_POSITION_Y -= 20;
+                    INIT_POSITION_Y -= 35;
                     if(current_row == MAX_ROW_TO_DISPLAY){
                         break;
                     }
@@ -201,9 +221,12 @@ export class AttendessController {
                 }catch(err){
                     console.log(err)
                 }
+                count++;
             }
-            page.drawText(`Página ${pagina} de ${arrayPage.length}`,{y:height-height+50, x:40, size:10, font:helveticaBold, color:DARK_GRAY})
-            page.drawText(`Total de asistentes ${array.length}`,{y:height-height+50, x:width-145, size:10, font:helveticaBold, color:DARK_GRAY})
+            page.drawCircle({y:height-height+25 , x:width-38, color:WHITE, size:5})
+            page.drawText(`${pagina}`,{y:height-height+21, x:width-40, size:10, font:helveticaBold, color:AEA99F})
+            page.drawText(`${numberOfPages}`,{y:height-height+21, x:width-26, size:10, font:helveticaBold, color:AEA99F})
+            pdfDoc.addPage(page);
             pagina++;
         }
 
@@ -301,7 +324,7 @@ export class AttendessController {
 
         let response = new AttendeesCreateResponseDto()
         response.id = id.id;
-        response.path = `${METHOD}://${DOMAIN}:${PORT}/attendees/contract/${id.id}`;
+        response.path = `${METHOD}://${DOMAIN}/attendees/contract/${id.id}`;
         return response;
 
     }

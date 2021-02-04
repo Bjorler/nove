@@ -63,7 +63,7 @@ export class AuthenticateController {
         result.permissions = user.permissions;
         result.username = `${user.name} ${user.apellido_paterno}`;
         result.role = user.role_name.replace(user.role_name[0],user.role_name.substr(0,1).toUpperCase());
-        result.download_img = `${METHOD}://${DOMAIN}:${PORT}/users/image/${user.id}`
+        result.download_img = `${METHOD}://${DOMAIN}/users/image/${user.id}`
 
         let response = new ResponseDto();
         response.message = "Token Provided";

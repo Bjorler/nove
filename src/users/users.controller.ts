@@ -164,7 +164,7 @@ export class UsersController {
         if(!user.length) throw new HttpException("User not found", HttpStatus.NOT_FOUND);
         
         let userDetail = new UserDetailDto();
-        userDetail.download_img = `${METHOD}://${DOMAIN}:${PORT}/users/image/${user[0].id}`;
+        userDetail.download_img = `${METHOD}://${DOMAIN}/users/image/${user[0].id}`;
         userDetail.avatar = user[0].avatar;
         userDetail.name = user[0].name;
         userDetail.apellido_paterno = user[0].apellido_paterno;
@@ -217,18 +217,20 @@ export class UsersController {
         storage:diskStorage({
             destination:path.join(__dirname,'../images'),//Si esta ruta presenta agun error remplazarla por ./images
             filename: (req, file, callback)=>{
+                console.log("1")
                 const name = new Date().getTime()
                 callback(null, `${name}_${file.originalname}`)
             }
         }),
         fileFilter:(req, file ,callback)=>{
+            console.log("2")
             const authorized = new Set(["image/png","image/jpeg", 'image/gif'])
             if(authorized.has(file.mimetype)) return callback(null, true)
             callback( new HttpException("Only image are allowed jpg/png/gif",413), false)
         }
     }))
     async update(@UploadedFile() avatar, @Body() user:UpdateUserDto, @User() session){
-        
+        console.log("ENTRE")
         let avatar_name = "", path = "";
         if( avatar ){
             avatar_name = avatar.originalname;

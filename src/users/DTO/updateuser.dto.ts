@@ -93,5 +93,5 @@ export class UpdateUserDto{
         required:false
     })
     @IsOptional()
-    image:any
+    avatar:any
 }

@@ -3,7 +3,7 @@ import { InjectKnex, Knex } from 'nestjs-knex';
 import * as moment from 'moment';
 import * as fs from 'fs';
 import * as path from 'path';
-import { PDFNumber } from 'pdf-lib';
+import { degrees, PDFNumber } from 'pdf-lib';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import { AttendeesCreateDto } from './DTO/attendees-create.dto';
 import { AttendeesListDto } from './DTO/attendees-list.dto';
@@ -46,7 +46,7 @@ export class AttendessService {
             let info = new AttendeesListDto();
             info.cedula = item.cedula,
             info.name = `${item.name}`;
-            info.download_signature = `${METHOD}://${DOMAIN}:${PORT}/attendees/signature/${item.id}`;
+            info.download_signature = `${METHOD}://${DOMAIN}/attendees/signature/${item.id}`;
             info.id = item.id;
             info.register_type = item.register_type;
             info.speciality = item.speciality;
@@ -93,64 +93,111 @@ export class AttendessService {
         return attendees;
     }
 
-    async preparePDF(pdfDoc, event_name:string){
-        let page = pdfDoc.addPage();
+    async preparePDF( event_name:string){
+        const RUTA = "./pdf/Formato_asistencia_template.pdf";
+        const pdfDoc = await PDFDocument.load(fs.readFileSync(RUTA));
+        //carga el archivo
+        const pages = pdfDoc.getPages();
+        let page = pages[0];
+        //let page = pdfDoc.addPage();
+        //page.setRotation(degrees(90))
+        
+        
         const { width, height } = page.getSize()
         const PATH_RESOURCE = "./pdf/resources";
-        
+        const ROTATION = degrees(90)
         const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
+        const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica)
         const RGB_PARSE = 1/255;
         const DARK_GRAY = rgb((RGB_PARSE*217),(RGB_PARSE*217),(RGB_PARSE*217));
-        const LIGHT_GRAY = rgb((RGB_PARSE*242),(RGB_PARSE*242),(RGB_PARSE*242));
+        const LIGHT_GRAY = rgb((RGB_PARSE*224),(RGB_PARSE*222),(RGB_PARSE*216));
         const BLUE = rgb((RGB_PARSE*53),(RGB_PARSE*71),(RGB_PARSE*140));
+        const DARK_BLUE = rgb((RGB_PARSE*0),(RGB_PARSE*25),(RGB_PARSE*101));
         const BLACK_GARY = rgb((RGB_PARSE*115),(RGB_PARSE*115),(RGB_PARSE*115));
-
-        /** HEADER */
-        const HEADER_Y = (height-70)
+        const AEA99F = rgb((RGB_PARSE*174),(RGB_PARSE*169),(RGB_PARSE*159));
+        const A858997 = rgb((RGB_PARSE*133),(RGB_PARSE*137),(RGB_PARSE*151));
         
-        const logo = fs.readFileSync(`${PATH_RESOURCE}/2396.png`);
+        const HEADER_Y = (height-80)
+        const logo = fs.readFileSync(`${PATH_RESOURCE}/novonordisk_2.png`);
         const embedLogo = await pdfDoc.embedPng(logo);
-        page.drawImage(embedLogo,{x:40, y: HEADER_Y , width:50, height:50})
-        page.drawText("LISTA DE ASISTENCIA",{font:helveticaBold ,x:width-170, y:height-50, size:12, color:DARK_GRAY});
-        page.drawLine({
-            start: { x: 40, y: height-80 },
-            end: { x: width-40, y:height-80},
-            color: LIGHT_GRAY
-        })
-        page.drawLine({
-            start: { x: 41, y: height-80 },
-            end: { x: width-41, y:height-80},
-            color: LIGHT_GRAY
-        })
-
-        /** INFORMACIÓN DEL EVENTO */
+        const WIDTH = width-width;
+        const HEIGHT = height;
+        const DATE = moment().format("DD-MM-YYYY");
         const EVENT_NAME = event_name;
-        const DATE = moment().format("DD-MM-YYYY")
-        page.drawText(EVENT_NAME,{ y:height-110, x:40, size: 14, maxWidth:400,
-            font:helveticaBold, color: BLUE })
-        page.drawText(DATE,{y:height-110, x:width-100, size: 12, maxWidth:400,
-            font:helveticaBold, color:DARK_GRAY})    
-        
-
-
-        /** TABLE HEADER */
-        const TABLE_HEADER_Y = height-180;
-        const CEDULA_X = 40;
-        const NAME_X = (width/2)-40;
-        const FIRMA_X = width-75;
-        const CEDULA = "# Cédula Profesional";
+        const CEDULA = "# Cédula";
         const NAME = "Nombre del médico";
         const FIRMA = "Firma";
-        page.drawText(CEDULA,{y:TABLE_HEADER_Y, x:CEDULA_X, size:12, font:helveticaBold, color:DARK_GRAY})    
-        page.drawText(NAME,{y:TABLE_HEADER_Y, x:NAME_X, size:12, font:helveticaBold, color:DARK_GRAY})    
-        page.drawText(FIRMA,{y:TABLE_HEADER_Y, x:FIRMA_X, size:12, font:helveticaBold, color:DARK_GRAY})  
-        page.drawLine({
-            start: { x: 41, y: height-190 },
-            end: { x: width-38, y:height-190},
-            color: BLACK_GARY
-        })    
+        const ID = "ID";
+        const EMAIL = "Correo";
+        const SPECIALITY = "Especialidad";
+        console.log({width, height})
+        page.drawText(DATE,{x:WIDTH+50, y:HEIGHT-60 , size: 10, maxWidth:400,
+            font:helvetica, color:AEA99F, 
+        })
+
+        // NOMBRE DEL EVENTO 
+        page.drawText(EVENT_NAME,{ x:WIDTH+50, y:HEIGHT-80, size: 12, maxWidth:507,
+            font:helveticaBold, color: DARK_BLUE 
+        })
+
+
+        /*page.drawText("LISTA DE ASISTENCIA",{font:helvetica ,
+            x:WIDTH+25, y:HEIGHT+30, size:12, color:DARK_BLUE, 
+            rotate:ROTATION, width:192
+        });
         
-        return page;
+        page.drawLine({
+            start: { x: WIDTH+33, y: HEIGHT+220 },
+            end: { x: WIDTH+33, y:HEIGHT+25},
+            color: LIGHT_GRAY,
+            rotate:ROTATION
+        })    
+
+        page.drawText(DATE,{x:WIDTH+45, y: HEIGHT+30 , size: 10, maxWidth:400,
+            font:helvetica, color:AEA99F, rotate:ROTATION
+        })  
+
+        page.drawImage(embedLogo,{x:WIDTH+60, y: HEADER_Y , width:50, height:50, rotate:ROTATION})
+        
+        // NOMBRE DEL EVENTO 
+        page.drawText(EVENT_NAME,{ x:WIDTH+65, y:HEIGHT+30, size: 12, maxWidth:507,
+            font:helveticaBold, color: DARK_BLUE, rotate:ROTATION 
+        })
+
+        
+        
+        // TABLE HEADER 
+
+        page.drawText(ID,{ x:WIDTH+100, y:HEIGHT+50, rotate:ROTATION, color:AEA99F, size:12,
+            font:helveticaBold 
+        })
+        page.drawText(CEDULA,{ x:WIDTH+100, y:HEIGHT+100, rotate:ROTATION, color:AEA99F, size:12,
+            font:helveticaBold 
+        })
+        page.drawText(NAME,{ x:WIDTH+100, y:HEIGHT+220, rotate:ROTATION, color:AEA99F, size:12,
+            font:helveticaBold 
+        })
+        page.drawText(EMAIL,{ x:WIDTH+100, y:HEIGHT+420, rotate:ROTATION, color:AEA99F, size:12,
+            font:helveticaBold 
+        })
+        page.drawText(SPECIALITY,{ x:WIDTH+100, y:HEIGHT+580, rotate:ROTATION, color:AEA99F, size:12,
+            font:helveticaBold 
+        })
+        page.drawText(FIRMA,{ x:WIDTH+100, y:HEIGHT+730, rotate:ROTATION, color:AEA99F, size:12,
+            font:helveticaBold 
+        })
+
+        page.drawLine({
+            start: { x: WIDTH+105, y: HEIGHT+20 },
+            end: { x: WIDTH+105, y:height-40},
+            color: A858997,
+            rotate:ROTATION
+        }) */
+
+
+        
+
+        return pdfDoc;
     }
 
 

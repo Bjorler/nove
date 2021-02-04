@@ -14,7 +14,8 @@ export class MasterGuard implements CanActivate{
         const req = ctx.switchToHttp().getRequest();
         if(!req.user) throw new HttpException("MISSING token", HttpStatus.UNAUTHORIZED);
 
-        const path = req.path.replace("/","").split("/")[0]
+        const path = req.path.replace("/","").split("/")[1]
+        
 
         const roles = new Set(this.reflector.get("roles", ctx.getHandler()))
         const permission = this.reflector.get('permission', ctx.getHandler())
@@ -23,9 +24,8 @@ export class MasterGuard implements CanActivate{
         const role = RolesDto[req.user.role_id]
         
         if(!roles.has(role)) throw new HttpException("ACCESS DENIED", HttpStatus.FORBIDDEN)
-        
         if(!req.user.permissions[path].toLowerCase().includes(permission.toString().toLowerCase())) throw new HttpException("ACCESS DENIED", HttpStatus.FORBIDDEN)
-
+        
         return true;
     }
 }

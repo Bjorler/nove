@@ -328,7 +328,7 @@ export class EventsController {
 
         let response = new EventsInfoDto();
         response.eventId = eventExist[0].id;
-        response.download_img = `${METHOD}://${DOMAIN}:${PORT}/events/image/${eventExist[0].id}`;
+        response.download_img = `${METHOD}://${DOMAIN}/events/image/${eventExist[0].id}`;
         response.image_name = eventExist[0].image;
         response.name = eventExist[0].name;
         response.location = eventExist[0].address;
