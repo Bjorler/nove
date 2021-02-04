@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectKnex, Knex } from 'nestjs-knex';
 import * as moment from 'moment';
+import { AttendessService } from '../attendess/attendess.service';
 import { EventsResponse } from './DTO/events-response.dto';
 import { EventsPaginationDto } from './DTO/events-pagination.dto';
 import { EventsInfoDto } from './DTO/events-info.dto';
@@ -10,7 +11,8 @@ import { METHOD, PORT, DOMAIN } from '../config';
 export class EventsService {
     private TABLE = "events";
     constructor(
-        @InjectKnex() private knex: Knex
+        @InjectKnex() private knex: Knex,
+        private attendeesService:AttendessService
     ){}
 
     async save(event){
@@ -32,6 +34,8 @@ export class EventsService {
             info.name = event.name;
             info.location = event.address;
             info.event_date = event.event_date//moment(event.event_date).format("DD-MM-YYYY");
+            //const total = await this.attendeesService.findTotalAttendeesByEvent(event.id);
+            
             info.assistance = event.assistants;
             result.push(info)
         }
@@ -110,7 +114,7 @@ export class EventsService {
 
     async futureEvents(){
         const events = await this.knex.table(this.TABLE).where({is_deleted:0})
-        .andWhere('event_date','>', moment().format("YYYY-MM-DD")).orderBy("event_date").limit(20)
+        .andWhere('event_date','>', moment().format("YYYY-MM-DD")).orderBy("event_date").limit(50)
         const result = [];
         for( let event of events ){
             let info = new EventsInfoDto();
@@ -126,5 +130,12 @@ export class EventsService {
             result.push(info);
         }
         return result;
+    }
+
+    async incrementAttendees(eventId:number, session){
+        const event = await this.knex.table(this.TABLE).where({id:eventId});
+        let count = event[0]['assistants']+1;
+        const updated = await this.knex.table(this.TABLE).update({assistants:count, modified_by:session.id});
+        return updated;
     }
 }

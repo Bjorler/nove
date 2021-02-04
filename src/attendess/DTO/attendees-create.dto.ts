@@ -49,11 +49,19 @@ export class AttendeesCreateDto{
     @ApiProperty({
         type:String,
         example:"excel",
-        description:"mechanism by which it was registered"
+        description:"indicates the place where the information was found"
     })
     @IsString()
     @IsNotEmpty()
     register_type:string;
+
+    @ApiProperty({
+        type:String,
+        example:"001",
+        description:"El formato de este atributo esta pendiente de validación"
+    })
+    @IsString()
+    idengage:string;
 
 
 
@@ -112,12 +120,5 @@ export class AttendeesCreateDto{
     @IsBoolean()
     authorization:boolean;
     
-    @ApiProperty({
-        type:String,
-        example:"",
-        description:"Si contestó afirmativamente en alguna de las anteriores, explique:"
-    })
-    @IsOptional()
-    description:string
 
 }

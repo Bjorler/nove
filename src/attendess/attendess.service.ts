@@ -31,21 +31,25 @@ export class AttendessService {
         
         const attendees = await this.knex
         .select(`${this.TABLE}.id`,`${this.TABLE}.cedula`,
-        `${this.TABLE}.name`,`${this.TABLE}.lastname`,`${this.TABLE}.speciality`,
-        `${this.TABLE}.register_type`
+        `${this.TABLE}.name`,`${this.TABLE}.speciality`,
+        `${this.TABLE}.register_type`,`${this.TABLE}.speciality`,`${this.TABLE}.email`,
+        `${this.TABLE}.idengage`
         )
         .table(this.TABLE)
         .limit(limit).offset(offset)
-        .where('attendees.event_id','=', eventId);
+        .where('attendees.event_id','=', eventId).andWhere({is_deleted:0})
 
         let result = [];
         for(let item of attendees){
             let info = new AttendeesListDto();
             info.cedula = item.cedula,
-            info.name = `${item.name} ${item.lastname}`;
+            info.name = `${item.name}`;
             info.download_signature = `${METHOD}://${DOMAIN}:${PORT}/attendees/signature/${item.id}`;
             info.id = item.id;
             info.register_type = item.register_type;
+            info.speciality = item.speciality;
+            info.email = item.email;
+            info.idengage = item.register_type != "excel" ? '': item.idengage;
             result.push(info)
         }
 
@@ -81,17 +85,8 @@ export class AttendessService {
         const attendees = await this.knex
         .table(this.TABLE)
         .where('attendees.event_id','=', eventId).andWhere({is_deleted:0})
-        let result = [];
-
-        for(let item of attendees){
-            let info = {
-                cedula:`${item.cedula}`,
-                name:`${item.name} ${item.lastname}`,
-                signature:item.path
-            }
-            result.push(info)
-        }
-        return result;
+        
+        return attendees;
     }
 
     async preparePDF(pdfDoc, event_name:string){
@@ -155,13 +150,17 @@ export class AttendessService {
     }
 
 
-    async setPdf(attendeesId:number, pdf_path:string){
-        const result = await this.knex.table(this.TABLE).update({pdf_path}).where({id:attendeesId})
+    async setPdf(attendeesId:number, pdf_path:string, modified_by:number){
+        const result = await this.knex.table(this.TABLE).update({pdf_path, modified_by}).where({id:attendeesId})
         return result;
     }
 
+    async setSinature(attendeesId:number, path:string, modified_by:number){
+        const result = await this.knex.table(this.TABLE).update({path, modified_by}).where({id:attendeesId})
+        return result;
+    }
     async fillPDFFisrtPart(questions,doctor_name:string, event){
-        const RUTA = "./pdf/nordisk.pdf";
+        const RUTA = "./pdf/template.pdf";
         //carga el archivo
         const pdfDoc = await PDFDocument.load(fs.readFileSync(RUTA));
         const pages = pdfDoc.getPages();
@@ -171,6 +170,7 @@ export class AttendessService {
         const form = pdfDoc.getForm()
 
         const NAME = "Campo de texto 2";
+        const ID_ONE_KEY = "Campo de texto 3";
         const EVENT = "Campo de texto 4";
         const EVENT_DATE = "Campo de texto 5";
         const QUESTION_1_YES = "Casilla de verificación 1";
@@ -187,6 +187,9 @@ export class AttendessService {
         let nameField = form.getTextField(NAME);
         nameField.setText(doctor_name);
         
+        let engageField = form.getTextField(ID_ONE_KEY);
+        engageField.setText(questions.idengage)
+
         let eventnameField = form.getTextField(EVENT);
         eventnameField.setText(event[0].name);
 
@@ -209,10 +212,7 @@ export class AttendessService {
             question2noField.check();
         }
 
-        if(questions.explication){
-            let explanationField = form.getTextField(EXPLANATION);
-            explanationField.setText(questions.explication)
-        }
+        
 
         if(questions.question2){
             let publicField = form.getTextField(PUBLIC_ENTITY);
@@ -252,7 +252,7 @@ export class AttendessService {
         const { width, height } = page.getSize();
         page.drawImage(imgEmbed, {
             x: width-274,
-            y: height-height+73,
+            y: height-height+87,
             width:238,
             height:67
         });
@@ -265,4 +265,30 @@ export class AttendessService {
         return true
 
     }
+
+    async pdfBundle(data){
+
+        const pdfDoc = await PDFDocument.create()
+
+        for(let item of data){
+            if(item.pdf_path){
+                const pdf = await PDFDocument.load(fs.readFileSync(item.pdf_path));
+                const [page] = await pdfDoc.copyPages(pdf,[0]);
+                pdfDoc.addPage(page);
+            }
+        }
+
+        const RUTA = "./pdf/bundle.pdf";
+        fs.writeFileSync(RUTA, await pdfDoc.save());
+    }
+
+
+    async findTotalAttendeesByEvent(eventId:number){
+        const total = await this.knex.table(this.TABLE).count("id as total")
+        .where({event_id:eventId}).andWhere({is_deleted:0})
+        //@ts-ignore
+        return total[0].total;
+
+    }
+
 }

@@ -17,7 +17,7 @@ export class EmailServices {
 
     async sendEmail(subject:string, to:string, message){
         const mailOptions = {
-            from: USER_EMAIL,
+            from:'"novo nordisk"<foo@example.com>',
             to: to,
             subject: subject,
             
@@ -25,7 +25,8 @@ export class EmailServices {
           if(message.path){
               //@ts-ignore
               mailOptions.attachments=[{
-                path:message.path
+                path:message.path,
+                filename:message.filename
             }]
           }
         this.transporter.sendMail(mailOptions, (sendError, sendInfo) => {

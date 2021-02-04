@@ -4,7 +4,8 @@ import { Controller, Post, Get, Put, Delete, Body, Query, Param,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiResponse, ApiTags, ApiHeader, ApiInternalServerErrorResponse,
-         ApiUnauthorizedResponse, ApiForbiddenResponse, ApiNotFoundResponse, ApiBadRequestResponse   
+         ApiUnauthorizedResponse, ApiForbiddenResponse, ApiNotFoundResponse, ApiBadRequestResponse, 
+         ApiOperation   
 } from '@nestjs/swagger';
 import { diskStorage } from 'multer';
 import * as path from 'path';
@@ -38,6 +39,10 @@ export class EventsController {
     ){}
 
     @Post()
+    @ApiOperation({
+        summary:"Api to create events",
+        description:"Requires an image in png / jpeg / gif format and it must be sent in the image attribute"
+    })
     @SetMetadata('roles',["MASTER"])
     @SetMetadata('permission',['C'])
     @ApiHeader({
@@ -107,6 +112,7 @@ export class EventsController {
     }
 
     @Get()
+    @ApiOperation({summary:"Api to get the events"})
     @SetMetadata('roles',["MASTER"])
     @SetMetadata('permission',['R'])
     @ApiHeader({
@@ -149,6 +155,7 @@ export class EventsController {
     }
 
     @Delete()
+    @ApiOperation({summary:"Api to delete events"})
     @SetMetadata('roles',["MASTER"])
     @SetMetadata('permission',['D'])
     @ApiHeader({
@@ -184,6 +191,7 @@ export class EventsController {
     }
 
     @Get("/timeline")
+    @ApiOperation({summary:"Api to get the list of future events"})
     @SetMetadata('roles',["MASTER"])
     @SetMetadata('permission',['D'])
     @ApiHeader({
@@ -207,6 +215,7 @@ export class EventsController {
 
 
     @Get('/image/:id')
+    @ApiOperation({summary:"Api to download the image with which the event was created"})
     @ApiResponse({status:200, description:"Download image"})
     @ApiNotFoundResponse({type:ImageNotFoundDto})
     @ApiInternalServerErrorResponse({type:InternalServerErrrorDto})
@@ -219,6 +228,10 @@ export class EventsController {
     }
 
     @Put()
+    @ApiOperation({
+        summary:"Api to update events",
+        description:"submit only the fields that need to be updated, if it is required to update the image send it in the image attribute"
+    })
     @SetMetadata('roles',["MASTER"])
     @SetMetadata('permission',['U'])
     @ApiHeader({
@@ -292,6 +305,7 @@ export class EventsController {
 
 
     @Get('/:eventId')
+    @ApiOperation({summary:"Api to obtain the information of a specific event"})
     @SetMetadata('roles',["MASTER"])
     @SetMetadata('permission',['R'])
     @ApiHeader({

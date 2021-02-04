@@ -46,7 +46,7 @@ export class UsersService {
         let result = [];
         for(let user of users){
             let info = new UsersDto();
-            info.lastlogin = user.lastlogin;
+            info.lastlogin = user.lastlogin || '';
             info.name = user.name;
             info.apellido_paterno = user.apellido_paterno;
             info.complete_name = `${user.name} ${user.apellido_paterno}`;

@@ -4,7 +4,9 @@ import { Controller, Get, Post, Delete, Put, Body, Param, Query, UsePipes, UseGu
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiResponse, ApiNotFoundResponse, ApiUnauthorizedResponse,
          ApiForbiddenResponse, ApiInternalServerErrorResponse, ApiBadRequestResponse,
-         ApiHeader
+         ApiHeader,
+         ApiProperty,
+         ApiBody, ApiConsumes, ApiOperation
 } from '@nestjs/swagger';
 import { diskStorage } from 'multer';
 import * as path from 'path';
@@ -30,6 +32,7 @@ import { AttendeesDetailDto } from './DTO/attendees-detail.dto';
 import { AttendeesItemDto } from './DTO/attendess-item.dto';
 import { AttendeesCreateResponseDto } from './DTO/attendees-create-response.dto';
 import {  METHOD, DOMAIN, PORT  } from '../config';
+import { AttendeesSignatureDto } from './DTO/attendees-signature.dto';
 
 
 
@@ -45,7 +48,11 @@ export class AttendessController {
         private emailService: EmailServices
     ){}
 
+    
+
+
     @Post()
+    @ApiOperation({summary:"Api to register an attendee in an event"})
     @SetMetadata('roles',["MASTER","ADMIN"])
     @SetMetadata('permission',['C'])
     @ApiHeader({
@@ -60,7 +67,6 @@ export class AttendessController {
     @ApiInternalServerErrorResponse({type:InternalServerErrrorDto})    
     @UseGuards(TokenGuard, MasterGuard)
     @UsePipes(new ValidationPipe)
-    
     async create( @Body() attendees: AttendeesCreateDto, @User() session ){
 
         //if(!signature) throw new HttpException("The signature field is mandatory", 417)
@@ -74,7 +80,7 @@ export class AttendessController {
             institutionName: attendees.institutionName,
             nameAndTitle: attendees.nameAndTitle,
             authorization: attendees.authorization,
-            explication: attendees.description
+            idengage: attendees.idengage
         }
         let schema = Object.assign({},{ 
             cedula: attendees.cedula,
@@ -84,11 +90,14 @@ export class AttendessController {
             created_by: session.id,
             modified_by: session.id,
             event_id:attendees.eventId,
+            register_type:attendees.register_type,
+            idengage: attendees.idengage,
             questions:JSON.stringify(questions) 
         });
         const newAttendees = await this.attendessService.create(schema);
+        const increment = await this.eventService.incrementAttendees(attendees.eventId, session.id);
         const pdf = await this.attendessService.fillPDFFisrtPart(questions,attendees.name, eventExist);
-        const updated = await this.attendessService.setPdf(newAttendees[0],pdf);
+        const updated = await this.attendessService.setPdf(newAttendees[0],pdf, session.id);
         
 
         let response = new AttendeesCreateResponseDto();
@@ -105,11 +114,21 @@ export class AttendessController {
         log.modified_by = session.id;
         await this.logService.createLog(log);
 
+        /** CREATE LOG EVENTS - INCREMENT ASSISTANTS */
+        log.new_change = "update";
+        log.type = "update";
+        log.element = updated;
+        log.db_table = "events";
+        log.created_by = session.id;
+        log.modified_by = session.id;
+        await this.logService.createLog(log);
+
         return response;
     }
 
     
     @Get("/assists/list/:eventId")
+    @ApiOperation({summary:"Api to generate the attendance list of an event"})
     @ApiResponse({status:200, description:"Download the list of attendees in pdf"})
     @ApiNotFoundResponse({type:PDFNotFoundDto})
     @ApiInternalServerErrorResponse({type:InternalServerErrrorDto})
@@ -122,8 +141,23 @@ export class AttendessController {
         const pdfDoc = await PDFDocument.create();
 
         const array = await this.attendessService.findAttendessByEvent(parseInt(eventId.eventId));
+        if(!array.length) throw new HttpException("EVENT NOT FOUND", HttpStatus.NOT_FOUND);
+
+        let result = [];
+
+        for(let item of array){
+            //if(item.path){
+                let info = {
+                    cedula:`${item.cedula}`,
+                    name:`${item.name}`,
+                    signature:item.path
+                }
+                result.push(info)
+            //}
+        }
+        
         const arrayPage = [];
-        let numberOfPages = Math.ceil(array.length /30)
+        let numberOfPages = Math.ceil(result.length /30)
         for(let i=0; i<numberOfPages; i++){
             let newPage =  await  this.attendessService.preparePDF(pdfDoc, existEvent[0].name) //pdfDoc.addPage();
             arrayPage.push(newPage);
@@ -146,15 +180,17 @@ export class AttendessController {
             let INIT_POSITION_Y = TABLE_HEADER_Y - 30;
             
             let current_row = 0
-            for(let item of array){
+            for(let item of result){
                 try{
                     page.drawText(item.cedula,{y:INIT_POSITION_Y, x:CEDULA_X, size:11, font:helveticaBold, color:BLUE})    
                     page.drawText(item.name,{y:INIT_POSITION_Y, x:NAME_X-10, size:11, font:helveticaBold, color:BLUE})  
+                    if(item.signature){
                     const SIGNATURE = fs.readFileSync(item.signature);
                     let mimetype = item.signature.split(".")
                     mimetype = mimetype[mimetype.length-1]
                     const EMBEDDED_SIGNATURE =  mimetype == "jpg" ? await pdfDoc.embedJpg(SIGNATURE): pdfDoc.embedPng(SIGNATURE)  
                     page.drawImage(EMBEDDED_SIGNATURE,{y:INIT_POSITION_Y, x:FIRMA_X-25, width:60, height:15})
+                    }   
                     INIT_POSITION_Y -= 20;
                     if(current_row == MAX_ROW_TO_DISPLAY){
                         break;
@@ -175,12 +211,28 @@ export class AttendessController {
         
     }  
 
+
+    @Get("/all/:eventId")
+    @ApiOperation({summary:"Api to download all the PDF files of the event attendees"})
+    @ApiResponse({status:200, description:"Donwload attendee bundle in pdf"})
+    @ApiNotFoundResponse({type:AttendeesNotFoundDto})
+    async findAllPdfByEvent(@Param() eventId: AttendeesInfoDto, @Response() res){
+        const attendees = await this.attendessService.findAttendessByEvent(parseInt(eventId.eventId));
+        if(!attendees.length) res.status(404).send({statusCode:404, message:"ATTENDEES NOT FOUND"})
+
+        await this.attendessService.pdfBundle(attendees);
+        const RUTA = "./pdf/bundle.pdf";
+        res.download(RUTA);
+    }
+
+
     @Get("/contract/:id")
+    @ApiOperation({summary:"Api to download the pdf file of conditions of attendance to the event and hospitality"})
     @ApiResponse({status:200, description:"PDF donwload"})
     @ApiNotFoundResponse({type:PDFNotFoundDto})
     @ApiInternalServerErrorResponse({type:InternalServerErrrorDto})
     async prepareContract(@Param() id: AttendeesDetailDto, @Response() res){
-        console.log(id)
+        
         const attendess = await this.attendessService.getById(id.id);
         if(!attendess.length) throw new  HttpException("PDF NOT FOUND", HttpStatus.NOT_FOUND)
         
@@ -189,12 +241,15 @@ export class AttendessController {
     
 
     @Put('/sign/:id')
+    @ApiOperation({summary:"Api to assign the signature to the PDF file"})
     @SetMetadata('roles',["MASTER","ADMIN"])
     @SetMetadata('permission',['U'])
     @ApiHeader({
         name:"token",
         example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlX2lkIjoyLCJpZCI6MTUsInBhc3N3b3JkIjoiJDJiJDEwJGE0dmI4azBQMDllSHk1b0FrUzlmRGViNmc4M1NZaWtCTGNJYll1SDQwTm9JMnhoU1FXTW8yIiwiZW1haWwiOiJkYXZpZEBnbWFpbC5jb20iLCJwZXJtaXNzaW9ucyI6eyJldmVudHMiOiJDIn0sImlhdCI6MTYxMTg2MTU4Nn0.KDX947q2WhlGlcZxtjUDZDh_vQ3HDPvxzuvShr-ptWo"
     })
+    @ApiConsumes('multipart/form-data')
+    @ApiBody({type:AttendeesSignatureDto})
     @ApiResponse({status:200, type:AttendeesCreateResponseDto})
     @ApiNotFoundResponse({type: PDFNotFoundDto})
     @ApiNotFoundResponse({type:AttendeesNotFoundDto})
@@ -228,9 +283,9 @@ export class AttendessController {
         const hasPDF = existAttendees[0].pdf_path;
         if(!hasPDF) throw new HttpException("PDF NOT FOUND", HttpStatus.NOT_FOUND)
         await this.attendessService.signPdf(existAttendees[0].pdf_path, signature.path)
-
+        await this.attendessService.setSinature(existAttendees[0].id, signature.path, session.id)
         await this.emailService.sendEmail(`Registro de asistencia`,
-        existAttendees[0].email,{path:existAttendees[0].pdf_path})
+        existAttendees[0].email,{filename:"registro_asistencia.pdf",path:existAttendees[0].pdf_path})
         /** CREATE LOG */
         let log = new LogDto();
         log.new_change = "sign_pdf";
@@ -250,6 +305,7 @@ export class AttendessController {
     }
 
     @Get('/signature/:id')
+    @ApiOperation({summary:"Api to download the image containing the user's signature"})
     @ApiResponse({status:200, description:"Download signature"})
     @ApiNotFoundResponse({type:ImageNotFoundDto})
     @ApiInternalServerErrorResponse({type:InternalServerErrrorDto})
@@ -263,6 +319,7 @@ export class AttendessController {
 
 
     @Get("/detail/:id")
+    @ApiOperation({summary:"Api to obtain the information of the user who will attend the event"})
     @SetMetadata('roles',["MASTER"])
     @SetMetadata('permission',['R'])
     @ApiHeader({
@@ -296,6 +353,7 @@ export class AttendessController {
 
 
     @Get('/:eventId')
+    @ApiOperation({summary:"Api to get the name of the event and the event attendees"})
     @SetMetadata('roles',["MASTER"])
     @SetMetadata('permission',['R'])
     @ApiHeader({

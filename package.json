@@ -6,6 +6,8 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
+    "db": "mysql -u root -p < ./db/master.sql",
+    "format:config": "node ./src/commons/format.js",
     "prebuild": "rimraf dist",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
@@ -43,6 +45,7 @@
     "pdf-lib": "^1.16.0",
     "pdf-signatures": "0.0.2",
     "puppeteer": "^6.0.0",
+    "read-excel-file": "^5.0.0",
     "reflect-metadata": "^0.1.13",
     "request": "^2.88.2",
     "rimraf": "^3.0.2",

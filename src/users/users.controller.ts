@@ -4,7 +4,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiHeader, ApiNotFoundResponse, ApiResponse, ApiUnauthorizedResponse,
         ApiForbiddenResponse, 
         ApiBadRequestResponse,
-        ApiInternalServerErrorResponse,
+        ApiInternalServerErrorResponse, ApiOperation,
         ApiParam} from '@nestjs/swagger';
 import { diskStorage } from 'multer';
 import * as path from 'path';
@@ -39,6 +39,10 @@ export class UsersController {
     ){}
 
     @Post()
+    @ApiOperation({
+        summary:"Api for creating users",
+        description:"Requires uploading an image in png or jpg format, the image attribute must be called avatar"
+    })
     @SetMetadata('roles',["MASTER"])
     @SetMetadata('permission',['C'])
     @ApiHeader({
@@ -112,6 +116,7 @@ export class UsersController {
 
 
     @Get()
+    @ApiOperation({summary:"Api to get the user list"})
     @SetMetadata('roles',["MASTER"])
     @SetMetadata('permission',['R'])
     @ApiHeader({
@@ -137,6 +142,7 @@ export class UsersController {
 
 
     @Get('/:id')
+    @ApiOperation({summary:"Api to obtain the information of a specific user"})
     @SetMetadata('roles',["MASTER"])
     @SetMetadata('permission',['R'])
     @ApiHeader({
@@ -171,6 +177,8 @@ export class UsersController {
     }
 
     @Get('/image/:id')
+    @ApiOperation({summary:"Api to download the image that the user uploaded"})
+    
     @ApiResponse({status:200, description:"Download image"})
     @ApiNotFoundResponse({type:ImageNotFoundDto})
     @ApiInternalServerErrorResponse({type:InternalServerErrrorDto})
@@ -188,6 +196,7 @@ export class UsersController {
         name:"token",
         example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlX2lkIjoyLCJpZCI6MTUsInBhc3N3b3JkIjoiJDJiJDEwJGE0dmI4azBQMDllSHk1b0FrUzlmRGViNmc4M1NZaWtCTGNJYll1SDQwTm9JMnhoU1FXTW8yIiwiZW1haWwiOiJkYXZpZEBnbWFpbC5jb20iLCJwZXJtaXNzaW9ucyI6eyJldmVudHMiOiJDIn0sImlhdCI6MTYxMTg2MTU4Nn0.KDX947q2WhlGlcZxtjUDZDh_vQ3HDPvxzuvShr-ptWo"
     })
+    @ApiOperation({summary:"Api to update users",description:"submit only the fields that need to be updated, if it is required to update the image send it in the avatar attribute"})
     @SetMetadata('roles',["MASTER"])
     @SetMetadata('permission',['U'])
     @ApiBadRequestResponse({type:ErrorDto})
@@ -296,6 +305,7 @@ export class UsersController {
         name:"token",
         example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlX2lkIjoyLCJpZCI6MTUsInBhc3N3b3JkIjoiJDJiJDEwJGE0dmI4azBQMDllSHk1b0FrUzlmRGViNmc4M1NZaWtCTGNJYll1SDQwTm9JMnhoU1FXTW8yIiwiZW1haWwiOiJkYXZpZEBnbWFpbC5jb20iLCJwZXJtaXNzaW9ucyI6eyJldmVudHMiOiJDIn0sImlhdCI6MTYxMTg2MTU4Nn0.KDX947q2WhlGlcZxtjUDZDh_vQ3HDPvxzuvShr-ptWo"
     })
+    @ApiOperation({summary:"Api to delete users"})
     @SetMetadata('roles',["MASTER"])
     @SetMetadata('permission',['D'])
     @UsePipes(new ValidationPipe)

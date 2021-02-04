@@ -1,5 +1,5 @@
 import { Controller, Post, Body, HttpException, HttpStatus, UsePipes } from '@nestjs/common';
-import { ApiTags, ApiNotFoundResponse, ApiResponse, ApiInternalServerErrorResponse } from '@nestjs/swagger';
+import { ApiTags, ApiNotFoundResponse, ApiResponse, ApiInternalServerErrorResponse, ApiOperation } from '@nestjs/swagger';
 import { AuthenticateService } from './authenticate.service';
 import { LogServices } from '../commons/services/log.service';
 import { ValidationPipe } from '../commons/validations/validations.pipe';
@@ -18,6 +18,7 @@ export class AuthenticateController {
 
 
     @Post()
+    @ApiOperation({summary:"Api to login"})
     @ApiNotFoundResponse({
         description: "USER NOT FOUND",
         type: NotFoundDto
