@@ -51,4 +51,10 @@ export class AttendeesListDto{
     })
     idengage:string;
 
+    @ApiProperty({
+        type:String,
+        example:"001"
+    })
+    id_to_display:string
+
 }

@@ -3,6 +3,7 @@ import { InjectKnex, Knex } from 'nestjs-knex';
 import * as moment from 'moment';
 import * as fs from 'fs';
 import * as path from 'path';
+import { PDFNumber } from 'pdf-lib';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import { AttendeesCreateDto } from './DTO/attendees-create.dto';
 import { AttendeesListDto } from './DTO/attendees-list.dto';
@@ -25,6 +26,7 @@ export class AttendessService {
     }
 
     async findByEvent(eventId:number, pagination: AttendeesPaginationDto){
+        
         let page = parseInt(pagination.page)
         let limit = parseInt(pagination.page_size)
         const offset = page == 1 ? 0 : (page-1)*limit
@@ -50,6 +52,8 @@ export class AttendessService {
             info.speciality = item.speciality;
             info.email = item.email;
             info.idengage = item.register_type != "excel" ? '': item.idengage;
+            let id_string = `00${item.id}`
+            info.id_to_display = item.id < 1000 ? id_string.substr(id_string.length-3, id_string.length) : item.id
             result.push(info)
         }
 
@@ -145,7 +149,7 @@ export class AttendessService {
             end: { x: width-38, y:height-190},
             color: BLACK_GARY
         })    
-
+        
         return page;
     }
 

@@ -139,6 +139,7 @@ export class AttendessController {
 
 
         const pdfDoc = await PDFDocument.create();
+        
 
         const array = await this.attendessService.findAttendessByEvent(parseInt(eventId.eventId));
         if(!array.length) throw new HttpException("EVENT NOT FOUND", HttpStatus.NOT_FOUND);
@@ -160,6 +161,7 @@ export class AttendessController {
         let numberOfPages = Math.ceil(result.length /30)
         for(let i=0; i<numberOfPages; i++){
             let newPage =  await  this.attendessService.preparePDF(pdfDoc, existEvent[0].name) //pdfDoc.addPage();
+            
             arrayPage.push(newPage);
         }
         const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
