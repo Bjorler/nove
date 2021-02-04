@@ -87,9 +87,11 @@ export class UsersController {
             })
             newUser = await this.userService.create(schema);
         }else{
+            console.log(userExist)
             const samePassword = await this.userService.comparePassword(user.password, userExist[0].password)
             const sameRole = userExist[0].role_id == RolesDto[user.role]
-            if(!samePassword && !sameRole){
+            
+            if(!samePassword && !sameRole && userExist.length < 2 ){
                     const {  hash, salt } = await this.userService.encrypt(user.password);
                     let schema = Object.assign({}, user,{
                         password: hash, salt, role_id:RolesDto[user.role], avatar:avatar_name, path,

@@ -185,7 +185,7 @@ export class DatabaseController {
         if( !excel.length ){
             const internet = await this.databaseService.getProfessionalLicense(id);
             //@ts-ignore
-            if(internet.error != "notValid"  ) info = [Object.assign(internet,{register_type:"internet"})] 
+            if(internet.error != "notValid"  ) info = [Object.assign(internet,{cedula:cedula.cedula,register_type:"internet"})] 
         }else{ info = [Object.assign(excel[0],{register_type:"excel"})]}
         let response= new DatabaseResponseByCedulaDto()
         if(info.length){
