@@ -138,4 +138,16 @@ export class EventsService {
         const updated = await this.knex.table(this.TABLE).update({assistants:count, modified_by:session.id});
         return updated;
     }
+
+
+    async findByYear(year:string){
+        const DATE = moment(year).format("YYYY-MM-DD");
+        let FINAL_YEAR = moment(year).endOf("year")
+        let FINAL = moment(FINAL_YEAR).format("YYYY-MM-DD")
+        
+        const events = await this.knex.table(this.TABLE).where('created_on','>=',DATE)
+        .andWhere('created_on','<=', FINAL)
+        .andWhere({is_deleted:0})
+        return events;
+    }
 }

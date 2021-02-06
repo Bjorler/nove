@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import * as puppeteer from 'puppeteer';
 import { InjectKnex, Knex } from 'nestjs-knex';
 import * as moment from 'moment';
+import * as _ from 'underscore';
 import { DatabaseInfoDto } from './DTO/database-info.dto';
 import { DatabaseLastUploadDto } from './DTO/database-lastloading.dto';
 import { PORT, METHOD, DOMAIN } from '../config';
@@ -117,6 +118,73 @@ export class DatabaseService {
 
       return result;
 
+    }
+
+    private translateMonth(month){
+      let months = {
+        "January":"Enero",
+        "February":"Febrero",
+        "March":"Marzo",
+        "April":"Abril",
+        "May":"Mayo",
+        "June":"Junio",
+        "July":"Julio",
+        "August":"Agosto",
+        "September":"Septiembre",
+        "October":"Octubre",
+        "November":"Noviembre",
+        "December":"Diciembre"
+      }
+      return months[month]
+    }
+
+    private translateDay(day){
+      let days = {
+        "Monday":"Lunes",
+        "Tuesday":"Martes",
+        "Wednesday":"Miercoles",
+        "Thursday":"Jueves",
+        "Friday":"Viernes",
+        "Saturday":"Sabado",
+        "Sunday":"Domingo"
+      }
+      return days[day]
+    }
+
+    private isToday(date, month){
+      if(moment(date).format("YYYY-MM-DD") == moment().format("YYYY-MM-DD") ){
+        return "Hoy";
+      }else{
+        return `${this.translateDay(moment(date).format("dddd"))}, ${parseInt(moment(date).format("DD"))} de ${month}`
+      }
+    }
+
+    async findAllHistorical(){
+      const CURRENT_YEAR = moment(`${new Date().getFullYear()}`).format("YYYY-MM-DD") 
+      const historical = await this.knex.table('load_history')
+      .select('created_on as date','id','file_name')
+      .where('created_on', '>=', CURRENT_YEAR).orderBy('created_on', 'desc');
+      
+      let groupByMonth = _.groupBy(historical,(e) => this.translateMonth(moment(e.date).format("MMMM"))  );
+      let result = {}
+      for(let month in groupByMonth){
+        
+        const groupByDay = _.groupBy(groupByMonth[month],(e)=> this.isToday(e.date, month) )
+        
+        result[month] = groupByDay
+      }
+
+      for(let month in result){
+        for( let day in result[month] ){
+          for(let item of result[month][day]){
+            item['time'] = moment(item.date).format("hh:mm")
+            item['date'] = moment(item.date).format("YYYY-MM-DD")
+            
+          }
+        }
+      }
+
+      return result;
     }
 
 }

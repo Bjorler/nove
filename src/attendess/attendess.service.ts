@@ -342,4 +342,20 @@ export class AttendessService {
 
     }
 
+
+    async findByYear(year:string){
+        const DATE = moment(year).format("YYYY-MM-DD");
+        let FINAL_YEAR = moment(year).endOf("year")
+        let FINAL = moment(FINAL_YEAR).format("YYYY-MM-DD")
+        
+        const attendees = await this.knex
+        .table(this.TABLE)
+        .select('events.event_date')
+        .innerJoin('events',`${this.TABLE}.event_id`,'events.id')
+        .where('events.created_on','>=',DATE)
+        .andWhere('events.created_on','<=', FINAL)
+        .andWhere('events.is_deleted','=',0).andWhere(`${this.TABLE}.is_deleted`,'=',0)
+        return attendees;
+    }
+
 }

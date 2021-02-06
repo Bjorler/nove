@@ -1,15 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-export class UnauthorizedDto{
+export class UsersDeleteMasterDto{
     @ApiProperty({
         type:Number,
-        example:401
+        example:419
     })
     statusCode: number;
 
     @ApiProperty({
         type:String,
-        example:"MISSING token"
+        example:"Unable to remove master user"
     })
     message:string
 }

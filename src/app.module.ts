@@ -9,6 +9,7 @@ import { AuthenticateModule } from './authenticate/authenticate.module';
 import { EventsModule } from './events/events.module';
 import { AttendessModule } from './attendess/attendess.module';
 import { DatabaseModule } from './database/database.module';
+import { GraphModule } from './graph/graph.module';
 
 
 @Module({
@@ -31,7 +32,8 @@ import { DatabaseModule } from './database/database.module';
     AuthenticateModule,
     EventsModule,
     AttendessModule,
-    DatabaseModule
+    DatabaseModule,
+    GraphModule
   ],
   controllers: [],
   providers: [],

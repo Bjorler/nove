@@ -25,6 +25,7 @@ import { DatabaseHistoricalDto } from './DTO/database-historical.dto';
 import { DatabaseLastUploadDto } from './DTO/database-lastloading.dto'
 import { DatabaseIdDto } from './DTO/database-id.dto';
 import { DatabaseFileDto } from './DTO/database-file.dto';
+import { DatabaseHistoricalExcelDto } from './DTO/database-historicalexcel.dto';
 
 
 @ApiTags("Database Upload")
@@ -160,6 +161,27 @@ export class DatabaseController {
         res.download(existExcel[0].file_path);
 
     }
+
+
+    @Get("/historical")
+    @ApiOperation({summary:"Api to get current year's Excel file upload history", description:"The name of the variables month and updated_load shown in the example of status 200 is representative, in reality it will be replaced by the corresponding information"})
+    @SetMetadata('roles',["MASTER","ADMIN"])
+    @SetMetadata('permission',['R'])
+    @ApiHeader({
+        name:"token",
+        example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlX2lkIjoyLCJpZCI6MTUsInBhc3N3b3JkIjoiJDJiJDEwJGE0dmI4azBQMDllSHk1b0FrUzlmRGViNmc4M1NZaWtCTGNJYll1SDQwTm9JMnhoU1FXTW8yIiwiZW1haWwiOiJkYXZpZEBnbWFpbC5jb20iLCJwZXJtaXNzaW9ucyI6eyJldmVudHMiOiJDIn0sImlhdCI6MTYxMTg2MTU4Nn0.KDX947q2WhlGlcZxtjUDZDh_vQ3HDPvxzuvShr-ptWo"
+    })
+    @ApiOkResponse({type:DatabaseHistoricalExcelDto})
+    @ApiUnauthorizedResponse({type:UnauthorizedDto})
+    @ApiForbiddenResponse({type:ForbiddenDto})
+    @ApiInternalServerErrorResponse({type:InternalServerErrrorDto})  
+    @UseGuards(TokenGuard, MasterGuard)
+    @UsePipes(new ValidationPipe)
+    async getHistorical(){
+        const historical = this.databaseService.findAllHistorical();
+        return historical;
+    }
+
 
     @Get("/:cedula")
     @ApiOperation({summary:"Api to obtain the information of an assistant per ID"})

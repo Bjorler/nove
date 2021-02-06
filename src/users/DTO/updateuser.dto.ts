@@ -60,8 +60,8 @@ export class UpdateUserDto{
 
     @IsNotEmpty()
     @IsString()
-    @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d$@$!%*?&]{8,}$/
-    ,{message:"password must contain at least one uppercase and one number"})
+    @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d$@$!_%*?&]{8,}$/
+    ,{message:"password must contain at least one uppercase, one number and one lowercase"})
     @MinLength(8)
     @IsOptional()
     @ApiProperty({

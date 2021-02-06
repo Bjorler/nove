@@ -1,15 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-export class UnauthorizedDto{
+export class UsersDeleteYourSelfErrorDto{
     @ApiProperty({
         type:Number,
-        example:401
+        example:418
     })
     statusCode: number;
 
     @ApiProperty({
         type:String,
-        example:"MISSING token"
+        example:"You are not allowed to eliminate yourself"
     })
     message:string
 }

@@ -144,6 +144,7 @@ export class AttendessController {
         */
 
         const array = await this.attendessService.findAttendessByEvent(parseInt(eventId.eventId));
+        
         if(!array.length) throw new HttpException("EVENT NOT FOUND", HttpStatus.NOT_FOUND);
 
         let result = [];
@@ -163,7 +164,7 @@ export class AttendessController {
         const arrayPage = [];
         const MAX_ROW_TO_DISPLAY = 14;
         let numberOfPages = Math.ceil(result.length /MAX_ROW_TO_DISPLAY);
-        console.log({numberOfPages})
+        
         
         const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
         const RGB_PARSE = 1/255;
@@ -201,11 +202,12 @@ export class AttendessController {
             let count = 0;
             for(let item of result){
                 try{
+                    
                     page.drawText(item.id,{y:Y_POSITIONS[count], x:ID_X, size:8, font:helveticaBold, color:LIGHT_BLUE})
                     page.drawText(item.cedula,{y:Y_POSITIONS[count], x:CEDULA_X, size:8, font:helveticaBold, color:LIGHT_BLUE})    
                     page.drawText(item.name,{y:Y_POSITIONS[count], x:NAME_X-10, size:8,maxWidth:160, lineHeight:37, font:helveticaBold, color:DARK_BLUE})  
-                    page.drawText(item.email,{y:Y_POSITIONS[count], x:EMAIL_X, size:8, font:helveticaBold, color:DARK_BLUE})
-                    page.drawText(item.speciality,{y:Y_POSITIONS[count], x:SPECIALITY_X, maxWidth:120, lineHeight:37 ,size:8, font:helveticaBold, color:DARK_BLUE})
+                    page.drawText(item.email,{y:Y_POSITIONS[count], x:EMAIL_X-20, maxWidth:100, size:8,  font:helveticaBold, color:DARK_BLUE})
+                    page.drawText(item.speciality,{y:Y_POSITIONS[count], x:SPECIALITY_X, maxWidth:200, lineHeight:37 ,size:6, font:helveticaBold, color:DARK_BLUE})
                     if(item.signature){
                         const SIGNATURE = fs.readFileSync(item.signature);
                         let mimetype = item.signature.split(".")
@@ -217,6 +219,8 @@ export class AttendessController {
                     if(current_row == MAX_ROW_TO_DISPLAY){
                         break;
                     }
+                    console.log("##############################################")
+                    console.log(item)
                     current_row++;
                 }catch(err){
                     console.log(err)
@@ -232,8 +236,8 @@ export class AttendessController {
 
         const pdfBytes = await pdfDoc.save();
         fs.writeFileSync('./pdf/lista_de_asistencia.pdf', pdfBytes);
-        res.download('./pdf/lista_de_asistencia.pdf');
-        
+        //res.download('./pdf/lista_de_asistencia.pdf');
+        res.send("HECHO")
     }  
 
 

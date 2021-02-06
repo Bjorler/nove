@@ -34,3 +34,7 @@ lerna-debug.log*
 !.vscode/extensions.json
 
 /src/config.ts
+
+/images
+/pdf
+/excel

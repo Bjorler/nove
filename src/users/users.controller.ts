@@ -17,7 +17,7 @@ import { UserDto } from './DTO/user.dto';
 import { UsersDto } from './DTO/users.dto';
 import { UnauthorizedDto, NotFoundDto, ForbiddenDto, ImageErrorDto, ErrorDto, 
     LogDto, InternalServerErrrorDto, EmailErrorDto, RoleRepatErrorDto, PasswordRepatErrorDto,
-    ImageNotFoundDto 
+    ImageNotFoundDto, UsersDeleteYourSelfErrorDto, UsersDeleteMasterDto 
 } from '../commons/DTO';
 import { RolesDto } from '../commons/DTO/roles.dto';
 import { PaginationDto } from './DTO/pagination.dto';
@@ -230,7 +230,7 @@ export class UsersController {
         }
     }))
     async update(@UploadedFile() avatar, @Body() user:UpdateUserDto, @User() session){
-        console.log("ENTRE")
+        
         let avatar_name = "", path = "";
         if( avatar ){
             avatar_name = avatar.originalname;
@@ -316,13 +316,17 @@ export class UsersController {
     @UseGuards(TokenGuard, MasterGuard)
     @ApiNotFoundResponse({type:NotFoundDto})
     @ApiResponse({status:200, type:DeleteUserDto})
+    @ApiResponse({status:418, type:UsersDeleteYourSelfErrorDto})
+    @ApiResponse({status:419, type:UsersDeleteMasterDto})
     @ApiInternalServerErrorResponse({type:InternalServerErrrorDto})
     @ApiUnauthorizedResponse({type:UnauthorizedDto})
     @ApiForbiddenResponse({type:ForbiddenDto})
     async delete( @Body() id:DeleteUserDto, @User() session ){
-        
+        if(id.userId == session.id) throw new HttpException("You are not allowed to eliminate yourself", 418)
         const userExist = await this.userService.findById(id.userId);
+        
         if(!userExist.length) throw new HttpException("User not found", HttpStatus.NOT_FOUND)
+        if(userExist[0].email == "admin@octopy.com" && userExist[0].role_id == 1 ) throw new HttpException("Unable to remove master user",419);
         const deleted = await this.userService.delete(id.userId);
 
         /** CREATE LOG */

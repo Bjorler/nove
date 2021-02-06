@@ -210,7 +210,6 @@ export class EventsController {
         return events;
     }
 
-
     
 
 
@@ -256,7 +255,7 @@ export class EventsController {
             }
         }),
         fileFilter:(req, file ,callback)=>{
-            console.log(file)
+            
             const authorized = new Set(["image/png","image/jpeg",'image/gif'])
             if(authorized.has(file.mimetype)) return callback(null, true)
             callback( new HttpException("Only image are allowed jpg/png/gif",413), false)

@@ -16,3 +16,5 @@ export { FilterDateErrorDto } from './filter-date-erro.dto';
 export { SignatureErrorDto } from './signature-error.dto';
 export { AttendeesNotFoundDto } from './attendees-notfound.dto';
 export { PDFNotFoundDto } from './pdf-notfound-error.dto';
+export { UsersDeleteYourSelfErrorDto } from './users-deleteyourselferror.dto';
+export { UsersDeleteMasterDto } from './users-deletemaster.dto';
