@@ -67,5 +67,32 @@ export class GraphService {
         return this.fillResponse(result);
     }
 
+    async groupBy(attendees, tag){
+        const groupBySpecialty = _.groupBy(attendees, (e)=> e[tag]);
+        return groupBySpecialty;
+    }
 
+    async formatData(data){
+        let result = [];
+        for(let item in data){
+            let info = new GraphEventsResponseDto();
+            info.name = item;
+            info.value = data[item].length;
+            result.push(info)
+        }
+        return result;
+    }
+    async findByYear(year:string){
+        const DATE = moment(year).format("YYYY-MM-DD");
+        let FINAL_YEAR = moment(year).endOf("year")
+        let FINAL = moment(FINAL_YEAR).format("YYYY-MM-DD")
+        
+        const attendees = await this.knex
+        .table('data_upload')
+        .select('data_upload.brand')
+        .where('data_upload.created_on','>=',DATE)
+        .andWhere('data_upload.created_on','<=', FINAL)
+        .andWhere('data_upload.is_deleted','=',0)
+        return attendees;
+    }
 }

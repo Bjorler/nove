@@ -12,6 +12,13 @@ export class AttendeesResponseDto{
         example:"Avances Tecnologicos de genética humana"
     })
     event_name:string;
+    
+    @ApiProperty({
+        type:String,
+        example:"08-02-2021",
+        description:"Event date"
+    })
+    event_date:string
 
     @ApiProperty({
         type:[AttendeesListDto],

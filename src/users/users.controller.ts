@@ -26,6 +26,9 @@ import { DeleteUserDto } from './DTO/delete-user.dto';
 import { FindUserDto } from './DTO/find-user.dto';
 import { UserDetailDto } from './DTO/user-detail.dto';
 import { UserResponseDto } from './DTO/user-response.dto';
+import { UserCreationDecorator, UserListDecorato, UserDetailDecorator,
+    UserUpdateDecorator, UserDeleteDecorator
+ } from './decorators'
 import { METHOD, DOMAIN, PORT } from '../config';
 
 
@@ -39,24 +42,7 @@ export class UsersController {
     ){}
 
     @Post()
-    @ApiOperation({
-        summary:"Api for creating users",
-        description:"Requires uploading an image in png or jpg format, the image attribute must be called avatar"
-    })
-    @SetMetadata('roles',["MASTER"])
-    @SetMetadata('permission',['C'])
-    @ApiHeader({
-        name:"token",
-        example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlX2lkIjoyLCJpZCI6MTUsInBhc3N3b3JkIjoiJDJiJDEwJGE0dmI4azBQMDllSHk1b0FrUzlmRGViNmc4M1NZaWtCTGNJYll1SDQwTm9JMnhoU1FXTW8yIiwiZW1haWwiOiJkYXZpZEBnbWFpbC5jb20iLCJwZXJtaXNzaW9ucyI6eyJldmVudHMiOiJDIn0sImlhdCI6MTYxMTg2MTU4Nn0.KDX947q2WhlGlcZxtjUDZDh_vQ3HDPvxzuvShr-ptWo"
-    })
-    @ApiResponse({status:201,type:UserDto})
-    @ApiResponse({status:413, type:ImageErrorDto})
-    @ApiBadRequestResponse({type:ErrorDto})
-    @ApiNotFoundResponse({type:NotFoundDto})
-    @ApiUnauthorizedResponse({type:UnauthorizedDto})
-    @ApiForbiddenResponse({type:ForbiddenDto})
-    @UsePipes(new ValidationPipe)
-    @UseGuards(TokenGuard, MasterGuard)
+    @UserCreationDecorator()
     @UseInterceptors(FileInterceptor("avatar",{
         storage:diskStorage({
             destination:path.join(__dirname,'../images'),//Si esta ruta presenta agun error remplazarla por ./images
@@ -72,7 +58,7 @@ export class UsersController {
         }
     }))
     async create(@UploadedFile() avatar, @Body() user:UserDto, @User() session ){
-        //console.log(avatar)
+        
         let avatar_name = "", path = "", newUser;
         const userExist = await this.userService.findByEmail(user.email);
         if( avatar ){
@@ -87,7 +73,6 @@ export class UsersController {
             })
             newUser = await this.userService.create(schema);
         }else{
-            console.log(userExist)
             const samePassword = await this.userService.comparePassword(user.password, userExist[0].password)
             const sameRole = userExist[0].role_id == RolesDto[user.role]
             
@@ -118,19 +103,7 @@ export class UsersController {
 
 
     @Get()
-    @ApiOperation({summary:"Api to get the user list"})
-    @SetMetadata('roles',["MASTER"])
-    @SetMetadata('permission',['R'])
-    @ApiHeader({
-        name:"token",
-        example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlX2lkIjoyLCJpZCI6MTUsInBhc3N3b3JkIjoiJDJiJDEwJGE0dmI4azBQMDllSHk1b0FrUzlmRGViNmc4M1NZaWtCTGNJYll1SDQwTm9JMnhoU1FXTW8yIiwiZW1haWwiOiJkYXZpZEBnbWFpbC5jb20iLCJwZXJtaXNzaW9ucyI6eyJldmVudHMiOiJDIn0sImlhdCI6MTYxMTg2MTU4Nn0.KDX947q2WhlGlcZxtjUDZDh_vQ3HDPvxzuvShr-ptWo"
-    })
-    @ApiResponse({status:200, type:UserResponseDto})
-    @ApiUnauthorizedResponse({type:UnauthorizedDto})
-    @ApiForbiddenResponse({type:ForbiddenDto})
-    @ApiInternalServerErrorResponse({type:InternalServerErrrorDto})
-    @UsePipes(new ValidationPipe)
-    @UseGuards(TokenGuard, MasterGuard)
+    @UserListDecorato()
     async find(@Query() page:PaginationDto ){
         page.limit = page.limit || 10;
         const pages = await this.userService.pages(page.limit);
@@ -144,20 +117,7 @@ export class UsersController {
 
 
     @Get('/:id')
-    @ApiOperation({summary:"Api to obtain the information of a specific user"})
-    @SetMetadata('roles',["MASTER"])
-    @SetMetadata('permission',['R'])
-    @ApiHeader({
-        name:"token",
-        example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlX2lkIjoyLCJpZCI6MTUsInBhc3N3b3JkIjoiJDJiJDEwJGE0dmI4azBQMDllSHk1b0FrUzlmRGViNmc4M1NZaWtCTGNJYll1SDQwTm9JMnhoU1FXTW8yIiwiZW1haWwiOiJkYXZpZEBnbWFpbC5jb20iLCJwZXJtaXNzaW9ucyI6eyJldmVudHMiOiJDIn0sImlhdCI6MTYxMTg2MTU4Nn0.KDX947q2WhlGlcZxtjUDZDh_vQ3HDPvxzuvShr-ptWo"
-    })
-    @ApiUnauthorizedResponse({type:UnauthorizedDto})
-    @ApiForbiddenResponse({type:ForbiddenDto})
-    @ApiInternalServerErrorResponse({type:InternalServerErrrorDto})
-    @ApiNotFoundResponse({type:NotFoundDto})
-    @ApiResponse({status:200, type:UserDetailDto})
-    @UsePipes(new ValidationPipe)
-    @UseGuards(TokenGuard, MasterGuard)
+    @UserDetailDecorator()
     async findUser(@Param() id:FindUserDto ){
         
         const user = await this.userService.findById(id.id);
@@ -194,25 +154,7 @@ export class UsersController {
 
 
     @Put()
-    @ApiHeader({
-        name:"token",
-        example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlX2lkIjoyLCJpZCI6MTUsInBhc3N3b3JkIjoiJDJiJDEwJGE0dmI4azBQMDllSHk1b0FrUzlmRGViNmc4M1NZaWtCTGNJYll1SDQwTm9JMnhoU1FXTW8yIiwiZW1haWwiOiJkYXZpZEBnbWFpbC5jb20iLCJwZXJtaXNzaW9ucyI6eyJldmVudHMiOiJDIn0sImlhdCI6MTYxMTg2MTU4Nn0.KDX947q2WhlGlcZxtjUDZDh_vQ3HDPvxzuvShr-ptWo"
-    })
-    @ApiOperation({summary:"Api to update users",description:"submit only the fields that need to be updated, if it is required to update the image send it in the avatar attribute"})
-    @SetMetadata('roles',["MASTER"])
-    @SetMetadata('permission',['U'])
-    @ApiBadRequestResponse({type:ErrorDto})
-    @ApiInternalServerErrorResponse({type:InternalServerErrrorDto})
-    @ApiUnauthorizedResponse({type:UnauthorizedDto})
-    @ApiForbiddenResponse({type:ForbiddenDto})
-    @ApiNotFoundResponse({type:NotFoundDto})
-    @ApiResponse({status:413, type:ImageErrorDto})
-    @ApiResponse({status:410, type:EmailErrorDto})
-    @ApiResponse({status:411, type:RoleRepatErrorDto})
-    @ApiResponse({status:412, type: PasswordRepatErrorDto})
-    @ApiResponse({status:200, type:UpdateUserDto, description:"The example is assuming that all the parameters are sent, in case of not sending all it would only return the sent ones."})
-    @UsePipes(new ValidationPipe)
-    @UseGuards(TokenGuard, MasterGuard)
+    @UserUpdateDecorator()
     @UseInterceptors(FileInterceptor("avatar",{
         storage:diskStorage({
             destination:path.join(__dirname,'../images'),//Si esta ruta presenta agun error remplazarla por ./images
@@ -305,22 +247,7 @@ export class UsersController {
 
 
     @Delete()
-    @ApiHeader({
-        name:"token",
-        example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlX2lkIjoyLCJpZCI6MTUsInBhc3N3b3JkIjoiJDJiJDEwJGE0dmI4azBQMDllSHk1b0FrUzlmRGViNmc4M1NZaWtCTGNJYll1SDQwTm9JMnhoU1FXTW8yIiwiZW1haWwiOiJkYXZpZEBnbWFpbC5jb20iLCJwZXJtaXNzaW9ucyI6eyJldmVudHMiOiJDIn0sImlhdCI6MTYxMTg2MTU4Nn0.KDX947q2WhlGlcZxtjUDZDh_vQ3HDPvxzuvShr-ptWo"
-    })
-    @ApiOperation({summary:"Api to delete users"})
-    @SetMetadata('roles',["MASTER"])
-    @SetMetadata('permission',['D'])
-    @UsePipes(new ValidationPipe)
-    @UseGuards(TokenGuard, MasterGuard)
-    @ApiNotFoundResponse({type:NotFoundDto})
-    @ApiResponse({status:200, type:DeleteUserDto})
-    @ApiResponse({status:418, type:UsersDeleteYourSelfErrorDto})
-    @ApiResponse({status:419, type:UsersDeleteMasterDto})
-    @ApiInternalServerErrorResponse({type:InternalServerErrrorDto})
-    @ApiUnauthorizedResponse({type:UnauthorizedDto})
-    @ApiForbiddenResponse({type:ForbiddenDto})
+    @UserDeleteDecorator()
     async delete( @Body() id:DeleteUserDto, @User() session ){
         if(id.userId == session.id) throw new HttpException("You are not allowed to eliminate yourself", 418)
         const userExist = await this.userService.findById(id.userId);

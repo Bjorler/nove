@@ -34,7 +34,7 @@ import { AttendeesCreateResponseDto } from './DTO/attendees-create-response.dto'
 import {  METHOD, DOMAIN, PORT  } from '../config';
 import { AttendeesSignatureDto } from './DTO/attendees-signature.dto';
 
-
+import { Excel } from '../commons/build-excel/excel';
 
 
 @ApiTags("Attendees")
@@ -128,7 +128,7 @@ export class AttendessController {
 
     
     @Get("/assists/list/:eventId")
-    @ApiOperation({summary:"Api to generate the attendance list of an event"})
+    @ApiOperation({summary:"Api to generate the attendance list of an event in PDF format"})
     @ApiResponse({status:200, description:"Download the list of attendees in pdf"})
     @ApiNotFoundResponse({type:PDFNotFoundDto})
     @ApiInternalServerErrorResponse({type:InternalServerErrrorDto})
@@ -219,8 +219,6 @@ export class AttendessController {
                     if(current_row == MAX_ROW_TO_DISPLAY){
                         break;
                     }
-                    console.log("##############################################")
-                    console.log(item)
                     current_row++;
                 }catch(err){
                     console.log(err)
@@ -236,10 +234,116 @@ export class AttendessController {
 
         const pdfBytes = await pdfDoc.save();
         fs.writeFileSync('./pdf/lista_de_asistencia.pdf', pdfBytes);
-        //res.download('./pdf/lista_de_asistencia.pdf');
-        res.send("HECHO")
+        res.download('./pdf/lista_de_asistencia.pdf');
+        //res.send("HECHO")
     }  
 
+    @Get('/assists/list-excel/:eventId')
+    @ApiOperation({summary:"api to generate the attendance list in EXCEL format"})
+    @ApiResponse({status:200, description:"Download the list of attendees in excel format"})
+    @ApiNotFoundResponse({type:EventNotFound})
+    @ApiInternalServerErrorResponse({type:InternalServerErrrorDto})
+    async buildExcel(@Response() res, @Param() eventId:AttendeesInfoDto){
+        const existEvent = await this.eventService.findById(parseInt(eventId.eventId));
+        if(!existEvent.length) throw new HttpException("EVENT NOT FOUND", HttpStatus.NOT_FOUND);
+        const array = await this.attendessService.findAttendessByEvent(parseInt(eventId.eventId));
+        if(!array.length) throw new HttpException("EVENT NOT FOUND", HttpStatus.NOT_FOUND);
+        let dir = fs.readdirSync(path.join(__dirname,'../../excel'))
+        /** DELETE OLD FILES */
+        let isTemplate = 'plantilla_excel.xlsx';
+        for(let file of dir){
+            if(isTemplate != file ){
+                await fs.unlinkSync(path.join(__dirname,`../../excel/${file}`))
+            }
+        }
+        /** OPEN EXCEL */
+        let workbook = new Excel();
+        const PATH = path.join(__dirname,'../../excel/plantilla_excel.xlsx') 
+        await workbook.openExcel(PATH);
+        /** GET SHEET 1 */
+        let SHEET = await workbook.getSheet(1);
+
+        /** SET EVENT DATE */
+        let EVENT_DATE_ROW = workbook.getRow(2,SHEET);
+        let EVENT_DATE_CELL = workbook.getCell(1, EVENT_DATE_ROW);
+        workbook.setValue(EVENT_DATE_CELL,moment(existEvent[0].event_date).format('DD-MM-YYYY'));
+        workbook.saveChanges(EVENT_DATE_ROW);
+
+        /** SET EVENT NAME */
+        const EVENT_NAME_ROW = workbook.getRow(4,SHEET);
+        const EVENT_NAME_CELL = workbook.getCell(1, EVENT_NAME_ROW);
+        workbook.setValue(EVENT_NAME_CELL,existEvent[0].name)
+        workbook.saveChanges(EVENT_NAME_ROW);
+
+
+        
+
+        /** BUILD INFORMATION */
+        let INITIAL_ROW = 8;
+        for(let item of array){
+            /** ID SECTION */
+            const ID_CELL_POSITION= 1;
+            const ID_ROW = workbook.getRow(INITIAL_ROW,SHEET);
+            const ID_CELL = workbook.getCell(ID_CELL_POSITION,ID_ROW);
+            let id_string = `000${item.id}`
+            let id_to_display = item.id < 1000 ? id_string.substring(id_string.length-3, id_string.length): `${item.id}`
+            workbook.setValue(ID_CELL,id_to_display);
+            workbook.setColor("009FDA",ID_CELL);
+            workbook.saveChanges(ID_ROW);
+
+            /** CEDULA SECTION */
+            const CEDULA_CELL_POSITION = 2;
+            const CEDULA_ROW = workbook.getRow(INITIAL_ROW,SHEET);
+            const CEDULA_CELL = workbook.getCell(CEDULA_CELL_POSITION,CEDULA_ROW);
+            workbook.setValue(CEDULA_CELL, item.cedula);
+            workbook.setColor("009FDA",CEDULA_CELL);
+            workbook.saveChanges(CEDULA_ROW);
+
+            /** SECTION DOCTOR'S NAME  */
+            const DOCTOR_NAME_CELL_POISITION = 3;
+            const DOCTOR_NAME_ROW = workbook.getRow(INITIAL_ROW, SHEET);
+            const DOCTOR_NAME_CELL = workbook.getCell(DOCTOR_NAME_CELL_POISITION, DOCTOR_NAME_ROW);
+            workbook.setValue(DOCTOR_NAME_CELL, item.name);
+            workbook.setColor("001965",DOCTOR_NAME_CELL);
+            workbook.saveChanges(DOCTOR_NAME_ROW);
+
+            /** EMAIL SECTION  */
+            const EMAIL_CELL_POSITION = 4;
+            const EMAIL_ROW = workbook.getRow(INITIAL_ROW, SHEET);
+            const EMAIL_CELL = workbook.getCell(EMAIL_CELL_POSITION, EMAIL_ROW);
+            workbook.setValue(EMAIL_CELL, item.email);
+            workbook.setColor("001965",EMAIL_CELL);
+            workbook.saveChanges(EMAIL_ROW)
+
+            /** SPECIALITY SECTION */
+            const SPECIALITY_CELL_POSITION = 5;
+            const SPECILAITY_ROW = workbook.getRow(INITIAL_ROW, SHEET);
+            const SPECIALITY_CELL = workbook.getCell(SPECIALITY_CELL_POSITION, SPECILAITY_ROW);
+            workbook.setValue(SPECIALITY_CELL, item.speciality);
+            workbook.setColor("001965",SPECIALITY_CELL);
+            workbook.saveChanges(SPECILAITY_ROW);
+
+            /** SIGNATURE SECTION  */
+            if(item.path){
+                const SINGATURE_CELL_POSITION = 6;
+                const SIGNATURE_ROW = workbook.getRow(INITIAL_ROW, SHEET);
+                const SIGNATURE_CELL = await workbook.getCell(SINGATURE_CELL_POSITION,SIGNATURE_ROW);
+                
+                await workbook.addImage(item.path,SHEET,INITIAL_ROW,SINGATURE_CELL_POSITION);
+                
+                workbook.saveChanges(SIGNATURE_ROW)
+            }
+
+            INITIAL_ROW++;
+        }
+
+        /** WRITE FINAL EXCEL */
+        let name = `${new Date().getTime()}${existEvent[0].name.substr(0,2)}${existEvent[0].id}`
+        const PATH_NEW_EXCEL = path.join(__dirname,`../../excel/${name}.xlsx`)
+        await workbook.writeFile(PATH_NEW_EXCEL)
+        res.download(PATH_NEW_EXCEL);
+        
+    }
 
     @Get("/all/:eventId")
     @ApiOperation({summary:"Api to download all the PDF files of the event attendees"})
@@ -248,9 +352,23 @@ export class AttendessController {
     async findAllPdfByEvent(@Param() eventId: AttendeesInfoDto, @Response() res){
         const attendees = await this.attendessService.findAttendessByEvent(parseInt(eventId.eventId));
         if(!attendees.length) res.status(404).send({statusCode:404, message:"ATTENDEES NOT FOUND"})
+        if (!fs.existsSync('./pdf/bundle')){
+            fs.mkdirSync('./pdf/bundle');
+        }
+        
+        let dir = fs.readdirSync('./pdf/bundle')
+        
 
-        await this.attendessService.pdfBundle(attendees);
-        const RUTA = "./pdf/bundle.pdf";
+        
+        /** DELETE OLD FILES */
+        for(let file of dir){
+            await fs.unlinkSync(`./pdf/bundle/${file}`)
+        }
+        
+        let name = `l${eventId.eventId}_${new Date().getTime()}`
+        const RUTA = `./pdf/bundle/${name}.pdf`;
+        await this.attendessService.pdfBundle(attendees,RUTA);
+        
         res.download(RUTA);
     }
 
@@ -408,6 +526,7 @@ export class AttendessController {
         let response = new AttendeesResponseDto();
         response.eventId = existEvent[0].id;
         response.event_name = existEvent[0].name;
+        response.event_date = moment(existEvent[0].event_date).format("DD-MM-YYYY");
         response.items = attendees;
         response.pages = pages;
         //@ts-ignore

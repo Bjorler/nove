@@ -22,7 +22,7 @@ export class MasterGuard implements CanActivate{
 
         
         const role = RolesDto[req.user.role_id]
-        
+        console.log({path,role,permission, permissions:req.user.permissions})
         if(!roles.has(role)) throw new HttpException("ACCESS DENIED", HttpStatus.FORBIDDEN)
         if(!req.user.permissions[path].toLowerCase().includes(permission.toString().toLowerCase())) throw new HttpException("ACCESS DENIED", HttpStatus.FORBIDDEN)
         

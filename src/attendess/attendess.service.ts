@@ -317,7 +317,7 @@ export class AttendessService {
 
     }
 
-    async pdfBundle(data){
+    async pdfBundle(data,path){
 
         const pdfDoc = await PDFDocument.create()
 
@@ -330,7 +330,7 @@ export class AttendessService {
         }
 
         const RUTA = "./pdf/bundle.pdf";
-        fs.writeFileSync(RUTA, await pdfDoc.save());
+        fs.writeFileSync(path, await pdfDoc.save());
     }
 
 
@@ -350,7 +350,7 @@ export class AttendessService {
         
         const attendees = await this.knex
         .table(this.TABLE)
-        .select('events.event_date')
+        .select('events.event_date',`${this.TABLE}.speciality`)
         .innerJoin('events',`${this.TABLE}.event_id`,'events.id')
         .where('events.created_on','>=',DATE)
         .andWhere('events.created_on','<=', FINAL)

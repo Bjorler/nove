@@ -5,7 +5,8 @@ export class GraphFilterDto{
     @ApiProperty({
         type:String,
         example:"2021",
-        description:"Filter by year"
+        description:"Filter by year",
+        required:false
     })
     @IsString()
     @IsOptional()

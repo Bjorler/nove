@@ -36,6 +36,7 @@
     "bcrypt": "^3.0.8",
     "class-transformer": "^0.3.2",
     "class-validator": "^0.13.1",
+    "exceljs": "^4.2.0",
     "html-pdf": "^2.2.0",
     "knex": "^0.21.16",
     "moment": "^2.29.1",

@@ -1,12 +1,12 @@
-import { Controller, Post, Body, HttpException, HttpStatus, UsePipes } from '@nestjs/common';
-import { ApiTags, ApiNotFoundResponse, ApiResponse, ApiInternalServerErrorResponse, ApiOperation } from '@nestjs/swagger';
+import { Controller, Post, Body, HttpException, HttpStatus } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { AuthenticateService } from './authenticate.service';
 import { LogServices } from '../commons/services/log.service';
-import { ValidationPipe } from '../commons/validations/validations.pipe';
 import { AutehenticateDto } from './DTO/authenticate.dto';
 import { ResponseDto, ResultDto } from './DTO/response.dto';
-import { ErrorDto, NotFoundDto,InternalServerErrrorDto, LogDto } from '../commons/DTO';
-import { METHOD, DOMAIN, PORT } from '../config';
+import {  LogDto } from '../commons/DTO';
+import { AuthenticationDecorator } from './decorators/authenticate.decorator';
+import { METHOD, DOMAIN } from '../config';
 
 @ApiTags("Authenticate")
 @Controller('authenticate')
@@ -18,25 +18,7 @@ export class AuthenticateController {
 
 
     @Post()
-    @ApiOperation({summary:"Api to login"})
-    @ApiNotFoundResponse({
-        description: "USER NOT FOUND",
-        type: NotFoundDto
-    })
-    @ApiResponse({
-        status:201,
-        type:ResponseDto
-    })
-    @ApiResponse({
-        status:400,
-        type:ErrorDto,
-        description:"Validation failed",
-    })
-    @ApiInternalServerErrorResponse({
-        description:"Internal server error",
-        type:InternalServerErrrorDto
-    })
-    @UsePipes(new ValidationPipe)
+    @AuthenticationDecorator()
     async authenticate( @Body() authenticate: AutehenticateDto){
         const users = await this.authService.findByEmail(authenticate.email);
         if(!users.length) throw new HttpException("USER NOT FOUND", HttpStatus.NOT_FOUND);
