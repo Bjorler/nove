@@ -1,29 +1,19 @@
-import { Controller, Get, Post, Delete, Put, Body, Param, Query, UsePipes, UseGuards,
-         SetMetadata, UseInterceptors, UploadedFile, HttpException, HttpStatus, Response, HttpService   
+import { Controller, Get, Post, Delete, Put, Body, Param, Query, 
+          UseInterceptors, UploadedFile, HttpException, HttpStatus, Response   
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiTags, ApiResponse, ApiNotFoundResponse, ApiUnauthorizedResponse,
-         ApiForbiddenResponse, ApiInternalServerErrorResponse, ApiBadRequestResponse,
-         ApiHeader,
-         ApiProperty,
-         ApiBody, ApiConsumes, ApiOperation
-} from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
 import { diskStorage } from 'multer';
 import * as path from 'path';
 import * as fs from 'fs';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import * as moment from 'moment';
-import { MasterGuard, TokenGuard } from '../commons/guards';
-import { ValidationPipe } from '../commons/validations/validations.pipe';
 import { AttendessService } from './attendess.service';
 import { EventsService } from 'src/events/events.service';
 import { LogServices } from '../commons/services/log.service';
 import { EmailServices } from '../commons/services/email.service';
 import { User } from '../commons/decoratos/user.decorator';
-import { LogDto, ImageErrorDto, SignatureErrorDto, EventNotFound, UnauthorizedDto,
-         ForbiddenDto, InternalServerErrrorDto, ImageNotFoundDto, ErrorDto, AttendeesNotFoundDto,
-         PDFNotFoundDto
-} from '../commons/DTO';
+import { LogDto} from '../commons/DTO';
 import { AttendeesCreateDto } from './DTO/attendees-create.dto';
 import { AttendeesInfoDto } from './DTO/attendees-info.dto';
 import { AttendeesResponseDto } from './DTO/attendees-response.dto';
@@ -31,10 +21,13 @@ import { AttendeesPaginationDto } from './DTO/attendees-pagination.dto';
 import { AttendeesDetailDto } from './DTO/attendees-detail.dto';
 import { AttendeesItemDto } from './DTO/attendess-item.dto';
 import { AttendeesCreateResponseDto } from './DTO/attendees-create-response.dto';
-import {  METHOD, DOMAIN, PORT  } from '../config';
-import { AttendeesSignatureDto } from './DTO/attendees-signature.dto';
-
 import { Excel } from '../commons/build-excel/excel';
+import { AttendeesCreateDecorator, AttendeesListPdfDecorator, AttendeesListExcelDecorator,
+AttendeesAllPdfDecorator, AttendeesContractDecorator, AttendeesSignDecorator, AttendeesSignatureDecorator,
+AttendeesDetailDecorator, AttendeesEventsDecorator
+} from './decorators';
+
+import {  METHOD, DOMAIN  } from '../config';
 
 
 @ApiTags("Attendees")
@@ -52,21 +45,7 @@ export class AttendessController {
 
 
     @Post()
-    @ApiOperation({summary:"Api to register an attendee in an event"})
-    @SetMetadata('roles',["MASTER","ADMIN"])
-    @SetMetadata('permission',['C'])
-    @ApiHeader({
-        name:"token",
-        example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlX2lkIjoyLCJpZCI6MTUsInBhc3N3b3JkIjoiJDJiJDEwJGE0dmI4azBQMDllSHk1b0FrUzlmRGViNmc4M1NZaWtCTGNJYll1SDQwTm9JMnhoU1FXTW8yIiwiZW1haWwiOiJkYXZpZEBnbWFpbC5jb20iLCJwZXJtaXNzaW9ucyI6eyJldmVudHMiOiJDIn0sImlhdCI6MTYxMTg2MTU4Nn0.KDX947q2WhlGlcZxtjUDZDh_vQ3HDPvxzuvShr-ptWo"
-    })
-    @ApiResponse({status:200, type:AttendeesCreateResponseDto})
-    @ApiBadRequestResponse({type:ErrorDto})
-    @ApiNotFoundResponse({type:EventNotFound})
-    @ApiUnauthorizedResponse({type:UnauthorizedDto})
-    @ApiForbiddenResponse({type:ForbiddenDto})
-    @ApiInternalServerErrorResponse({type:InternalServerErrrorDto})    
-    @UseGuards(TokenGuard, MasterGuard)
-    @UsePipes(new ValidationPipe)
+    @AttendeesCreateDecorator()
     async create( @Body() attendees: AttendeesCreateDto, @User() session ){
 
         //if(!signature) throw new HttpException("The signature field is mandatory", 417)
@@ -128,10 +107,7 @@ export class AttendessController {
 
     
     @Get("/assists/list/:eventId")
-    @ApiOperation({summary:"Api to generate the attendance list of an event in PDF format"})
-    @ApiResponse({status:200, description:"Download the list of attendees in pdf"})
-    @ApiNotFoundResponse({type:PDFNotFoundDto})
-    @ApiInternalServerErrorResponse({type:InternalServerErrrorDto})
+    @AttendeesListPdfDecorator()
     async buildPdf( @Response() res, @Param() eventId:AttendeesInfoDto ){
         const existEvent = await this.eventService.findById(parseInt(eventId.eventId));
         if(!existEvent.length) throw new HttpException("EVENT NOT FOUND", HttpStatus.NOT_FOUND);
@@ -139,9 +115,7 @@ export class AttendessController {
 
 
         const pdfDoc = await PDFDocument.create();
-        /*const RUTA = "./pdf/Formato_asistencia_template.pdf";
-        const pdfDoc = await PDFDocument.load(fs.readFileSync(RUTA));
-        */
+        
 
         const array = await this.attendessService.findAttendessByEvent(parseInt(eventId.eventId));
         
@@ -182,7 +156,6 @@ export class AttendessController {
            let preparedPDF = await  this.attendessService.preparePDF( existEvent[0].name)
             const [page] = await pdfDoc.copyPages(preparedPDF,[0]);
             
-        //for(let page of arrayPage){
             const { width, height } = page.getSize()
             const TABLE_HEADER_Y = height-123;
             const CEDULA_X = 100 ;
@@ -235,14 +208,11 @@ export class AttendessController {
         const pdfBytes = await pdfDoc.save();
         fs.writeFileSync('./pdf/lista_de_asistencia.pdf', pdfBytes);
         res.download('./pdf/lista_de_asistencia.pdf');
-        //res.send("HECHO")
+        
     }  
 
     @Get('/assists/list-excel/:eventId')
-    @ApiOperation({summary:"api to generate the attendance list in EXCEL format"})
-    @ApiResponse({status:200, description:"Download the list of attendees in excel format"})
-    @ApiNotFoundResponse({type:EventNotFound})
-    @ApiInternalServerErrorResponse({type:InternalServerErrrorDto})
+    @AttendeesListExcelDecorator()
     async buildExcel(@Response() res, @Param() eventId:AttendeesInfoDto){
         const existEvent = await this.eventService.findById(parseInt(eventId.eventId));
         if(!existEvent.length) throw new HttpException("EVENT NOT FOUND", HttpStatus.NOT_FOUND);
@@ -346,9 +316,7 @@ export class AttendessController {
     }
 
     @Get("/all/:eventId")
-    @ApiOperation({summary:"Api to download all the PDF files of the event attendees"})
-    @ApiResponse({status:200, description:"Donwload attendee bundle in pdf"})
-    @ApiNotFoundResponse({type:AttendeesNotFoundDto})
+    @AttendeesAllPdfDecorator()
     async findAllPdfByEvent(@Param() eventId: AttendeesInfoDto, @Response() res){
         const attendees = await this.attendessService.findAttendessByEvent(parseInt(eventId.eventId));
         if(!attendees.length) res.status(404).send({statusCode:404, message:"ATTENDEES NOT FOUND"})
@@ -374,10 +342,7 @@ export class AttendessController {
 
 
     @Get("/contract/:id")
-    @ApiOperation({summary:"Api to download the pdf file of conditions of attendance to the event and hospitality"})
-    @ApiResponse({status:200, description:"PDF donwload"})
-    @ApiNotFoundResponse({type:PDFNotFoundDto})
-    @ApiInternalServerErrorResponse({type:InternalServerErrrorDto})
+    @AttendeesContractDecorator()
     async prepareContract(@Param() id: AttendeesDetailDto, @Response() res){
         
         const attendess = await this.attendessService.getById(id.id);
@@ -388,25 +353,7 @@ export class AttendessController {
     
 
     @Put('/sign/:id')
-    @ApiOperation({summary:"Api to assign the signature to the PDF file"})
-    @SetMetadata('roles',["MASTER","ADMIN"])
-    @SetMetadata('permission',['U'])
-    @ApiHeader({
-        name:"token",
-        example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlX2lkIjoyLCJpZCI6MTUsInBhc3N3b3JkIjoiJDJiJDEwJGE0dmI4azBQMDllSHk1b0FrUzlmRGViNmc4M1NZaWtCTGNJYll1SDQwTm9JMnhoU1FXTW8yIiwiZW1haWwiOiJkYXZpZEBnbWFpbC5jb20iLCJwZXJtaXNzaW9ucyI6eyJldmVudHMiOiJDIn0sImlhdCI6MTYxMTg2MTU4Nn0.KDX947q2WhlGlcZxtjUDZDh_vQ3HDPvxzuvShr-ptWo"
-    })
-    @ApiConsumes('multipart/form-data')
-    @ApiBody({type:AttendeesSignatureDto})
-    @ApiResponse({status:200, type:AttendeesCreateResponseDto})
-    @ApiNotFoundResponse({type: PDFNotFoundDto})
-    @ApiNotFoundResponse({type:AttendeesNotFoundDto})
-    @ApiResponse({status:413,type:ImageErrorDto})
-    @ApiResponse({status:417,type:SignatureErrorDto})
-    @ApiUnauthorizedResponse({type:UnauthorizedDto})
-    @ApiForbiddenResponse({type:ForbiddenDto})
-    @ApiInternalServerErrorResponse({type:InternalServerErrrorDto})    
-    @UseGuards(TokenGuard, MasterGuard)
-    @UsePipes(new ValidationPipe)
+    @AttendeesSignDecorator()
     @UseInterceptors(FileInterceptor("signature",{
         storage:diskStorage({
             destination:path.join(__dirname,'../signatures'),//Si esta ruta presenta agun error remplazarla por ./images
@@ -452,10 +399,7 @@ export class AttendessController {
     }
 
     @Get('/signature/:id')
-    @ApiOperation({summary:"Api to download the image containing the user's signature"})
-    @ApiResponse({status:200, description:"Download signature"})
-    @ApiNotFoundResponse({type:ImageNotFoundDto})
-    @ApiInternalServerErrorResponse({type:InternalServerErrrorDto})
+    @AttendeesSignatureDecorator()
     async download(@Response() res ,@Param('id') id:number){
         const attendees = await this.attendessService.findByid(id)
         if(!attendees.length) throw new HttpException('IMAGE NOT FOUND', HttpStatus.NOT_FOUND);
@@ -466,21 +410,7 @@ export class AttendessController {
 
 
     @Get("/detail/:id")
-    @ApiOperation({summary:"Api to obtain the information of the user who will attend the event"})
-    @SetMetadata('roles',["MASTER"])
-    @SetMetadata('permission',['R'])
-    @ApiHeader({
-        name:"token",
-        example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlX2lkIjoyLCJpZCI6MTUsInBhc3N3b3JkIjoiJDJiJDEwJGE0dmI4azBQMDllSHk1b0FrUzlmRGViNmc4M1NZaWtCTGNJYll1SDQwTm9JMnhoU1FXTW8yIiwiZW1haWwiOiJkYXZpZEBnbWFpbC5jb20iLCJwZXJtaXNzaW9ucyI6eyJldmVudHMiOiJDIn0sImlhdCI6MTYxMTg2MTU4Nn0.KDX947q2WhlGlcZxtjUDZDh_vQ3HDPvxzuvShr-ptWo"
-    })
-    @ApiResponse({status:200, type:AttendeesItemDto})
-    @ApiBadRequestResponse({type:ErrorDto})
-    @ApiNotFoundResponse({type:AttendeesNotFoundDto})
-    @ApiUnauthorizedResponse({type:UnauthorizedDto})
-    @ApiForbiddenResponse({type:ForbiddenDto})
-    @ApiInternalServerErrorResponse({type:InternalServerErrrorDto})    
-    @UseGuards(TokenGuard, MasterGuard)
-    @UsePipes(new ValidationPipe)
+    @AttendeesDetailDecorator()
     async findById(@Param() id:AttendeesDetailDto){
         const attendees = await this.attendessService.getById(id.id);
         if( !attendees.length ) throw new HttpException("Assistant not found", HttpStatus.NOT_FOUND);
@@ -500,21 +430,7 @@ export class AttendessController {
 
 
     @Get('/:eventId')
-    @ApiOperation({summary:"Api to get the name of the event and the event attendees"})
-    @SetMetadata('roles',["MASTER"])
-    @SetMetadata('permission',['R'])
-    @ApiHeader({
-        name:"token",
-        example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlX2lkIjoyLCJpZCI6MTUsInBhc3N3b3JkIjoiJDJiJDEwJGE0dmI4azBQMDllSHk1b0FrUzlmRGViNmc4M1NZaWtCTGNJYll1SDQwTm9JMnhoU1FXTW8yIiwiZW1haWwiOiJkYXZpZEBnbWFpbC5jb20iLCJwZXJtaXNzaW9ucyI6eyJldmVudHMiOiJDIn0sImlhdCI6MTYxMTg2MTU4Nn0.KDX947q2WhlGlcZxtjUDZDh_vQ3HDPvxzuvShr-ptWo"
-    })
-    @ApiResponse({status:200, type:AttendeesResponseDto})
-    @ApiBadRequestResponse({type:ErrorDto})
-    @ApiNotFoundResponse({type:EventNotFound})
-    @ApiUnauthorizedResponse({type:UnauthorizedDto})
-    @ApiForbiddenResponse({type:ForbiddenDto})
-    @ApiInternalServerErrorResponse({type:InternalServerErrrorDto})    
-    @UseGuards(TokenGuard, MasterGuard)
-    @UsePipes(new ValidationPipe)
+    @AttendeesEventsDecorator()
     async findEvent(@Param() eventId:AttendeesInfoDto, @Query() pagination:AttendeesPaginationDto ){
         
         const existEvent = await this.eventService.findById(parseInt(eventId.eventId));

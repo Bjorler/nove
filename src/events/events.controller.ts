@@ -1,32 +1,25 @@
-import { Controller, Post, Get, Put, Delete, Body, Query, Param,
-        UseGuards, UsePipes, SetMetadata, UseInterceptors, UploadedFile,
+import { Controller, Post, Get, Put, Delete, Body, Query, Param, UseInterceptors, UploadedFile,
         HttpException, HttpStatus, Response
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiResponse, ApiTags, ApiHeader, ApiInternalServerErrorResponse,
-         ApiUnauthorizedResponse, ApiForbiddenResponse, ApiNotFoundResponse, ApiBadRequestResponse, 
-         ApiOperation   
-} from '@nestjs/swagger';
+import {  ApiTags } from '@nestjs/swagger';
 import { diskStorage } from 'multer';
 import * as path from 'path';
-import * as moment from 'moment';
 import { EventsService } from './events.service';
 import { LogServices } from '../commons/services/log.service';
-import { ValidationPipe } from '../commons/validations/validations.pipe';
-import { MasterGuard, TokenGuard } from '../commons/guards'
 import { User } from '../commons/decoratos/user.decorator';
 import { EventsCreateDto } from './DTO/events-create.dto';
-import { LogDto, InternalServerErrrorDto, UnauthorizedDto, ForbiddenDto, ImageErrorDto,
-         DateErrorDto, EventNotFound, ImageNotFoundDto, EvetnDateErrorDto, FilterDateErrorDto,
-         ErrorDto   
-} from '../commons/DTO';
+import { LogDto } from '../commons/DTO';
 import { EventsPaginationDto } from './DTO/events-pagination.dto';
 import { EventsDto } from './DTO/events.dto';
 import { EventsDeleteDto } from './DTO/events-delete.dto';
 import { EventsDetailDto } from './DTO/events-detaildto';
 import { EventsInfoDto } from './DTO/events-info.dto';
 import { EventsUpdateDto } from './DTO/events-update-dto';
-import { METHOD, DOMAIN, PORT } from '../config';
+import { EventsCreationDecorator, EventsListDecorator, EventsDeleteDecorator,
+EventsTimeLineDecorator, EventsImageDecorator, EventsUpdateDecorator, EventsDetailDecorator
+} from './decorators';
+import { METHOD, DOMAIN} from '../config';
 
 
 @ApiTags("Events")
@@ -39,25 +32,7 @@ export class EventsController {
     ){}
 
     @Post()
-    @ApiOperation({
-        summary:"Api to create events",
-        description:"Requires an image in png / jpeg / gif format and it must be sent in the image attribute"
-    })
-    @SetMetadata('roles',["MASTER"])
-    @SetMetadata('permission',['C'])
-    @ApiHeader({
-        name:"token",
-        example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlX2lkIjoyLCJpZCI6MTUsInBhc3N3b3JkIjoiJDJiJDEwJGE0dmI4azBQMDllSHk1b0FrUzlmRGViNmc4M1NZaWtCTGNJYll1SDQwTm9JMnhoU1FXTW8yIiwiZW1haWwiOiJkYXZpZEBnbWFpbC5jb20iLCJwZXJtaXNzaW9ucyI6eyJldmVudHMiOiJDIn0sImlhdCI6MTYxMTg2MTU4Nn0.KDX947q2WhlGlcZxtjUDZDh_vQ3HDPvxzuvShr-ptWo"
-    })
-    @UsePipes(new ValidationPipe)
-    @UseGuards(TokenGuard, MasterGuard)
-    @ApiResponse({status:201,type:EventsCreateDto})
-    @ApiResponse({status:413, type:ImageErrorDto})
-    @ApiResponse({status:415, type:EvetnDateErrorDto})
-    @ApiBadRequestResponse({type:ErrorDto})
-    @ApiUnauthorizedResponse({type:UnauthorizedDto})
-    @ApiForbiddenResponse({type:ForbiddenDto})
-    @ApiInternalServerErrorResponse({type:InternalServerErrrorDto})
+    @EventsCreationDecorator()
     @UseInterceptors(FileInterceptor("image",{
         storage:diskStorage({
             destination:path.join(__dirname,'../images'),//Si esta ruta presenta agun error remplazarla por ./images
@@ -112,22 +87,7 @@ export class EventsController {
     }
 
     @Get()
-    @ApiOperation({summary:"Api to get the events"})
-    @SetMetadata('roles',["MASTER"])
-    @SetMetadata('permission',['R'])
-    @ApiHeader({
-        name:"token",
-        example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlX2lkIjoyLCJpZCI6MTUsInBhc3N3b3JkIjoiJDJiJDEwJGE0dmI4azBQMDllSHk1b0FrUzlmRGViNmc4M1NZaWtCTGNJYll1SDQwTm9JMnhoU1FXTW8yIiwiZW1haWwiOiJkYXZpZEBnbWFpbC5jb20iLCJwZXJtaXNzaW9ucyI6eyJldmVudHMiOiJDIn0sImlhdCI6MTYxMTg2MTU4Nn0.KDX947q2WhlGlcZxtjUDZDh_vQ3HDPvxzuvShr-ptWo"
-    })
-    @UsePipes(new ValidationPipe)
-    @UseGuards(TokenGuard, MasterGuard)
-    @ApiResponse({status:200, type:EventsDto})
-    @ApiResponse({status:414, type:DateErrorDto})
-    @ApiResponse({status:416, type:FilterDateErrorDto})
-    @ApiBadRequestResponse({type:ErrorDto})
-    @ApiUnauthorizedResponse({type:UnauthorizedDto})
-    @ApiForbiddenResponse({type:ForbiddenDto})
-    @ApiInternalServerErrorResponse({type:InternalServerErrrorDto})
+    @EventsListDecorator()
     async findAll(@Query() pagination:EventsPaginationDto){
         
         if(pagination.date_init && !pagination.date_final ) throw new HttpException("The init_date and final_date fields are dependent", 414)
@@ -155,21 +115,7 @@ export class EventsController {
     }
 
     @Delete()
-    @ApiOperation({summary:"Api to delete events"})
-    @SetMetadata('roles',["MASTER"])
-    @SetMetadata('permission',['D'])
-    @ApiHeader({
-        name:"token",
-        example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlX2lkIjoyLCJpZCI6MTUsInBhc3N3b3JkIjoiJDJiJDEwJGE0dmI4azBQMDllSHk1b0FrUzlmRGViNmc4M1NZaWtCTGNJYll1SDQwTm9JMnhoU1FXTW8yIiwiZW1haWwiOiJkYXZpZEBnbWFpbC5jb20iLCJwZXJtaXNzaW9ucyI6eyJldmVudHMiOiJDIn0sImlhdCI6MTYxMTg2MTU4Nn0.KDX947q2WhlGlcZxtjUDZDh_vQ3HDPvxzuvShr-ptWo"
-    })
-    @ApiResponse({status:200, type:EventsDeleteDto})
-    @ApiNotFoundResponse({type:EventNotFound})
-    @ApiBadRequestResponse({type:ErrorDto})
-    @ApiUnauthorizedResponse({type:UnauthorizedDto})
-    @ApiForbiddenResponse({type:ForbiddenDto})
-    @ApiInternalServerErrorResponse({type:InternalServerErrrorDto})
-    @UsePipes(new ValidationPipe)
-    @UseGuards(TokenGuard, MasterGuard)
+    @EventsDeleteDecorator()
     async delete(@Body() eventId: EventsDeleteDto, @User() session ){
         
         const eventExist = await this.eventService.findById(eventId.eventId);
@@ -191,20 +137,7 @@ export class EventsController {
     }
 
     @Get("/timeline")
-    @ApiOperation({summary:"Api to get the list of future events"})
-    @SetMetadata('roles',["MASTER"])
-    @SetMetadata('permission',['D'])
-    @ApiHeader({
-        name:"token",
-        example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlX2lkIjoyLCJpZCI6MTUsInBhc3N3b3JkIjoiJDJiJDEwJGE0dmI4azBQMDllSHk1b0FrUzlmRGViNmc4M1NZaWtCTGNJYll1SDQwTm9JMnhoU1FXTW8yIiwiZW1haWwiOiJkYXZpZEBnbWFpbC5jb20iLCJwZXJtaXNzaW9ucyI6eyJldmVudHMiOiJDIn0sImlhdCI6MTYxMTg2MTU4Nn0.KDX947q2WhlGlcZxtjUDZDh_vQ3HDPvxzuvShr-ptWo"
-    })
-    @ApiResponse({status:200, type:[EventsInfoDto]})
-    @ApiNotFoundResponse({type:EventNotFound})
-    @ApiUnauthorizedResponse({type:UnauthorizedDto})
-    @ApiForbiddenResponse({type:ForbiddenDto})
-    @ApiInternalServerErrorResponse({type:InternalServerErrrorDto})
-    @UsePipes(new ValidationPipe)
-    @UseGuards(TokenGuard, MasterGuard)
+    @EventsTimeLineDecorator()
     async getTimeLine(){
         const events = await this.eventService.futureEvents() 
         return events;
@@ -214,10 +147,7 @@ export class EventsController {
 
 
     @Get('/image/:id')
-    @ApiOperation({summary:"Api to download the image with which the event was created"})
-    @ApiResponse({status:200, description:"Download image"})
-    @ApiNotFoundResponse({type:ImageNotFoundDto})
-    @ApiInternalServerErrorResponse({type:InternalServerErrrorDto})
+    @EventsImageDecorator()
     async download(@Response() res ,@Param('id') id:number){
         const event = await this.eventService.findById(id);
         if(!event.length) throw new HttpException('IMAGE NOT FOUND', HttpStatus.NOT_FOUND);
@@ -227,25 +157,7 @@ export class EventsController {
     }
 
     @Put()
-    @ApiOperation({
-        summary:"Api to update events",
-        description:"submit only the fields that need to be updated, if it is required to update the image send it in the image attribute"
-    })
-    @SetMetadata('roles',["MASTER"])
-    @SetMetadata('permission',['U'])
-    @ApiHeader({
-        name:"token",
-        example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlX2lkIjoyLCJpZCI6MTUsInBhc3N3b3JkIjoiJDJiJDEwJGE0dmI4azBQMDllSHk1b0FrUzlmRGViNmc4M1NZaWtCTGNJYll1SDQwTm9JMnhoU1FXTW8yIiwiZW1haWwiOiJkYXZpZEBnbWFpbC5jb20iLCJwZXJtaXNzaW9ucyI6eyJldmVudHMiOiJDIn0sImlhdCI6MTYxMTg2MTU4Nn0.KDX947q2WhlGlcZxtjUDZDh_vQ3HDPvxzuvShr-ptWo"
-    })
-    @ApiResponse({status:200, type:EventsUpdateDto})
-    @ApiResponse({status:415, type:EvetnDateErrorDto})
-    @ApiBadRequestResponse({type:ErrorDto})
-    @ApiNotFoundResponse({type:EventNotFound})
-    @ApiUnauthorizedResponse({type:UnauthorizedDto})
-    @ApiForbiddenResponse({type:ForbiddenDto})
-    @ApiInternalServerErrorResponse({type:InternalServerErrrorDto})
-    @UsePipes(new ValidationPipe)
-    @UseGuards(TokenGuard, MasterGuard)
+    @EventsUpdateDecorator()
     @UseInterceptors(FileInterceptor("image",{
         storage:diskStorage({
             destination:path.join(__dirname,'../images'),//Si esta ruta presenta agun error remplazarla por ./images
@@ -304,21 +216,7 @@ export class EventsController {
 
 
     @Get('/:eventId')
-    @ApiOperation({summary:"Api to obtain the information of a specific event"})
-    @SetMetadata('roles',["MASTER"])
-    @SetMetadata('permission',['R'])
-    @ApiHeader({
-        name:"token",
-        example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlX2lkIjoyLCJpZCI6MTUsInBhc3N3b3JkIjoiJDJiJDEwJGE0dmI4azBQMDllSHk1b0FrUzlmRGViNmc4M1NZaWtCTGNJYll1SDQwTm9JMnhoU1FXTW8yIiwiZW1haWwiOiJkYXZpZEBnbWFpbC5jb20iLCJwZXJtaXNzaW9ucyI6eyJldmVudHMiOiJDIn0sImlhdCI6MTYxMTg2MTU4Nn0.KDX947q2WhlGlcZxtjUDZDh_vQ3HDPvxzuvShr-ptWo"
-    })
-    @ApiResponse({status:201, type:EventsInfoDto})
-    @ApiBadRequestResponse({type:ErrorDto})
-    @ApiNotFoundResponse({type:EventNotFound})
-    @ApiUnauthorizedResponse({type:UnauthorizedDto})
-    @ApiForbiddenResponse({type:ForbiddenDto})
-    @ApiInternalServerErrorResponse({type:InternalServerErrrorDto})
-    @UsePipes(new ValidationPipe)
-    @UseGuards(TokenGuard, MasterGuard)
+    @EventsDetailDecorator()
     async eventDetail(@Param() event:EventsDetailDto ){
         
         const eventExist = await this.eventService.findById(parseInt(event.eventId));

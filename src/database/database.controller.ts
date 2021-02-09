@@ -1,32 +1,22 @@
-import { Controller, Get, Post, Put, Delete, Param, Query, Body, UseGuards, UseInterceptors,
-         SetMetadata, UsePipes, HttpException, UploadedFile, HttpStatus, Response
+import { Controller, Get, Post, Put, Delete, Param, Query, Body,  UseInterceptors,
+         HttpException, UploadedFile, HttpStatus, Response
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiTags, ApiHeader, ApiResponse, ApiBadRequestResponse, ApiUnauthorizedResponse, ApiForbiddenResponse,
-         ApiInternalServerErrorResponse,
-         ApiCreatedResponse,
-         ApiOkResponse,
-         ApiBody,
-         ApiConsumes, ApiOperation
-} from '@nestjs/swagger';
+import { ApiTags} from '@nestjs/swagger';
 import * as Excel from 'read-excel-file';
 import { diskStorage } from 'multer';
 import * as path from 'path';
 import * as fs from 'fs';
-import { TokenGuard, MasterGuard } from '../commons/guards';
-import { ValidationPipe } from '../commons/validations/validations.pipe';
 import { User } from '../commons/decoratos/user.decorator';
 import { DatabaseService } from './database.service';
 import { LogServices } from '../commons/services/log.service';
-import { ErrorDto, UnauthorizedDto, ForbiddenDto, InternalServerErrrorDto, LogDto } from '../commons/DTO';
+import {  LogDto } from '../commons/DTO';
 import { DatabaseCedulaDto } from './DTO/database-cedula.dto';
 import { DatabaseResponseByCedulaDto } from './DTO/database-responsebycedula.dto';
 import { DatabaseHistoricalDto } from './DTO/database-historical.dto';
-import { DatabaseLastUploadDto } from './DTO/database-lastloading.dto'
-import { DatabaseIdDto } from './DTO/database-id.dto';
-import { DatabaseFileDto } from './DTO/database-file.dto';
-import { DatabaseHistoricalExcelDto } from './DTO/database-historicalexcel.dto';
-
+import { DatabaseUploadDecorator, DataBaseLastUploadDecorator, DatabaseExcelDecorator,
+DatabaseHistoricalDecorator, DatabaseSearchDecorator
+} from './decorators';
 
 @ApiTags("Database Upload")
 @Controller('database')
@@ -39,21 +29,7 @@ export class DatabaseController {
     ){}
 
     @Post()
-    @ApiOperation({summary:"Api to load assistants through an excel file"})
-    @SetMetadata('roles',["MASTER"])
-    @SetMetadata('permission',['C'])
-    @ApiHeader({
-        name:"token",
-        example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlX2lkIjoyLCJpZCI6MTUsInBhc3N3b3JkIjoiJDJiJDEwJGE0dmI4azBQMDllSHk1b0FrUzlmRGViNmc4M1NZaWtCTGNJYll1SDQwTm9JMnhoU1FXTW8yIiwiZW1haWwiOiJkYXZpZEBnbWFpbC5jb20iLCJwZXJtaXNzaW9ucyI6eyJldmVudHMiOiJDIn0sImlhdCI6MTYxMTg2MTU4Nn0.KDX947q2WhlGlcZxtjUDZDh_vQ3HDPvxzuvShr-ptWo"
-    })
-    @ApiConsumes('multipart/form-data')
-    @ApiBody({type:DatabaseFileDto})
-    @ApiCreatedResponse({type:DatabaseLastUploadDto})
-    @ApiUnauthorizedResponse({type:UnauthorizedDto})
-    @ApiForbiddenResponse({type:ForbiddenDto})
-    @ApiInternalServerErrorResponse({type:InternalServerErrrorDto})  
-    @UseGuards(TokenGuard, MasterGuard)
-    @UsePipes(new ValidationPipe)
+    @DatabaseUploadDecorator()
     @UseInterceptors(FileInterceptor('file',{
         storage:diskStorage({
             destination:path.join(__dirname,'../excel'),//Si esta ruta presenta agun error remplazarla por ./images
@@ -121,38 +97,14 @@ export class DatabaseController {
     }    
 
     @Get("/lastupload")
-    @ApiOperation({summary:"Api to obtain the information of the last excel file loaded"})
-    @SetMetadata('roles',["MASTER"])
-    @SetMetadata('permission',['R'])
-    @ApiHeader({
-        name:"token",
-        example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlX2lkIjoyLCJpZCI6MTUsInBhc3N3b3JkIjoiJDJiJDEwJGE0dmI4azBQMDllSHk1b0FrUzlmRGViNmc4M1NZaWtCTGNJYll1SDQwTm9JMnhoU1FXTW8yIiwiZW1haWwiOiJkYXZpZEBnbWFpbC5jb20iLCJwZXJtaXNzaW9ucyI6eyJldmVudHMiOiJDIn0sImlhdCI6MTYxMTg2MTU4Nn0.KDX947q2WhlGlcZxtjUDZDh_vQ3HDPvxzuvShr-ptWo"
-    })
-    @ApiOkResponse({type:DatabaseLastUploadDto})
-    @ApiUnauthorizedResponse({type:UnauthorizedDto})
-    @ApiForbiddenResponse({type:ForbiddenDto})
-    @ApiInternalServerErrorResponse({type:InternalServerErrrorDto})  
-    @UseGuards(TokenGuard, MasterGuard)
+    @DataBaseLastUploadDecorator()
     async lastUpload(){
         const last = await this.databaseService.lastUpload();
         return last;
     }
 
     @Get("/excel")
-    @ApiOperation({summary:"Api to get the latest excel loaded"})
-    @SetMetadata('roles',["MASTER"])
-    @SetMetadata('permission',['R'])
-    @ApiHeader({
-        name:"token",
-        example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlX2lkIjoyLCJpZCI6MTUsInBhc3N3b3JkIjoiJDJiJDEwJGE0dmI4azBQMDllSHk1b0FrUzlmRGViNmc4M1NZaWtCTGNJYll1SDQwTm9JMnhoU1FXTW8yIiwiZW1haWwiOiJkYXZpZEBnbWFpbC5jb20iLCJwZXJtaXNzaW9ucyI6eyJldmVudHMiOiJDIn0sImlhdCI6MTYxMTg2MTU4Nn0.KDX947q2WhlGlcZxtjUDZDh_vQ3HDPvxzuvShr-ptWo"
-    })
-    @ApiOkResponse({description:"Download the last excel uploaded "})
-    @ApiUnauthorizedResponse({type:UnauthorizedDto})
-    @ApiBadRequestResponse({type:ErrorDto})
-    @ApiForbiddenResponse({type:ForbiddenDto})
-    @ApiInternalServerErrorResponse({type:InternalServerErrrorDto})  
-    //@UseGuards(TokenGuard, MasterGuard)
-    @UsePipes(new ValidationPipe)
+    @DatabaseExcelDecorator()
     async downloadExcel( @Response() res){
         
         const existExcel = await this.databaseService.findLastElememt();
@@ -164,19 +116,7 @@ export class DatabaseController {
 
 
     @Get("/historical")
-    @ApiOperation({summary:"Api to get current year's Excel file upload history", description:"The name of the variables month and updated_load shown in the example of status 200 is representative, in reality it will be replaced by the corresponding information"})
-    @SetMetadata('roles',["MASTER","ADMIN"])
-    @SetMetadata('permission',['R'])
-    @ApiHeader({
-        name:"token",
-        example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlX2lkIjoyLCJpZCI6MTUsInBhc3N3b3JkIjoiJDJiJDEwJGE0dmI4azBQMDllSHk1b0FrUzlmRGViNmc4M1NZaWtCTGNJYll1SDQwTm9JMnhoU1FXTW8yIiwiZW1haWwiOiJkYXZpZEBnbWFpbC5jb20iLCJwZXJtaXNzaW9ucyI6eyJldmVudHMiOiJDIn0sImlhdCI6MTYxMTg2MTU4Nn0.KDX947q2WhlGlcZxtjUDZDh_vQ3HDPvxzuvShr-ptWo"
-    })
-    @ApiOkResponse({type:DatabaseHistoricalExcelDto})
-    @ApiUnauthorizedResponse({type:UnauthorizedDto})
-    @ApiForbiddenResponse({type:ForbiddenDto})
-    @ApiInternalServerErrorResponse({type:InternalServerErrrorDto})  
-    @UseGuards(TokenGuard, MasterGuard)
-    @UsePipes(new ValidationPipe)
+    @DatabaseHistoricalDecorator()
     async getHistorical(){
         const historical = this.databaseService.findAllHistorical();
         return historical;
@@ -184,20 +124,7 @@ export class DatabaseController {
 
 
     @Get("/:cedula")
-    @ApiOperation({summary:"Api to obtain the information of an assistant per ID"})
-    @SetMetadata('roles',["MASTER","ADMIN"])
-    @SetMetadata('permission',['R'])
-    @ApiHeader({
-        name:"token",
-        example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlX2lkIjoyLCJpZCI6MTUsInBhc3N3b3JkIjoiJDJiJDEwJGE0dmI4azBQMDllSHk1b0FrUzlmRGViNmc4M1NZaWtCTGNJYll1SDQwTm9JMnhoU1FXTW8yIiwiZW1haWwiOiJkYXZpZEBnbWFpbC5jb20iLCJwZXJtaXNzaW9ucyI6eyJldmVudHMiOiJDIn0sImlhdCI6MTYxMTg2MTU4Nn0.KDX947q2WhlGlcZxtjUDZDh_vQ3HDPvxzuvShr-ptWo"
-    })
-    @ApiResponse({status:200, type:DatabaseResponseByCedulaDto})
-    @ApiBadRequestResponse({type:ErrorDto})
-    @ApiUnauthorizedResponse({type:UnauthorizedDto})
-    @ApiForbiddenResponse({type:ForbiddenDto})
-    @ApiInternalServerErrorResponse({type:InternalServerErrrorDto})  
-    @UseGuards(TokenGuard, MasterGuard)
-    @UsePipes(new ValidationPipe)
+    @DatabaseSearchDecorator()
     async findDoctorByCedula(@Param() cedula:DatabaseCedulaDto){
         
         const id = parseInt(cedula.cedula);

@@ -1,24 +1,16 @@
-import { Controller, Post, Body, UploadedFile, UseInterceptors, UsePipes, UseGuards, 
-    HttpException, HttpStatus, SetMetadata, Get, Query, Param, Response, Put, Delete } from '@nestjs/common';
+import { Controller, Post, Body, UploadedFile, UseInterceptors,  
+    HttpException, HttpStatus, Get, Query, Param, Response, Put, Delete } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiTags, ApiHeader, ApiNotFoundResponse, ApiResponse, ApiUnauthorizedResponse,
-        ApiForbiddenResponse, 
-        ApiBadRequestResponse,
-        ApiInternalServerErrorResponse, ApiOperation,
-        ApiParam} from '@nestjs/swagger';
+import { ApiTags, ApiNotFoundResponse, ApiResponse,
+        ApiInternalServerErrorResponse, ApiOperation} from '@nestjs/swagger';
 import { diskStorage } from 'multer';
 import * as path from 'path';
-import { ValidationPipe } from '../commons/validations/validations.pipe';
 import { UsersService } from './users.service';
 import { LogServices } from '../commons/services/log.service';
-import { TokenGuard, MasterGuard } from '../commons/guards';
 import { User } from '../commons/decoratos/user.decorator';
 import { UserDto } from './DTO/user.dto';
-import { UsersDto } from './DTO/users.dto';
-import { UnauthorizedDto, NotFoundDto, ForbiddenDto, ImageErrorDto, ErrorDto, 
-    LogDto, InternalServerErrrorDto, EmailErrorDto, RoleRepatErrorDto, PasswordRepatErrorDto,
-    ImageNotFoundDto, UsersDeleteYourSelfErrorDto, UsersDeleteMasterDto 
-} from '../commons/DTO';
+import {  
+    LogDto, InternalServerErrrorDto,  ImageNotFoundDto } from '../commons/DTO';
 import { RolesDto } from '../commons/DTO/roles.dto';
 import { PaginationDto } from './DTO/pagination.dto';
 import { UpdateUserDto } from './DTO/updateuser.dto';
@@ -29,7 +21,7 @@ import { UserResponseDto } from './DTO/user-response.dto';
 import { UserCreationDecorator, UserListDecorato, UserDetailDecorator,
     UserUpdateDecorator, UserDeleteDecorator
  } from './decorators'
-import { METHOD, DOMAIN, PORT } from '../config';
+import { METHOD, DOMAIN} from '../config';
 
 
 @ApiTags("Users")
@@ -105,6 +97,7 @@ export class UsersController {
     @Get()
     @UserListDecorato()
     async find(@Query() page:PaginationDto ){
+        
         page.limit = page.limit || 10;
         const pages = await this.userService.pages(page.limit);
         

@@ -1,0 +1,9 @@
+export { AttendeesCreateDecorator } from './attendees-ceate.decorator';
+export { AttendeesListPdfDecorator } from './attendees-listpdf.decorator';
+export { AttendeesListExcelDecorator } from './attendees-listexcel.decorator';
+export { AttendeesAllPdfDecorator } from './attendees-allpdf.decorator';
+export { AttendeesContractDecorator } from './attendees-contract.decorator';
+export { AttendeesSignDecorator } from './attendees-sign.decorator';
+export { AttendeesSignatureDecorator } from './attendees-signature.decorator';
+export { AttendeesDetailDecorator } from './attendees-detail.decorator';
+export { AttendeesEventsDecorator } from './attendees-events.decorator';
