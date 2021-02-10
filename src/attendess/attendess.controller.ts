@@ -207,8 +207,8 @@ export class AttendessController {
 
         const pdfBytes = await pdfDoc.save();
         fs.writeFileSync('./pdf/lista_de_asistencia.pdf', pdfBytes);
-        res.download('./pdf/lista_de_asistencia.pdf');
-        
+        //res.download('./pdf/lista_de_asistencia.pdf');
+        res.status(200).send({pdf:fs.readFileSync('./pdf/lista_de_asistencia.pdf',{encoding:'base64'})})
     }  
 
     @Get('/assists/list-excel/:eventId')
@@ -318,7 +318,9 @@ export class AttendessController {
     @Get("/all/:eventId")
     @AttendeesAllPdfDecorator()
     async findAllPdfByEvent(@Param() eventId: AttendeesInfoDto, @Response() res){
+       
         const attendees = await this.attendessService.findAttendessByEvent(parseInt(eventId.eventId));
+        
         if(!attendees.length) res.status(404).send({statusCode:404, message:"ATTENDEES NOT FOUND"})
         if (!fs.existsSync('./pdf/bundle')){
             fs.mkdirSync('./pdf/bundle');
@@ -336,8 +338,8 @@ export class AttendessController {
         let name = `l${eventId.eventId}_${new Date().getTime()}`
         const RUTA = `./pdf/bundle/${name}.pdf`;
         await this.attendessService.pdfBundle(attendees,RUTA);
-        
-        res.download(RUTA);
+        res.status(200).send({pdf:fs.readFileSync(RUTA,{encoding:'base64'})});
+        //res.download(RUTA);
     }
 
 

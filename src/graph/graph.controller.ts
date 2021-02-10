@@ -22,9 +22,12 @@ export class GraphController {
         if(!filter.year) filter.year = `${new Date().getFullYear()}`
         const events = await this.eventsService.findByYear(filter.year);
         const result = await this.graphService.groupByMonth(events);
+        const abr_result = await this.graphService.abbrMonth(result);
+        const years = this.graphService.getYearsList(events, 'event_date')
         let response = new  GraphPieResponse();
-        response.items = result;
+        response.items = abr_result;
         response.total_elements = events.length;
+        response.years = years
         return response;
     }
 
@@ -34,9 +37,12 @@ export class GraphController {
         if(!filter.year) filter.year = `${new Date().getFullYear()}`
         const attendees = await this.attendeesService.findByYear(filter.year)
         const result = await this.graphService.groupByMonth(attendees);
+        const abr_result = await this.graphService.abbrMonth(result);
+        const years = this.graphService.getYearsList(attendees, 'event_date')
         let response = new GraphPieResponse();
-        response.items = result;
+        response.items = abr_result;
         response.total_elements = attendees.length;
+        response.years = years;
         return response;
     }
 

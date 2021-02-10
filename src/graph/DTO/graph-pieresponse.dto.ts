@@ -12,4 +12,10 @@ export class GraphPieResponse{
     })
     total_elements:number;
 
+    @ApiProperty({
+        type:[String],
+        example:["2021"]
+    })
+    years:string[]
+
 }

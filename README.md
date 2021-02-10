@@ -38,7 +38,7 @@ npm run start:dev
 - To run in release mode, please run
 
 ```
-nom run build
+npm run build
 ```
 
 # To see the Api's documentation please go to

@@ -61,7 +61,7 @@ export class AttendessService {
     }
 
     async findByid(id:number){
-        const attendees = await this.knex.table(this.TABLE).where({is_deleted:0})
+        const attendees = await this.knex.table(this.TABLE).where({is_deleted:0}).andWhere({id})
         return attendees;
     }
 

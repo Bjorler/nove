@@ -3,6 +3,7 @@ import { InjectKnex, Knex } from 'nestjs-knex';
 import * as _ from 'underscore';
 import * as moment from 'moment';
 import {  GraphEventsResponseDto } from './DTO/graph-eventsresponse.dto';
+import { GraphPieResponse } from './DTO/graph-pieresponse.dto';
 
 @Injectable()
 export class GraphService {
@@ -54,22 +55,58 @@ export class GraphService {
         return result
     }
 
+    abbrMonth(arr_months:GraphEventsResponseDto[]){
+        let months = {
+            "Enero":"Ene",
+            "Febrero":"Feb",
+            "Marzo":"Mar",
+            "Abril":"Abr",
+            "Mayo":"Mayo",
+            "Junio":"Jun",
+            "Julio":"Jul",
+            "Agosto":"Ago",
+            "Septiembre":"Sep",
+            "Octubre":"Oct",
+            "Noviembre":"Nov",
+            "Diciembre":"Dic"
+        }
+        let result = []
+        for (let month of arr_months){
+            
+            result.push({
+                name:months[month.name],
+                value:month.value
+            })
+        }
+        return result
+        
+    }
+
     async groupByMonth(events){
         const groupByMonth = _.groupBy(events, (e) => this.translateMonth(moment(e.event_date).format("MMMM")) )
         let result = [];
         for(let month in groupByMonth){
+            
             let info = new GraphEventsResponseDto();
             info.name = month;
             info.value = groupByMonth[month].length;
             result.push(info)
         }
-
-        return this.fillResponse(result);
+        result = this.fillResponse(result)
+        return result
     }
 
     async groupBy(attendees, tag){
         const groupBySpecialty = _.groupBy(attendees, (e)=> e[tag]);
         return groupBySpecialty;
+    }
+
+    getYearsList(arr, attr_name){
+        let result = []
+        for(let item of arr){
+            result.push(moment(item[attr_name]).format("YYYY"))
+        }
+        return Array.from(new Set(result)) ;
     }
 
     async formatData(data){
