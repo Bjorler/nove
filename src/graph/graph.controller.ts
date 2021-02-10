@@ -23,7 +23,7 @@ export class GraphController {
         const events = await this.eventsService.findByYear(filter.year);
         const result = await this.graphService.groupByMonth(events);
         const abr_result = await this.graphService.abbrMonth(result);
-        const years = this.graphService.getYearsList(events, 'event_date')
+        const years = await this.graphService.getYearsList('event_date')
         let response = new  GraphPieResponse();
         response.items = abr_result;
         response.total_elements = events.length;
@@ -38,7 +38,7 @@ export class GraphController {
         const attendees = await this.attendeesService.findByYear(filter.year)
         const result = await this.graphService.groupByMonth(attendees);
         const abr_result = await this.graphService.abbrMonth(result);
-        const years = this.graphService.getYearsList(attendees, 'event_date')
+        const years = await this.graphService.getYearsList('event_date')
         let response = new GraphPieResponse();
         response.items = abr_result;
         response.total_elements = attendees.length;

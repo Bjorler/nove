@@ -101,11 +101,14 @@ export class GraphService {
         return groupBySpecialty;
     }
 
-    getYearsList(arr, attr_name){
+    async getYearsList(attr_name){
         let result = []
-        for(let item of arr){
+        let year = await this.knex.select(attr_name).table("events");
+        for(let item of year){
             result.push(moment(item[attr_name]).format("YYYY"))
         }
+        
+
         return Array.from(new Set(result)) ;
     }
 

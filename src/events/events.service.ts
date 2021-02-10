@@ -44,8 +44,9 @@ export class EventsService {
 
     private async getQuery(filter:string, limit:number, offset:number, init_date:string, final_date:string){
         let events = []
-        events = await this.knex.table(this.TABLE).limit(limit).offset(offset)
+        /*events = await this.knex.table(this.TABLE).limit(limit).offset(offset)
         .where((builder) => {
+            console.log({filter, init_date, final_date})
             if(filter){
                 if(isNaN(parseInt(filter))){
                     builder.where('name', 'like',`%${filter}%`)
@@ -57,9 +58,27 @@ export class EventsService {
             if(init_date && final_date){
                 builder.where("event_date",'>=', init_date).andWhere("event_date", '<=', final_date)
             }
-        }).andWhere({is_deleted:0})
+        }).andWhere({is_deleted:0})*/
 
-
+        events = await this.knex.table(this.TABLE).limit(limit).offset(offset)
+        .where((builder) => {
+            console.log({filter, init_date, final_date})
+            if(filter){
+                if(isNaN(parseInt(filter))){
+                    builder.where('name', 'like',`%${filter}%`)
+                    .orWhere('address', 'like', `%${filter}%`)
+                }else{
+                    builder.where('assistants', '=',parseInt(filter))
+                }
+            }
+            
+        }).
+        andWhere((builder) => {
+            if(init_date && final_date){
+                builder.where("event_date",'>=', init_date).andWhere("event_date", '<=', final_date)
+            }
+        })
+        .andWhere({is_deleted:0}).orderBy('id','desc')
         return events;
     }
 
@@ -75,10 +94,16 @@ export class EventsService {
                     builder.where('assistants', '=',parseInt(filter))
                 }
             }
+            /*if(init_date && final_date){
+                builder.where("event_date",'>=', init_date).andWhere("event_date", '<=', final_date)
+            }*/
+        }).
+        andWhere((builder) => {
             if(init_date && final_date){
                 builder.where("event_date",'>=', init_date).andWhere("event_date", '<=', final_date)
             }
-        }).andWhere({is_deleted:0})
+        })
+        .andWhere({is_deleted:0})
 
 
         return events;
@@ -145,8 +170,8 @@ export class EventsService {
         let FINAL_YEAR = moment(year).endOf("year")
         let FINAL = moment(FINAL_YEAR).format("YYYY-MM-DD")
         
-        const events = await this.knex.table(this.TABLE).where('created_on','>=',DATE)
-        .andWhere('created_on','<=', FINAL)
+        const events = await this.knex.table(this.TABLE).where('event_date','>=',DATE)
+        .andWhere('event_date','<=', FINAL)
         .andWhere({is_deleted:0})
         return events;
     }
