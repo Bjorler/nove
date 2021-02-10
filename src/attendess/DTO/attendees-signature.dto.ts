@@ -1,9 +1,17 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export  class AttendeesSignatureDto{
+    
     @ApiProperty({
-        type:Object,
-        description:"Upload a signature file png/jg"
+        type:"file",
+        description:"Upload a signature file png/jg",
+        properties:{
+            signature:{
+                type:"string",
+                format:"binary"
+            }
+        },
+        required:false
     })
     signature:any
 }

@@ -2,7 +2,7 @@ import { Controller, Post, Body, UploadedFile, UseInterceptors,
     HttpException, HttpStatus, Get, Query, Param, Response, Put, Delete } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiNotFoundResponse, ApiResponse,
-        ApiInternalServerErrorResponse, ApiOperation} from '@nestjs/swagger';
+        ApiInternalServerErrorResponse, ApiOperation, ApiConsumes, ApiBody} from '@nestjs/swagger';
 import { diskStorage } from 'multer';
 import * as path from 'path';
 import { UsersService } from './users.service';
@@ -23,6 +23,7 @@ import { UserCreationDecorator, UserListDecorato, UserDetailDecorator,
  } from './decorators'
 import { METHOD, DOMAIN} from '../config';
 
+import { ApiImplicitFormData } from './DTO/test.dto';
 
 @ApiTags("Users")
 @Controller('users')
@@ -34,6 +35,7 @@ export class UsersController {
     ){}
 
     @Post()
+    @ApiConsumes('multipart/form-data')
     @UserCreationDecorator()
     @UseInterceptors(FileInterceptor("avatar",{
         storage:diskStorage({
@@ -93,7 +95,6 @@ export class UsersController {
     }
 
 
-
     @Get()
     @UserListDecorato()
     async find(@Query() page:PaginationDto ){
@@ -148,6 +149,7 @@ export class UsersController {
 
     @Put()
     @UserUpdateDecorator()
+    @ApiConsumes('multipart/form-data')
     @UseInterceptors(FileInterceptor("avatar",{
         storage:diskStorage({
             destination:path.join(__dirname,'../images'),//Si esta ruta presenta agun error remplazarla por ./images

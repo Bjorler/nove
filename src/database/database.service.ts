@@ -74,6 +74,7 @@ export class DatabaseService {
           info.speciality = row[3];
           info.email = row[4];
           info.created_by = session.id;
+          info.brand = row[5];
           result.push(info)
         }else{ isHeader = false; }
       }

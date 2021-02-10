@@ -1,11 +1,23 @@
 import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
-import { PORT } from './config';
+import * as fs from 'fs';
+import { PORT, IS_DEVELOPMENT, KEY_FILE, CERT_FILE, API_PREFIX } from './config';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  app.setGlobalPrefix("noveve-api")
+  
+  let app;
+  if(IS_DEVELOPMENT){
+    app = await NestFactory.create(AppModule);    
+  }else{
+    const httpsOptions = {
+      key: fs.readFileSync(KEY_FILE),
+      cert: fs.readFileSync(CERT_FILE)
+    }
+    app = await NestFactory.create(AppModule,{httpsOptions});
+  }
+  
+  app.setGlobalPrefix(API_PREFIX)
   app.enableCors()
 
   const config = new DocumentBuilder()
@@ -13,8 +25,8 @@ async function bootstrap() {
     .setVersion('1.0.0')
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('/noveve-api/api', app, document);
-
+  SwaggerModule.setup(`/${API_PREFIX}/api`, app, document);
+  
   await app.listen(PORT);
 }
 bootstrap();

@@ -1,4 +1,4 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Post, Query } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { EventsService } from '../events/events.service';
 import { GraphService } from './graph.service';
@@ -68,5 +68,7 @@ export class GraphController {
         response.total_elements = attendees.length;
         return response;
     }
+
+    
 
 }

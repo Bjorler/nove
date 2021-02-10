@@ -58,9 +58,9 @@ export class EventsCreateDto{
 
     @ApiProperty({
         type:"file",
-        description:"Image",
+        description:"Event image",
         properties:{
-            file:{
+            image:{
                 type:"string",
                 format:"binary"
             }

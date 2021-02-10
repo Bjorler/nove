@@ -17,6 +17,30 @@
 CREATE DATABASE IF NOT EXISTS `noveve` /*!40100 DEFAULT CHARACTER SET latin1 */;
 USE `noveve`;
 
+-- Volcando estructura para tabla noveve.events
+CREATE TABLE IF NOT EXISTS `events` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(250) NOT NULL,
+  `address` varchar(500) NOT NULL,
+  `description` text NOT NULL,
+  `event_date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `hour_init` time NOT NULL,
+  `hour_end` time NOT NULL,
+  `image` varchar(100) DEFAULT '',
+  `path` varchar(250) DEFAULT '',
+  `assistants` int(11) DEFAULT '0',
+  `is_active` tinyint(4) NOT NULL DEFAULT '0',
+  `is_deleted` tinyint(4) NOT NULL DEFAULT '0',
+  `created_on` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `created_by` tinyint(4) DEFAULT '0',
+  `modified_on` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `modified_by` tinyint(4) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
+
+-- La exportación de datos fue deseleccionada.
+
+
 -- Volcando estructura para tabla noveve.attendees
 CREATE TABLE IF NOT EXISTS `attendees` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -62,28 +86,7 @@ CREATE TABLE IF NOT EXISTS `data_upload` (
 
 -- La exportación de datos fue deseleccionada.
 
--- Volcando estructura para tabla noveve.events
-CREATE TABLE IF NOT EXISTS `events` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `name` varchar(250) NOT NULL,
-  `address` varchar(500) NOT NULL,
-  `description` text NOT NULL,
-  `event_date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `hour_init` time NOT NULL,
-  `hour_end` time NOT NULL,
-  `image` varchar(100) DEFAULT '',
-  `path` varchar(250) DEFAULT '',
-  `assistants` int(11) DEFAULT '0',
-  `is_active` tinyint(4) NOT NULL DEFAULT '0',
-  `is_deleted` tinyint(4) NOT NULL DEFAULT '0',
-  `created_on` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `created_by` tinyint(4) DEFAULT '0',
-  `modified_on` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `modified_by` tinyint(4) DEFAULT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
 
--- La exportación de datos fue deseleccionada.
 
 -- Volcando estructura para tabla noveve.load_history
 CREATE TABLE IF NOT EXISTS `load_history` (

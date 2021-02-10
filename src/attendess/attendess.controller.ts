@@ -2,7 +2,7 @@ import { Controller, Get, Post, Delete, Put, Body, Param, Query,
           UseInterceptors, UploadedFile, HttpException, HttpStatus, Response   
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiTags, ApiConsumes } from '@nestjs/swagger';
 import { diskStorage } from 'multer';
 import * as path from 'path';
 import * as fs from 'fs';

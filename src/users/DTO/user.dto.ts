@@ -60,7 +60,7 @@ export class UserDto{
 
     @ApiProperty({
         type:"file",
-        description:"Image",
+        description:"User avatar",
         properties:{
             file:{
                 type:"string",

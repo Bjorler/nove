@@ -5,4 +5,5 @@ export class DatabaseInfoDto{
     speciality:string;
     email:string;
     created_by:number;
+    brand:string;
 }

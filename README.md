@@ -25,16 +25,22 @@ npm run format:config
 - SECRET: Fill this variable with the key that will be used to decode the JWT
 - METHOD: Fill the METHOD variable with the server protocol http/https
 - DOMAIN: Fill the DOMAIN variable with the server domain
-- PORT: Assign the port where the server will run
+- IS_DEVELOPMENT set to true only when the server is on a local machine; otherwise it is false
 
 # Commands
 
-- To run the API, please run
+- To run the API in a local machie, please run
 
 ```
 npm run start:dev
 ```
 
+- To run in release mode, please run
+
+```
+nom run build
+```
+
 # To see the Api's documentation please go to
 
-- http://localhost:4057/api
+- http://localhost:4057/noveve-api/api

@@ -8,3 +8,7 @@ export const DOMAIN = "localhost:4057/noveve-api";
 export const PORT = 4057;
 export const  USER_EMAIL = "";
 export const PASSWORD_EMAIL = "";
+export const KEY_FILE = "/home/springlabs/certificados/springlabsdevs.net.key";
+export const CERT_FILE = "/home/springlabs/certificados/springlabsdevs.net.trust.cer";
+export const IS_DEVELOPMENT = true;
+export const API_PREFIX = "noveve-api"

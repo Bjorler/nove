@@ -2,7 +2,7 @@ import { Controller, Post, Get, Put, Delete, Body, Query, Param, UseInterceptors
         HttpException, HttpStatus, Response
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import {  ApiTags } from '@nestjs/swagger';
+import {  ApiTags, ApiConsumes } from '@nestjs/swagger';
 import { diskStorage } from 'multer';
 import * as path from 'path';
 import { EventsService } from './events.service';
@@ -32,6 +32,7 @@ export class EventsController {
     ){}
 
     @Post()
+    @ApiConsumes('multipart/form-data')
     @EventsCreationDecorator()
     @UseInterceptors(FileInterceptor("image",{
         storage:diskStorage({
@@ -157,6 +158,7 @@ export class EventsController {
     }
 
     @Put()
+    @ApiConsumes('multipart/form-data')
     @EventsUpdateDecorator()
     @UseInterceptors(FileInterceptor("image",{
         storage:diskStorage({

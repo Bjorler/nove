@@ -54,6 +54,8 @@ export class DatabaseController {
     }))
     async loadExcel(@UploadedFile() file, @User() session){
         
+        if(!file) throw new HttpException("The file parameter is required",418)
+
         const response = await Excel(fs.readFileSync(file.path)).then(async (rows) => {
             
             const deleted = await this.databaseService.deleteHistorical(session);
