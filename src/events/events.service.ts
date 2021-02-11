@@ -144,6 +144,7 @@ export class EventsService {
         for( let event of events ){
             let info = new EventsInfoDto();
             info.download_img = `${METHOD}://${DOMAIN}/events/image/${event.id}`;
+            info.default_img = `${METHOD}://${DOMAIN}/events/image`;
             info.eventId = event.id;
             info.image_name = event.image;
             info.name = event.name;

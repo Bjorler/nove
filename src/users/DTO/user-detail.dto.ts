@@ -42,6 +42,12 @@ export class UserDetailDto{
         example:"http://116.24.56.9:8080/users/image/1"
     })
     download_img:string;
+    @ApiProperty({
+        type:String,
+        example:"http://116.24.56.9:8080/users/image/",
+        description:"Default image when main image is missing"
+    })
+    default_img:string;
 
     @ApiProperty({
         type:String,

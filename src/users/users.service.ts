@@ -52,6 +52,7 @@ export class UsersService {
             info.complete_name = `${user.name} ${user.apellido_paterno}`;
             info.email = user.email;
             info.download_img = `${METHOD}://${DOMAIN}/users/image/${user.id}`
+            info.default_img = `${METHOD}://${DOMAIN}/users/image`
             info.id = user.id
             info.role = user.role_id == 1 ? "Master":"Administrador";
             info.role_id = user.role_id

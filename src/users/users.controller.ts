@@ -110,27 +110,7 @@ export class UsersController {
     }
 
 
-    @Get('/:id')
-    @UserDetailDecorator()
-    async findUser(@Param() id:FindUserDto ){
-        
-        const user = await this.userService.findById(id.id);
-        if(!user.length) throw new HttpException("User not found", HttpStatus.NOT_FOUND);
-        
-        let userDetail = new UserDetailDto();
-        userDetail.download_img = `${METHOD}://${DOMAIN}/users/image/${user[0].id}`;
-        userDetail.avatar = user[0].avatar;
-        userDetail.name = user[0].name;
-        userDetail.apellido_paterno = user[0].apellido_paterno;
-        userDetail.apellido_materno = user[0].apellido_materno;
-        userDetail.email = user[0].email;
-        userDetail.password_length = user[0].password_length;
-        userDetail.role = RolesDto[user[0].role_id].toLowerCase()
-        userDetail.role = userDetail.role.replace(userDetail.role[0] ,userDetail.role.substr(0,1).toUpperCase())
-        userDetail.role_id = user[0].role_id
-        userDetail.id = user[0].id;
-        return userDetail;
-    }
+    
 
     @Get('/image/:id')
     @ApiOperation({summary:"Api to download the image that the user uploaded"})
@@ -146,6 +126,16 @@ export class UsersController {
         res.download(path)
     }
 
+    @Get('/image')
+    @ApiOperation({summary:"Api to download the image that the user uploaded"})
+    
+    @ApiResponse({status:200, description:"Download image"})
+    @ApiNotFoundResponse({type:ImageNotFoundDto})
+    @ApiInternalServerErrorResponse({type:InternalServerErrrorDto})
+    async download_default(@Response() res ,@Param('id') id:number){
+        res.download('./defaults/user.png')
+        
+    }
 
     @Put()
     @UserUpdateDecorator()
@@ -261,5 +251,28 @@ export class UsersController {
         log.modified_by = session.id;
         await this.logService.createLog(log);
         return id;
+    }
+
+    @Get('/:id')
+    @UserDetailDecorator()
+    async findUser(@Param() id:FindUserDto ){
+        
+        const user = await this.userService.findById(id.id);
+        if(!user.length) throw new HttpException("User not found", HttpStatus.NOT_FOUND);
+        
+        let userDetail = new UserDetailDto();
+        userDetail.download_img = `${METHOD}://${DOMAIN}/users/image/${user[0].id}`;
+        userDetail.default_img =  `${METHOD}://${DOMAIN}/users/image`;
+        userDetail.avatar = user[0].avatar;
+        userDetail.name = user[0].name;
+        userDetail.apellido_paterno = user[0].apellido_paterno;
+        userDetail.apellido_materno = user[0].apellido_materno;
+        userDetail.email = user[0].email;
+        userDetail.password_length = user[0].password_length;
+        userDetail.role = RolesDto[user[0].role_id].toLowerCase()
+        userDetail.role = userDetail.role.replace(userDetail.role[0] ,userDetail.role.substr(0,1).toUpperCase())
+        userDetail.role_id = user[0].role_id
+        userDetail.id = user[0].id;
+        return userDetail;
     }
 }

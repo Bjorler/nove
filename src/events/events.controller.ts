@@ -157,6 +157,13 @@ export class EventsController {
         res.download(path)
     }
 
+    @Get('/image')
+    @EventsImageDecorator()
+    async download_default(@Response() res ,@Param('id') id:number){
+        
+        res.download('./defaults/img-event.png');
+    }
+
     @Put()
     @ApiConsumes('multipart/form-data')
     @EventsUpdateDecorator()
@@ -228,6 +235,7 @@ export class EventsController {
         let response = new EventsInfoDto();
         response.eventId = eventExist[0].id;
         response.download_img = `${METHOD}://${DOMAIN}/events/image/${eventExist[0].id}`;
+        response.default_img = `${METHOD}://${DOMAIN}/events/image`;
         response.image_name = eventExist[0].image;
         response.name = eventExist[0].name;
         response.location = eventExist[0].address;
