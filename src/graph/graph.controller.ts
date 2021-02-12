@@ -63,10 +63,10 @@ export class GraphController {
 
     @Get('/brand')
     @GraphBrandDecorator()
-    async attendeesByBrand(@Query() filter:GraphFilterDto){
-        if(!filter.year) filter.year = `${new Date().getFullYear()}`
+    async attendeesByBrand(/*@Query() filter:GraphFilterDto*/){
+        //if(!filter.year) filter.year = `${new Date().getFullYear()}`
 
-        const attendees = await this.graphService.findByYear(filter.year);
+        const attendees = await this.graphService.findByYear(/*filter.year*/);
         const groupBy = await this.graphService.groupBy(attendees, 'brand');
         const format = await this.graphService.formatData(groupBy);
         let response = new GraphPieResponse();

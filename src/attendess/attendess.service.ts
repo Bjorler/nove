@@ -358,4 +358,10 @@ export class AttendessService {
         return attendees;
     }
 
+    async isAlreadyRegistered(cedula:number, eventId:number){
+        const result = await this.knex.table(this.TABLE).where({cedula}).andWhere({event_id:eventId})
+        .andWhere({is_deleted:0});
+        return result;
+    }
+
 }

@@ -122,17 +122,18 @@ export class GraphService {
         }
         return result;
     }
-    async findByYear(year:string){
-        const DATE = moment(year).format("YYYY-MM-DD");
+    async findByYear(/*year:string*/){
+        /*const DATE = moment(year).format("YYYY-MM-DD");
         let FINAL_YEAR = moment(year).endOf("year")
-        let FINAL = moment(FINAL_YEAR).format("YYYY-MM-DD")
+        let FINAL = moment(FINAL_YEAR).format("YYYY-MM-DD")*/
         
         const attendees = await this.knex
         .table('data_upload')
         .select('data_upload.brand')
-        .where('data_upload.created_on','>=',DATE)
-        .andWhere('data_upload.created_on','<=', FINAL)
+        //.where('data_upload.created_on','>=',DATE)
+        //.andWhere('data_upload.created_on','<=', FINAL)
         .andWhere('data_upload.is_deleted','=',0)
+        
         return attendees;
     }
 }

@@ -19,3 +19,4 @@ export { PDFNotFoundDto } from './pdf-notfound-error.dto';
 export { UsersDeleteYourSelfErrorDto } from './users-deleteyourselferror.dto';
 export { UsersDeleteMasterDto } from './users-deletemaster.dto';
 export { DatabaseExcelErrorDto } from './database-excelerror.dto';
+export { AttendeesDuplicateDto } from './attendes-duplicate.dto';

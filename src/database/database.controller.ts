@@ -3,10 +3,10 @@ import { Controller, Get, Post, Put, Delete, Param, Query, Body,  UseInterceptor
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags} from '@nestjs/swagger';
-import * as Excel from 'read-excel-file';
 import { diskStorage } from 'multer';
 import * as path from 'path';
 import * as fs from 'fs';
+import { ExcelReader } from '../commons/read-excel/excelreader';
 import { User } from '../commons/decoratos/user.decorator';
 import { DatabaseService } from './database.service';
 import { LogServices } from '../commons/services/log.service';
@@ -18,6 +18,8 @@ import { DatabaseUploadDecorator, DataBaseLastUploadDecorator, DatabaseExcelDeco
 DatabaseHistoricalDecorator, DatabaseSearchDecorator
 } from './decorators';
 
+
+
 @ApiTags("Database Upload")
 @Controller('database')
 export class DatabaseController {
@@ -27,6 +29,7 @@ export class DatabaseController {
         private databaseService: DatabaseService,
         private logServices: LogServices
     ){}
+
 
     @Post()
     @DatabaseUploadDecorator()
@@ -56,46 +59,44 @@ export class DatabaseController {
         
         if(!file) throw new HttpException("The file parameter is required",418)
 
-        const response = await Excel(fs.readFileSync(file.path)).then(async (rows) => {
-            
-            const deleted = await this.databaseService.deleteHistorical(session);
-            const data = await this.databaseService.parseExcel(rows, session);
-            const saved = await this.databaseService.saveExcel(data);
-            let historial:DatabaseHistoricalDto = { file_name: file.originalname, file_path: file.path, created_by:session.id }
-            const deletedAll = await this.databaseService.deleteAll();    
-            const saved_historical = await this.databaseService.saveHistorical(historial);
-            const response = await this.databaseService.lastUpload();
-            
-            /** CREATE LOG DELETE FILES */
-            let log = new LogDto();
-            log.new_change = "delete";
-            log.type = "delete";
-            log.db_table = this.TABLE_LOAD_HISTORY;
-            log.created_by = session.id;
-            log.modified_by = session.id;
-            log.element = deletedAll;
-            await this.logServices.createLog(log)
+        let excelReader = new ExcelReader();
+        const rows = await excelReader.open(file.path);
 
-            /** CREATE LOG UPLOAD FILE */
-            log = new LogDto();
-            log.new_change = "create";
-            log.type = "create";
-            log.db_table = this.TABLE_DATA_UPLOAD;
-            log.created_by = session.id;
-            log.modified_by = session.id;
-            log.element = saved[0];
-            await this.logServices.createLog(log)
+        const deleted = await this.databaseService.deleteHistorical(session);
+        const data = await this.databaseService.parseExcel(rows, session);
+        const saved = await this.databaseService.saveExcel(data);
+        let historial:DatabaseHistoricalDto = { file_name: file.originalname, file_path: file.path, created_by:session.id }
+        const deletedAll = await this.databaseService.deleteAll();    
+        const saved_historical = await this.databaseService.saveHistorical(historial);
+        const response = await this.databaseService.lastUpload();
+        
+        /** CREATE LOG DELETE FILES */
+        let log = new LogDto();
+        log.new_change = "delete";
+        log.type = "delete";
+        log.db_table = this.TABLE_LOAD_HISTORY;
+        log.created_by = session.id;
+        log.modified_by = session.id;
+        log.element = deletedAll;
+        await this.logServices.createLog(log)
 
-            /** CREATE LOG SAVE HISTORICAL */
-            log.db_table = this.TABLE_LOAD_HISTORY;
-            log.element = saved_historical[0];
-            await this.logServices.createLog(log);
+        /** CREATE LOG UPLOAD FILE */
+        log = new LogDto();
+        log.new_change = "create";
+        log.type = "create";
+        log.db_table = this.TABLE_DATA_UPLOAD;
+        log.created_by = session.id;
+        log.modified_by = session.id;
+        log.element = saved[0];
+        await this.logServices.createLog(log)
 
-            return response;
-        }).catch((err)=>{
-            return err;
-        })
-        return response
+        /** CREATE LOG SAVE HISTORICAL */
+        log.db_table = this.TABLE_LOAD_HISTORY;
+        log.element = saved_historical[0];
+        await this.logServices.createLog(log);
+
+        return response;
+        
     }    
 
     @Get("/lastupload")

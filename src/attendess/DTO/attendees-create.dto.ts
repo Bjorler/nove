@@ -1,6 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsEmail, IsNumber, IsNotEmpty, IsObject, IsBoolean, IsEnum, IsOptional } from 'class-validator';
 import { TypeOfInstitution } from './attedees-institution.dto';
+
+enum RegisterType{
+    EXCEL="excel",
+    INTERNET="internet",
+    REGISTERED="registered"
+}
 export class AttendeesCreateDto{
 
     @ApiProperty({
@@ -47,13 +53,17 @@ export class AttendeesCreateDto{
     email:string;
 
     @ApiProperty({
-        type:String,
-        example:"excel",
-        description:"indicates the place where the information was found"
+        //type:String,
+        enum:RegisterType,
+        example:RegisterType.EXCEL,
+        description:"indicates the place where the information was found",
+        
     })
-    @IsString()
-    @IsNotEmpty()
+    //@IsString()
+    //@IsNotEmpty()
+    @IsEnum(RegisterType,{message:"register_type must be a valid enum value [excel, internet, registered] "})
     register_type:string;
+
 
     @ApiProperty({
         type:String,
@@ -91,7 +101,9 @@ export class AttendeesCreateDto{
         enum:TypeOfInstitution,
         example:TypeOfInstitution.PRIVATE,
     })
-    @IsEnum(TypeOfInstitution)
+    @IsEnum(TypeOfInstitution,{
+        message:`typeOfInstitution must be a valid enum value [${TypeOfInstitution.PUBLIC}, ${TypeOfInstitution.PRIVATE}]`
+    })
     typeOfInstitution:string
 
     @ApiProperty({
@@ -119,6 +131,9 @@ export class AttendeesCreateDto{
     })
     @IsBoolean()
     authorization:boolean;
+
+
+    
     
 
 }

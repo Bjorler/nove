@@ -4,6 +4,7 @@ import { Controller, Post, Get, Put, Delete, Body, Query, Param, UseInterceptors
 import { FileInterceptor } from '@nestjs/platform-express';
 import {  ApiTags, ApiConsumes } from '@nestjs/swagger';
 import { diskStorage } from 'multer';
+import * as moment from 'moment';
 import * as path from 'path';
 import { EventsService } from './events.service';
 import { LogServices } from '../commons/services/log.service';
@@ -16,8 +17,10 @@ import { EventsDeleteDto } from './DTO/events-delete.dto';
 import { EventsDetailDto } from './DTO/events-detaildto';
 import { EventsInfoDto } from './DTO/events-info.dto';
 import { EventsUpdateDto } from './DTO/events-update-dto';
+import { EventsTodaysListDto } from './DTO/events-todayslist.dto';
 import { EventsCreationDecorator, EventsListDecorator, EventsDeleteDecorator,
-EventsTimeLineDecorator, EventsImageDecorator, EventsUpdateDecorator, EventsDetailDecorator
+EventsTimeLineDecorator, EventsImageDecorator, EventsUpdateDecorator, EventsDetailDecorator,
+EventsTodayListDecorator
 } from './decorators';
 import { METHOD, DOMAIN} from '../config';
 
@@ -144,7 +147,34 @@ export class EventsController {
         return events;
     }
 
-    
+    @Get('/todays-list')
+    @EventsTodayListDecorator()
+    async getTodaysList(){
+        const initial_date = moment().format("YYYY-MM-DD")
+        const final_date = moment().add(1,'d')
+        .format("YYYY-MM-DD")
+        const hour_init = moment().format("HH:00");
+        
+        const events = await this.eventService.getTodaysList(initial_date, final_date, hour_init);
+       
+        let result:EventsTodaysListDto[] = [];
+        for(let event of events){
+            let info = new EventsTodaysListDto();
+            info.id = event.id;
+            info.event_date = moment(event.event_date).format("DD-MM-YYYY");
+            info.event_name = event.name;
+            info.description = event.description;
+            info.display_time = `${moment(event.hour_init,"HH:mm").format("HH:mm")} - ${moment(event.hour_end,"HH:mm").format("HH:mm")} Hrs`;
+            info.hour_init = event.hour_init;
+            info.hour_end = event.hour_end;
+            info.download_img = `${METHOD}://${DOMAIN}/events/image/${event.id}`;
+            info.default_img = `${METHOD}://${DOMAIN}/events/image`;
+            info.ubication = event.address
+            result.push(info)
+        }
+
+        return result;
+    }
 
 
     @Get('/image/:id')

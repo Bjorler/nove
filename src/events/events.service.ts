@@ -176,4 +176,13 @@ export class EventsService {
         .andWhere({is_deleted:0})
         return events;
     }
+
+    async getTodaysList(init_date:string, final_date:string, hour_init:string){
+        const result = await this.knex.table(this.TABLE).where('event_date','>=', init_date)
+        .andWhere('event_date','<=', final_date).andWhere({is_deleted:0})
+        .andWhere('hour_init','>=', hour_init)
+        .orderBy("hour_init");
+        return result;
+    }
+
 }

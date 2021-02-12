@@ -5,3 +5,4 @@ export { EventsTimeLineDecorator } from './events-timeline.decorator';
 export { EventsImageDecorator } from './events-image.decorator';
 export { EventsUpdateDecorator } from './events-update.decorator';
 export { EventsDetailDecorator } from './events-detail.decorator';
+export { EventsTodayListDecorator } from './events-todaylist.decorator';

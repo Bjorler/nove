@@ -51,6 +51,9 @@ export class AttendessController {
         //if(!signature) throw new HttpException("The signature field is mandatory", 417)
         const eventExist = await this.eventService.findById(attendees.eventId);
         if(!eventExist.length) throw new HttpException("EVENT NOT FOUND",HttpStatus.NOT_FOUND);
+
+        const isAlreadyRegistered = await this.attendessService.isAlreadyRegistered(attendees.cedula, attendees.eventId);
+        if(isAlreadyRegistered.length) throw new HttpException("User already registered",HttpStatus.CONFLICT )
         
         let questions = {
             question1:attendees.question1,
@@ -315,6 +318,11 @@ export class AttendessController {
         
     }
 
+    @Get('/img-template')
+    async imgTemplate(@Response() res){
+        res.download(path.join(__dirname,'../../src/commons/html-templates/logodash.png'))
+    }
+
     @Get("/all/:eventId")
     @AttendeesAllPdfDecorator()
     async findAllPdfByEvent(@Param() eventId: AttendeesInfoDto, @Response() res){
@@ -380,8 +388,23 @@ export class AttendessController {
         if(!hasPDF) throw new HttpException("PDF NOT FOUND", HttpStatus.NOT_FOUND)
         await this.attendessService.signPdf(existAttendees[0].pdf_path, signature.path)
         await this.attendessService.setSinature(existAttendees[0].id, signature.path, session.id)
+        
+        const event = await this.eventService.findById(existAttendees[0].event_id)
+        
+        let email_template = await this.emailService.readTemplate(path.join(__dirname,'../../src/commons/html-templates/email-attendees.html'));
+        let event_time = `${moment(event[0].hour_init,"HH:mm").format("HH:mm")} - ${moment(event[0].hour_end,"HH:mm").format("HH:mm")} Hrs`;
+        let logo = `${METHOD}://${DOMAIN}/attendees/img-template`
+        
+        email_template = this.emailService.prepareTemplate([
+            {key:"event_name", value:event[0].name},
+            {key:"event_date", value:moment(event[0].event_date).format("YYYY-MM-DD")},
+            {key:"logo", value:`<img src="${logo}" style="width: 100%; height: 100px; ">`},
+            {key:"event_time", value:event_time},
+            {key:"event_location", value:event[0].address}
+        ],email_template);
         await this.emailService.sendEmail(`Registro de asistencia`,
-        existAttendees[0].email,{filename:"registro_asistencia.pdf",path:existAttendees[0].pdf_path})
+        existAttendees[0].email,{filename:"registro_asistencia.pdf",path:existAttendees[0].pdf_path}, email_template)
+        
         /** CREATE LOG */
         let log = new LogDto();
         log.new_change = "sign_pdf";
