@@ -26,13 +26,23 @@ export class AttendeesCreateDto{
 
     @ApiProperty({
         type:String,
-        example:"Jimena",
+        example:"Emilie",
         required:true
     })
     @IsString()
     @IsNotEmpty()
     name:string;
     
+    @ApiProperty({
+        type:String,
+        example:"Ruiz Espinosa",
+        required:true
+    })
+    @IsString()
+    @IsNotEmpty()
+    lastname:string;
+
+
 
     @ApiProperty({
         type:String,
@@ -96,6 +106,13 @@ export class AttendeesCreateDto{
     @IsBoolean()
     question2:boolean;
 
+    @ApiProperty({
+        type:Boolean,
+        example:true,
+        description:`Manifiesto con firma y fecha haber informado y en su caso, contar con autorización de mi superior para atender al Evento:`
+    })
+    @IsBoolean()
+    question3:boolean;
 
     @ApiProperty({
         enum:TypeOfInstitution,

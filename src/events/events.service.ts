@@ -182,6 +182,11 @@ export class EventsService {
         .andWhere('event_date','<=', final_date).andWhere({is_deleted:0})
         .andWhere('hour_init','>=', hour_init)
         .orderBy("hour_init");
+        let str = await this.knex.table(this.TABLE).where('event_date','>=', init_date)
+        .andWhere('event_date','<=', final_date).andWhere({is_deleted:0})
+        .andWhere('hour_init','>=', hour_init)
+        .orderBy("hour_init").toSQL().toNative()
+        console.log(str)
         return result;
     }
 

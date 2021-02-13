@@ -14,6 +14,7 @@ import {  LogDto } from '../commons/DTO';
 import { DatabaseCedulaDto } from './DTO/database-cedula.dto';
 import { DatabaseResponseByCedulaDto } from './DTO/database-responsebycedula.dto';
 import { DatabaseHistoricalDto } from './DTO/database-historical.dto';
+import { DatabaseUploadDto } from './DTO/database-upload.dto';
 import { DatabaseUploadDecorator, DataBaseLastUploadDecorator, DatabaseExcelDecorator,
 DatabaseHistoricalDecorator, DatabaseSearchDecorator
 } from './decorators';
@@ -61,41 +62,51 @@ export class DatabaseController {
 
         let excelReader = new ExcelReader();
         const rows = await excelReader.open(file.path);
-
-        const deleted = await this.databaseService.deleteHistorical(session);
-        const data = await this.databaseService.parseExcel(rows, session);
-        const saved = await this.databaseService.saveExcel(data);
-        let historial:DatabaseHistoricalDto = { file_name: file.originalname, file_path: file.path, created_by:session.id }
-        const deletedAll = await this.databaseService.deleteAll();    
-        const saved_historical = await this.databaseService.saveHistorical(historial);
-        const response = await this.databaseService.lastUpload();
         
-        /** CREATE LOG DELETE FILES */
-        let log = new LogDto();
-        log.new_change = "delete";
-        log.type = "delete";
-        log.db_table = this.TABLE_LOAD_HISTORY;
-        log.created_by = session.id;
-        log.modified_by = session.id;
-        log.element = deletedAll;
-        await this.logServices.createLog(log)
+        const deleted = await this.databaseService.deleteHistorical(session);
+        const { result:data, errors } = await this.databaseService.parseExcel(rows, session);
+        
+        const saved = await this.databaseService.saveExcel(data);
+        let res = new DatabaseUploadDto();
+        if(saved){
+            let historial:DatabaseHistoricalDto = { file_name: file.originalname, file_path: file.path, created_by:session.id }
+            const deletedAll = await this.databaseService.deleteAll();    
+            const saved_historical = await this.databaseService.saveHistorical(historial);
+            let response = await this.databaseService.lastUpload();
+            
+            /** CREATE LOG DELETE FILES */
+            let log = new LogDto();
+            log.new_change = "delete";
+            log.type = "delete";
+            log.db_table = this.TABLE_LOAD_HISTORY;
+            log.created_by = session.id;
+            log.modified_by = session.id;
+            log.element = deletedAll;
+            await this.logServices.createLog(log)
 
-        /** CREATE LOG UPLOAD FILE */
-        log = new LogDto();
-        log.new_change = "create";
-        log.type = "create";
-        log.db_table = this.TABLE_DATA_UPLOAD;
-        log.created_by = session.id;
-        log.modified_by = session.id;
-        log.element = saved[0];
-        await this.logServices.createLog(log)
+            /** CREATE LOG UPLOAD FILE */
+            log = new LogDto();
+            log.new_change = "create";
+            log.type = "create";
+            log.db_table = this.TABLE_DATA_UPLOAD;
+            log.created_by = session.id;
+            log.modified_by = session.id;
+            log.element = saved[0];
+            await this.logServices.createLog(log)
 
-        /** CREATE LOG SAVE HISTORICAL */
-        log.db_table = this.TABLE_LOAD_HISTORY;
-        log.element = saved_historical[0];
-        await this.logServices.createLog(log);
+            /** CREATE LOG SAVE HISTORICAL */
+            log.db_table = this.TABLE_LOAD_HISTORY;
+            log.element = saved_historical[0];
+            await this.logServices.createLog(log);
+            
+            res.response = response;
+            res.errors = errors;
+        }
+        if(!saved) throw new HttpException("Wrong file format checks the data.",420);
 
-        return response;
+        
+
+        return res;
         
     }    
 
@@ -132,22 +143,10 @@ export class DatabaseController {
         
         const id = parseInt(cedula.cedula);
         if(isNaN(id)) throw new HttpException("Internal server error", 500)
-        let info = [];
-        const excel = await this.databaseService.findByCedula(id);
-        if( !excel.length ){
-            const internet = await this.databaseService.getProfessionalLicense(id);
-            //@ts-ignore
-            if(internet.error != "notValid"  ) info = [Object.assign(internet,{cedula:cedula.cedula,register_type:"internet"})] 
-        }else{ info = [Object.assign(excel[0],{register_type:"excel"})]}
+        
         let response= new DatabaseResponseByCedulaDto()
-        if(info.length){
-            response.idengage = info[0].idengage;
-            response.cedula = info[0].cedula;
-            response.email = info[0].email;
-            response.name = info[0].name;
-            response.speciality = info[0].speciality;
-            response.register_type = info[0].register_type;
-        }
+        response = await this.databaseService.findDoctorByCedula(id)
+        
         return response;
     }
 }

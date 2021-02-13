@@ -20,3 +20,4 @@ export { UsersDeleteYourSelfErrorDto } from './users-deleteyourselferror.dto';
 export { UsersDeleteMasterDto } from './users-deletemaster.dto';
 export { DatabaseExcelErrorDto } from './database-excelerror.dto';
 export { AttendeesDuplicateDto } from './attendes-duplicate.dto';
+export { DatabaseFileErrorDto } from './database-fileerror.dto';

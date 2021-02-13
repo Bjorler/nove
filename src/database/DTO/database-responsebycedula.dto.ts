@@ -5,7 +5,18 @@ export class DatabaseResponseByCedulaDto{
         type:String,
         example:"ILSE ITZEL BAUTISTA CRUZ"
     })
-    name:string="";
+    complete_name:string="";
+
+    @ApiProperty({
+        type:String,
+        example:"ILSE ITZEL"
+    })
+    name:string;
+
+    @ApiProperty({
+        type:String,
+        example:"BAUTISTA CRUZ"
+    })
 
     @ApiProperty({
         type:String,

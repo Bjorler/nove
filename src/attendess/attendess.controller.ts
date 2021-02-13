@@ -58,6 +58,7 @@ export class AttendessController {
         let questions = {
             question1:attendees.question1,
             question2:attendees.question2,
+            question3: attendees.question3,
             typeOfInstitution: attendees.typeOfInstitution,
             institutionName: attendees.institutionName,
             nameAndTitle: attendees.nameAndTitle,
@@ -66,7 +67,9 @@ export class AttendessController {
         }
         let schema = Object.assign({},{ 
             cedula: attendees.cedula,
-            name: attendees.name,
+            name: `${attendees.name} ${attendees.lastname}`,
+            firstname: attendees.name,
+            lastname: attendees.lastname,
             speciality: attendees.speciality,
             email:attendees.email,
             created_by: session.id,
@@ -76,15 +79,13 @@ export class AttendessController {
             idengage: attendees.idengage,
             questions:JSON.stringify(questions) 
         });
+
+
         const newAttendees = await this.attendessService.create(schema);
         const increment = await this.eventService.incrementAttendees(attendees.eventId, session.id);
         const pdf = await this.attendessService.fillPDFFisrtPart(questions,attendees.name, eventExist);
         const updated = await this.attendessService.setPdf(newAttendees[0],pdf, session.id);
         
-
-        let response = new AttendeesCreateResponseDto();
-        response.id = newAttendees[0];
-        response.path = `${METHOD}://${DOMAIN}/attendees/contract/${newAttendees[0]}`
 
         /** CREATE LOG */
         let log = new LogDto();
@@ -104,6 +105,10 @@ export class AttendessController {
         log.created_by = session.id;
         log.modified_by = session.id;
         await this.logService.createLog(log);
+
+        let response = new AttendeesCreateResponseDto();
+        response.id = newAttendees[0];
+        response.path = `${METHOD}://${DOMAIN}/attendees/contract/${newAttendees[0]}`
 
         return response;
     }
@@ -358,7 +363,8 @@ export class AttendessController {
         const attendess = await this.attendessService.getById(id.id);
         if(!attendess.length) throw new  HttpException("PDF NOT FOUND", HttpStatus.NOT_FOUND)
         
-        res.download(attendess[0].pdf_path)
+        //res.download(attendess[0].pdf_path)
+        res.status(200).send({pdf:fs.readFileSync(attendess[0].pdf_path,{encoding:'base64'})})
     }
     
 

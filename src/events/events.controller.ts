@@ -156,7 +156,7 @@ export class EventsController {
         const hour_init = moment().format("HH:00");
         
         const events = await this.eventService.getTodaysList(initial_date, final_date, hour_init);
-       
+       console.log(events)
         let result:EventsTodaysListDto[] = [];
         for(let event of events){
             let info = new EventsTodaysListDto();

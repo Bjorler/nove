@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, HttpService } from '@nestjs/common';
 import * as puppeteer from 'puppeteer';
 import { InjectKnex, Knex } from 'nestjs-knex';
 import * as moment from 'moment';
@@ -7,48 +7,150 @@ import { DatabaseInfoDto } from './DTO/database-info.dto';
 import { DatabaseLastUploadDto } from './DTO/database-lastloading.dto';
 import { PORT, METHOD, DOMAIN } from '../config';
 
+import * as request from 'request';
+
 @Injectable()
 export class DatabaseService {
 
     private TABLE = "data_upload";
+    private SPECIALITIES = {
+      7654321:"Clínicas",
+      9999992:"Quirúrgicas",
+      1111999:"Médico-quirúrgicas"
+    }
 
     constructor(
-      @InjectKnex() private knex: Knex
+      @InjectKnex() private knex: Knex,
+      private httpService: HttpService
     ){}
 
+
+    getProfessionalLicense(license){
+      return new Promise(async (resolve,reject) => {
+        const browser = await puppeteer.launch({
+          headless: true,
+          args: ['--no-sandbox', '--disable-setuid-sandbox'],
+          devtools: false
+      });
+      let page = await browser.newPage();
+        await page.goto('https://cedula.buholegal.com/' + license + '/');
+        const existeClase = await page.$('#contenedormedio > div > div > div.container.mt-3')
+        
+        if(existeClase) {
+          const name_raw = await page.waitForXPath('//*[@id="contenedormedio"]/div/div/div[2]/div/div[2]/div/div/div/div[1]/h3');
+          const name= await page.evaluate(name_raw => name_raw.textContent, name_raw);
+          
+
+          const carrera_raw = await page.waitForXPath('//*[@id="contenedormedio"]/div/div/div[2]/div/div[2]/div/div/div/div[2]/div/div/div[1]/table/tbody/tr[2]/td[2]')
+          const carrera= await page.evaluate(carrera_raw => carrera_raw.textContent, carrera_raw);
+
+          const email_raw = await page.waitForXPath('//*[@id="contenedormedio"]/div/div/div[2]/div/div[2]/div/div/div/div[2]/div/div/div[2]/table/tbody/tr[2]/td[2]')
+          const email = await page.evaluate(email_raw => email_raw.textContent, email_raw);
+          
+          resolve({name, speciality:'', email, idengage:''});
+        } else {
+          resolve({error: "notValid"});
+        }
+      });
+    }  
+
+    private parseDataExcel(data, cedula){
+      data = data[0];
+      let info = [{
+        complete_name:data.name,
+        name:data.only_name,
+        lastname:data.lastname, 
+        speciality:data.speciality || data.speciality_2,
+        email:data.email, 
+        idengage:data.idengage,
+        cedula,
+        register_type:"excel"
+      }]
+      return info;
+    }
+
+    async  findDoctorByCedula(cedula:number){
+      
+      let info = [
+        {
+          complete_name:"",
+          name:"",
+          lastname:"", 
+          speciality:"",
+          email:"", 
+          idengage:"",
+          cedula:cedula,
+          register_type:""
+      }
+      ];
+      
+      const excel = await this.findByCedula(cedula);
+      if( !excel.length ){
+        let result = await this.getProfesionalLicensePrototype(cedula);
+       
+        if(result) info = [result];
+
+      }else{ 
+        info = this.parseDataExcel(excel, cedula);
+      }
+      return info[0];
+    }
+
     async findByCedula(cedula:number){
-      const cedulaExist = await this.knex.table(this.TABLE).where({cedula}).andWhere({is_deleted:0});
+      const cedulaExist = await this.knex.table(this.TABLE).where( (builder) => {
+        builder.where("cedula",'=', cedula).orWhere('cedula_2','=', cedula).orWhere('cedula_3','=', cedula);
+      })
+      .andWhere({is_deleted:0});
+      
       return cedulaExist;
     }
 
 
-    getProfessionalLicense(license){
-        return new Promise(async (resolve,reject) => {
-          const browser = await puppeteer.launch({
-            headless: true,
-            args: ['--no-sandbox', '--disable-setuid-sandbox'],
-            devtools: false
-        });
-        let page = await browser.newPage();
-          await page.goto('https://cedula.buholegal.com/' + license + '/');
-          const existeClase = await page.$('#contenedormedio > div > div > div.container.mt-3')
-          
-          if(existeClase) {
-            const name_raw = await page.waitForXPath('//*[@id="contenedormedio"]/div/div/div[2]/div/div[2]/div/div/div/div[1]/h3');
-            const name= await page.evaluate(name_raw => name_raw.textContent, name_raw);
-            
+  
+    async getProfesionalLicensePrototype(cedula:number){
+      let TOTAL_REQUEST = 3;
+      let result = undefined;
+      while(TOTAL_REQUEST > 0){
+        try{
+          result = await this.requestSep(cedula)
+        }catch(err){
+          console.log(err)
+        }
+        TOTAL_REQUEST--;
+      }
+      
+      if(result.items){
+        let data = result.items[0];
+        return {complete_name:`${data.nombre} ${data.paterno} ${data.materno}`,
+        name:data.nombre,
+        lastname:`${data.paterno} ${data.materno}`, 
+        speciality:'', email:'', idengage:'',
+        cedula:parseInt(data.idCedula),
+        register_type:"internet"
+        }
+      }
+      return result;
+    
+    }
 
-            const carrera_raw = await page.waitForXPath('//*[@id="contenedormedio"]/div/div/div[2]/div/div[2]/div/div/div/div[2]/div/div/div[1]/table/tbody/tr[2]/td[2]')
-            const carrera= await page.evaluate(carrera_raw => carrera_raw.textContent, carrera_raw);
-
-            const email_raw = await page.waitForXPath('//*[@id="contenedormedio"]/div/div/div[2]/div/div[2]/div/div/div/div[2]/div/div/div[2]/table/tbody/tr[2]/td[2]')
-            const email = await page.evaluate(email_raw => email_raw.textContent, email_raw);
-            
-            resolve({name, speciality:carrera, email, idengage:''});
-          } else {
-            resolve({error: "notValid"});
+    private requestSep(cedula:number){
+      return new Promise((resolve, reject) => {
+        let requestOptions = {
+          method: 'POST',
+          url: 'https://www.cedulaprofesional.sep.gob.mx/cedula/buscaCedulaJson.action',
+          headers: {
+            'content-type': 'multipart/form-data;boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW'
+          },
+          formData: {
+            json: '{"maxResult":"1000","nombre":"","paterno":"","materno":"","idCedula":"'+cedula+'"}'
           }
-        });
+        };
+  
+        request(requestOptions, (error, res, body) => {
+          if(error) return reject(error);
+          return resolve(JSON.parse(body));
+        })
+      })
     }
 
     async deleteHistorical(session){
@@ -61,25 +163,73 @@ export class DatabaseService {
       return save;
     }
 
+
+    private isEmpty(value){
+      return !value || !isNaN(value); 
+    }
+    private isNumber(value){
+      return !isNaN(value);
+    }
+    private isEmail(email) {
+      const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+      return re.test(String(email).toLowerCase());
+    }
+
     async parseExcel(excel, session){
       let isHeader = true;
-      let result = []
+      let result = [];
+      let errors = [];
       
+      const isBrandEmpty = this.isEmpty;
+      const isIdEngageEmpty = this.isEmpty;
+      const isNameEmpty = this.isEmpty;
+      const isLastNameEmpty = this.isEmpty;
+      const isCedulaNumber = this.isNumber;
+      const isEmail = this.isEmail;
+      const isEspecialityEmpty = this.isEmpty;
+      let count = 1
       for(let row of excel){
         if(!isHeader){
           let info = new DatabaseInfoDto();
-          info.idengage = row[0];
-          info.cedula = row[1];
-          info.name = row[2];
-          info.speciality = row[3];
-          info.email = row[4];
-          info.created_by = session.id;
-          info.brand = row[5];
-          result.push(info)
+          console.log(`${row[8]}  ${row[9]}`)
+          if( !isBrandEmpty(row[0]) && !isIdEngageEmpty(row[1]) && !isNameEmpty(row[2]) 
+          && !isLastNameEmpty(row[3])
+          && isCedulaNumber(row[4]) && isEmail(row[7]) && ( !isEspecialityEmpty(row[8]) || !isEspecialityEmpty(row[9]) ) ){
+            
+            info.idengage = row[1];
+            info.cedula = row[4];
+            if(row[5] && row[5] != '-' )info.cedula_2 = row[5];
+            if(row[6] && row[6] != '-' )info.cedula_3 = row[6];
+            info.name = `${row[2]} ${row[3]}`;
+            info.only_name = row[2];
+            info.lastname = row[3];
+            info.speciality = row[8];
+            if(!isEspecialityEmpty(row[9]))info.speciality_2 = row[9]
+            info.email = row[7];
+            info.created_by = session.id;
+            info.brand = row[0];
+            result.push(info)
+          }else{
+            let error = {
+              row:count,
+              "TherapyArea":row[0],
+              "IMSID":row[1],
+              "FirstName":row[2],
+              "LastName":row[3],
+              "LicenseNumber":row[4],
+              "SpecialtyLicense1":row[5],
+              "SpecialtyLicense2":row[6],
+              "EMail":row[7],
+              "Specialty":row[8],
+              "Specialty2":row[9]
+            }
+            errors.push(error);
+          }
         }else{ isHeader = false; }
+        count++;
       }
 
-      return result;
+      return {result, errors};
     }
 
     async findAll(){

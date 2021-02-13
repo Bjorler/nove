@@ -4,9 +4,10 @@ ApiUnauthorizedResponse, ApiForbiddenResponse, ApiInternalServerErrorResponse, A
 } from '@nestjs/swagger';
 import { ValidationPipe } from '../../commons/validations/validations.pipe';
 import { TokenGuard, MasterGuard } from '../../commons/guards';
-import { UnauthorizedDto, ForbiddenDto, InternalServerErrrorDto, DatabaseExcelErrorDto } from '../../commons/DTO';
+import { UnauthorizedDto, ForbiddenDto, InternalServerErrrorDto, DatabaseExcelErrorDto, DatabaseFileErrorDto } from '../../commons/DTO';
 import { DatabaseFileDto } from '../DTO/database-file.dto';
 import { DatabaseLastUploadDto } from '../DTO/database-lastloading.dto';
+import { DatabaseUploadDto } from '../DTO/database-upload.dto';
 
 export function DatabaseUploadDecorator(){
     return applyDecorators(
@@ -19,8 +20,9 @@ export function DatabaseUploadDecorator(){
         }),
         ApiConsumes('multipart/form-data'),
         ApiBody({type:DatabaseFileDto}),
+        ApiResponse({status:420, type:DatabaseFileErrorDto}),
         ApiResponse({status:418, type:DatabaseExcelErrorDto}),
-        ApiCreatedResponse({type:DatabaseLastUploadDto}),
+        ApiCreatedResponse({type:DatabaseUploadDto}),
         ApiUnauthorizedResponse({type:UnauthorizedDto}),
         ApiForbiddenResponse({type:ForbiddenDto}),
         ApiInternalServerErrorResponse({type:InternalServerErrrorDto}),  

@@ -16,7 +16,7 @@ export class GraphController {
         private attendeesService: AttendessService
     ){}
     @Get("/events")
-    @GraphEventsDecorator()
+    //@GraphEventsDecorator()
     async events(@Query() filter:GraphFilterDto){
         
         if(!filter.year) filter.year = `${new Date().getFullYear()}`

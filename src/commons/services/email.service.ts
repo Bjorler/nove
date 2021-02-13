@@ -2,6 +2,12 @@ import { Injectable } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 import * as fs from 'fs';
 import { USER_EMAIL, PASSWORD_EMAIL } from '../../config';
+
+interface StringParse{
+  key:string;
+  value:any;
+}
+
 @Injectable()
 export class EmailServices {
     
@@ -44,7 +50,7 @@ export class EmailServices {
       return await fs.readFileSync(path,{encoding:'utf8'});
     }
     
-    prepareTemplate(params, template:string){
+    prepareTemplate(params:StringParse[], template:string){
       for(let param of params){
         template = template.replace(`%${param.key}%`, param.value)
       }
