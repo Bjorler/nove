@@ -58,7 +58,7 @@ export class DatabaseService {
       data = data[0];
       let info = [{
         complete_name:data.name,
-        name:data.only_name,
+        name:data.firstname,
         lastname:data.lastname, 
         speciality:data.speciality || data.speciality_2,
         email:data.email, 
@@ -85,6 +85,7 @@ export class DatabaseService {
       ];
       
       const excel = await this.findByCedula(cedula);
+
       if( !excel.length ){
         let result = await this.getProfesionalLicensePrototype(cedula);
        
@@ -101,6 +102,7 @@ export class DatabaseService {
         builder.where("cedula",'=', cedula).orWhere('cedula_2','=', cedula).orWhere('cedula_3','=', cedula);
       })
       .andWhere({is_deleted:0});
+
       
       return cedulaExist;
     }
@@ -113,6 +115,8 @@ export class DatabaseService {
       while(TOTAL_REQUEST > 0){
         try{
           result = await this.requestSep(cedula)
+          
+          if(result.items) break;
         }catch(err){
           console.log(err)
         }
@@ -187,21 +191,23 @@ export class DatabaseService {
       const isCedulaNumber = this.isNumber;
       const isEmail = this.isEmail;
       const isEspecialityEmpty = this.isEmpty;
+      
       let count = 1
       for(let row of excel){
+
         if(!isHeader){
           let info = new DatabaseInfoDto();
-          console.log(`${row[8]}  ${row[9]}`)
           if( !isBrandEmpty(row[0]) && !isIdEngageEmpty(row[1]) && !isNameEmpty(row[2]) 
           && !isLastNameEmpty(row[3])
-          && isCedulaNumber(row[4]) && isEmail(row[7]) && ( !isEspecialityEmpty(row[8]) || !isEspecialityEmpty(row[9]) ) ){
+          && isCedulaNumber(row[4]) && isEmail(row[7]) && ( !isEspecialityEmpty(row[8]) 
+          || !isEspecialityEmpty(row[9]) ) ){
             
             info.idengage = row[1];
             info.cedula = row[4];
             if(row[5] && row[5] != '-' )info.cedula_2 = row[5];
             if(row[6] && row[6] != '-' )info.cedula_3 = row[6];
             info.name = `${row[2]} ${row[3]}`;
-            info.only_name = row[2];
+            info.firstname = row[2];
             info.lastname = row[3];
             info.speciality = row[8];
             if(!isEspecialityEmpty(row[9]))info.speciality_2 = row[9]
@@ -263,7 +269,7 @@ export class DatabaseService {
       if(last.length){
         result.id = last[0].id;
         result.file_name = last[0].file_name;
-        result.created_on = moment(last[0].created_on).format("DD-MM-YYYY");
+        result.created_on = moment(last[0].created_on).format("DD/MM/YYYY");
         result.download_file = `${METHOD}://${DOMAIN}/database/excel/`
       }
 

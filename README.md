@@ -43,4 +43,5 @@ npm run build
 
 # To see the Api's documentation please go to
 
-- http://localhost:4057/noveve-api/api
+- Local environment: http://localhost:4057/noveve-api/api
+- Development environment: https://pruebas4.springlabsdevs.net/noveve-api/api/

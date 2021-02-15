@@ -16,7 +16,7 @@ export class GraphController {
         private attendeesService: AttendessService
     ){}
     @Get("/events")
-    //@GraphEventsDecorator()
+    @GraphEventsDecorator()
     async events(@Query() filter:GraphFilterDto){
         
         if(!filter.year) filter.year = `${new Date().getFullYear()}`
@@ -55,9 +55,11 @@ export class GraphController {
         const attendees = await this.attendeesService.findByYear(filter.year);
         const groupBy = await this.graphService.groupBy(attendees, 'speciality');
         const format = await this.graphService.formatData(groupBy);
+        const years = await this.graphService.getYearsList('event_date')
         let response = new GraphPieResponse();
         response.items = format;
         response.total_elements = attendees.length;
+        response.years = years;
         return response;
     }
 

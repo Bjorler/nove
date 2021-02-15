@@ -62,11 +62,10 @@ export class DatabaseController {
 
         let excelReader = new ExcelReader();
         const rows = await excelReader.open(file.path);
-        
         const deleted = await this.databaseService.deleteHistorical(session);
         const { result:data, errors } = await this.databaseService.parseExcel(rows, session);
-        
         const saved = await this.databaseService.saveExcel(data);
+
         let res = new DatabaseUploadDto();
         if(saved){
             let historial:DatabaseHistoricalDto = { file_name: file.originalname, file_path: file.path, created_by:session.id }

@@ -9,6 +9,6 @@ export class DatabaseInfoDto{
     email:string;
     created_by:number;
     brand:string;
-    only_name?:string;
+    firstname?:string;
     lastname?:string
 }

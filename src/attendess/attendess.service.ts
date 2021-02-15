@@ -141,60 +141,7 @@ export class AttendessService {
         })
 
 
-        /*page.drawText("LISTA DE ASISTENCIA",{font:helvetica ,
-            x:WIDTH+25, y:HEIGHT+30, size:12, color:DARK_BLUE, 
-            rotate:ROTATION, width:192
-        });
         
-        page.drawLine({
-            start: { x: WIDTH+33, y: HEIGHT+220 },
-            end: { x: WIDTH+33, y:HEIGHT+25},
-            color: LIGHT_GRAY,
-            rotate:ROTATION
-        })    
-
-        page.drawText(DATE,{x:WIDTH+45, y: HEIGHT+30 , size: 10, maxWidth:400,
-            font:helvetica, color:AEA99F, rotate:ROTATION
-        })  
-
-        page.drawImage(embedLogo,{x:WIDTH+60, y: HEADER_Y , width:50, height:50, rotate:ROTATION})
-        
-        // NOMBRE DEL EVENTO 
-        page.drawText(EVENT_NAME,{ x:WIDTH+65, y:HEIGHT+30, size: 12, maxWidth:507,
-            font:helveticaBold, color: DARK_BLUE, rotate:ROTATION 
-        })
-
-        
-        
-        // TABLE HEADER 
-
-        page.drawText(ID,{ x:WIDTH+100, y:HEIGHT+50, rotate:ROTATION, color:AEA99F, size:12,
-            font:helveticaBold 
-        })
-        page.drawText(CEDULA,{ x:WIDTH+100, y:HEIGHT+100, rotate:ROTATION, color:AEA99F, size:12,
-            font:helveticaBold 
-        })
-        page.drawText(NAME,{ x:WIDTH+100, y:HEIGHT+220, rotate:ROTATION, color:AEA99F, size:12,
-            font:helveticaBold 
-        })
-        page.drawText(EMAIL,{ x:WIDTH+100, y:HEIGHT+420, rotate:ROTATION, color:AEA99F, size:12,
-            font:helveticaBold 
-        })
-        page.drawText(SPECIALITY,{ x:WIDTH+100, y:HEIGHT+580, rotate:ROTATION, color:AEA99F, size:12,
-            font:helveticaBold 
-        })
-        page.drawText(FIRMA,{ x:WIDTH+100, y:HEIGHT+730, rotate:ROTATION, color:AEA99F, size:12,
-            font:helveticaBold 
-        })
-
-        page.drawLine({
-            start: { x: WIDTH+105, y: HEIGHT+20 },
-            end: { x: WIDTH+105, y:height-40},
-            color: A858997,
-            rotate:ROTATION
-        }) */
-
-
         
 
         return pdfDoc;
@@ -329,7 +276,6 @@ export class AttendessService {
             }
         }
 
-        const RUTA = "./pdf/bundle.pdf";
         fs.writeFileSync(path, await pdfDoc.save());
     }
 

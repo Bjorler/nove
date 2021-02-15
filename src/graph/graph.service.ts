@@ -97,13 +97,13 @@ export class GraphService {
     }
 
     async groupBy(attendees, tag){
-        const groupBySpecialty = _.groupBy(attendees, (e)=> e[tag]);
+        const groupBySpecialty = _.groupBy(attendees, (e)=> e[tag].toLowerCase());
         return groupBySpecialty;
     }
 
     async getYearsList(attr_name){
         let result = []
-        let year = await this.knex.select(attr_name).table("events");
+        let year = await this.knex.select(attr_name).table("events").orderBy(attr_name,"desc");
         for(let item of year){
             result.push(moment(item[attr_name]).format("YYYY"))
         }
