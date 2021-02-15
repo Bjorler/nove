@@ -62,4 +62,16 @@ export class EventsInfoDto{
         example:"13:00"
     })
     hour_end:string; 
+
+    @ApiProperty({
+        type:String,
+        example:"05-06-2021"
+    })
+    display_date:string;
+
+    @ApiProperty({
+        type:String,
+        example:"12:00 - 13:00 Hrs"
+    })
+    display_time:string;
 }

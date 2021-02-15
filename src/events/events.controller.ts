@@ -143,6 +143,7 @@ export class EventsController {
     @Get("/timeline")
     @EventsTimeLineDecorator()
     async getTimeLine(){
+        
         const events = await this.eventService.futureEvents() 
         return events;
     }

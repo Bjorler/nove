@@ -44,21 +44,6 @@ export class EventsService {
 
     private async getQuery(filter:string, limit:number, offset:number, init_date:string, final_date:string){
         let events = []
-        /*events = await this.knex.table(this.TABLE).limit(limit).offset(offset)
-        .where((builder) => {
-            console.log({filter, init_date, final_date})
-            if(filter){
-                if(isNaN(parseInt(filter))){
-                    builder.where('name', 'like',`%${filter}%`)
-                    .orWhere('address', 'like', `%${filter}%`)
-                }else{
-                    builder.where('assistants', '=',parseInt(filter))
-                }
-            }
-            if(init_date && final_date){
-                builder.where("event_date",'>=', init_date).andWhere("event_date", '<=', final_date)
-            }
-        }).andWhere({is_deleted:0})*/
 
         events = await this.knex.table(this.TABLE).limit(limit).offset(offset)
         .where((builder) => {
@@ -138,8 +123,21 @@ export class EventsService {
     }
 
     async futureEvents(){
+        const hour_init = moment().format("HH:00");
+        /*const events = await this.knex.table(this.TABLE).where({is_deleted:0})
+        .andWhere('event_date','>', moment().format("YYYY-MM-DD")) 
+        .orderBy("event_date")*/
+        // Si se require regresar a que este servicio solo muestre los eventos futuros eliminar la query events y descomentar la query events
+
         const events = await this.knex.table(this.TABLE).where({is_deleted:0})
-        .andWhere('event_date','>', moment().format("YYYY-MM-DD")).orderBy("event_date").limit(50)
+        .andWhere(this.knex.raw("date_format(event_date,'%Y-%m-%d') > ? ",[moment().format("YYYY-MM-DD")]))
+        .orWhere((builder) => {
+            builder.where("hour_init", '>=', hour_init)
+            .andWhere(this.knex.raw("date_format(event_date,'%Y-%m-%d') = ?",[moment().format("YYYY-MM-DD")]))
+        })
+        .orderBy("event_date").orderBy('hour_init')
+        
+        
         const result = [];
         for( let event of events ){
             let info = new EventsInfoDto();
@@ -153,6 +151,8 @@ export class EventsService {
             info.event_date = event.event_date;
             info.hour_init = event.hour_init;
             info.hour_end = event.hour_end;
+            info.display_date = moment(event.event_date).format("MM-DD-YYYY")
+            info.display_time = `${moment(event.hour_init,"HH:mm").format("HH:mm")} - ${moment(event.hour_end,"HH:mm").format("HH:mm")} Hrs`
             result.push(info);
         }
         return result;
