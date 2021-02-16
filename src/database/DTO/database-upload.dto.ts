@@ -1,6 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { DatabaseLastUploadDto } from './database-lastloading.dto';
 
+class MessageError{
+    @ApiProperty({
+        type:String,
+        example:"Therapy Area must be not empty"
+    })
+    message:string;
+}
+
 class UploadErrorDto{
     @ApiProperty({
         type:Number,
@@ -68,6 +76,11 @@ class UploadErrorDto{
         example:"Internal medicine"
     })
     Specialty2:string;
+
+    @ApiProperty({
+        type:[MessageError]
+    })
+    errors: MessageError[]
 
 }
 
