@@ -135,6 +135,7 @@ export class DatabaseController {
         return historical;
     }
 
+    
 
     @Get("/:cedula")
     @DatabaseSearchDecorator()

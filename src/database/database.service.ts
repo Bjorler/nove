@@ -3,20 +3,21 @@ import * as puppeteer from 'puppeteer';
 import { InjectKnex, Knex } from 'nestjs-knex';
 import * as moment from 'moment';
 import * as _ from 'underscore';
+import * as FormData from 'form-data';
 import { DatabaseInfoDto } from './DTO/database-info.dto';
 import { DatabaseLastUploadDto } from './DTO/database-lastloading.dto';
-import { PORT, METHOD, DOMAIN } from '../config';
+import {  METHOD, DOMAIN } from '../config';
 
-import * as request from 'request';
+
 
 @Injectable()
 export class DatabaseService {
 
     private TABLE = "data_upload";
-    private SPECIALITIES = {
-      7654321:"Clínicas",
-      9999992:"Quirúrgicas",
-      1111999:"Médico-quirúrgicas"
+    private ENUMCEDULA = {
+      cedula_2:"speciality",
+      cedula_3: "speciality_2",
+      cedula:"Médico General"
     }
 
     constructor(
@@ -54,13 +55,27 @@ export class DatabaseService {
       });
     }  
 
+    private findSpeciality(data, cedula){
+      let speciality = "Médico General";
+      
+      for(let key in data){
+        if(key == 'cedula' || key == 'cedula_2' || key == 'cedula_3' ){
+          if( data[key] == cedula ){
+            speciality = data[this.ENUMCEDULA[key]] || this.ENUMCEDULA['cedula']
+          }
+        }
+      }
+      return speciality;
+    }
+
     private parseDataExcel(data, cedula){
       data = data[0];
+      
       let info = [{
         complete_name:data.name,
         name:data.firstname,
         lastname:data.lastname, 
-        speciality:data.speciality || data.speciality_2,
+        speciality:this.findSpeciality(data,cedula),
         email:data.email, 
         idengage:data.idengage,
         cedula,
@@ -69,7 +84,7 @@ export class DatabaseService {
       return info;
     }
 
-    async  findDoctorByCedula(cedula:number){
+    async findDoctorByCedula(cedula:number){
       
       let info = [
         {
@@ -85,10 +100,11 @@ export class DatabaseService {
       ];
       
       const excel = await this.findByCedula(cedula);
-
+      console.log(excel)
+      
       if( !excel.length ){
         let result = await this.getProfesionalLicensePrototype(cedula);
-       
+        
         if(result) info = [result];
 
       }else{ 
@@ -138,22 +154,19 @@ export class DatabaseService {
     }
 
     private requestSep(cedula:number){
+      
+
       return new Promise((resolve, reject) => {
-        let requestOptions = {
-          method: 'POST',
-          url: 'https://www.cedulaprofesional.sep.gob.mx/cedula/buscaCedulaJson.action',
-          headers: {
-            'content-type': 'multipart/form-data;boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW'
-          },
-          formData: {
-            json: '{"maxResult":"1000","nombre":"","paterno":"","materno":"","idCedula":"'+cedula+'"}'
-          }
-        };
-  
-        request(requestOptions, (error, res, body) => {
-          if(error) return reject(error);
-          return resolve(JSON.parse(body));
-        })
+        
+        let formData = new FormData();
+        formData.append("json",`{"maxResult":"1000","nombre":"","paterno":"","materno":"","idCedula":"${cedula}"}`)
+        
+        let header = formData.getHeaders()
+        
+        this.httpService.post('https://www.cedulaprofesional.sep.gob.mx/cedula/buscaCedulaJson.action',
+        formData,{headers:header,responseType:'arraybuffer'})
+        .toPromise().then(e => { resolve(JSON.parse(e.data.toString('latin1'))) })
+        .catch(err => reject(err)) 
       })
     }
 
@@ -178,12 +191,15 @@ export class DatabaseService {
       const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
       return re.test(String(email).toLowerCase());
     }
-
-    async parseExcel(excel, session){
-      let isHeader = true;
-      let result = [];
-      let errors = [];
+    private relationExist(dependence, dependent){
       
+      if( ( typeof dependence == 'number' ) == dependent )return true;
+      if( !( typeof dependence == 'number' ) == !dependent ) return true;
+
+      return false;
+    }
+
+    private excelValidations(row){
       const isBrandEmpty = this.isEmpty;
       const isIdEngageEmpty = this.isEmpty;
       const isNameEmpty = this.isEmpty;
@@ -191,16 +207,101 @@ export class DatabaseService {
       const isCedulaNumber = this.isNumber;
       const isEmail = this.isEmail;
       const isEspecialityEmpty = this.isEmpty;
-      
+      const isSpeciality1RelationExist = this.relationExist;
+      const isSpeciality2RelationExist = this.relationExist;
+      const LicenseNumber = row[4];
+      const SpecialtyLicense1 = row[5];
+      const SpecialtyLicense2 = row[6];
+      let result = { guard: true, errors:[] };
+
+      !isBrandEmpty(row[0]) && !isIdEngageEmpty(row[1]) && !isNameEmpty(row[2]) 
+      && !isLastNameEmpty(row[3])
+      && isCedulaNumber(row[4]) && isEmail(row[7]) && ( !isEspecialityEmpty(row[8]) 
+      || !isEspecialityEmpty(row[9]) ) &&
+      isSpeciality2RelationExist(row[6], row[9]) && isSpeciality1RelationExist(row[5], row[8])
+
+      if(isBrandEmpty(row[0])){
+        result.guard = false,
+        result.errors.push({
+          message: "Therapy Area must be not empty"
+        })
+      }
+      if(isIdEngageEmpty(row[1])){
+        result.guard = false;
+        result.errors.push({
+          message:"IMS ID must be not empty"
+        })
+      }
+      if(isNameEmpty(row[2])){
+        result.guard = false;
+        result.errors.push({
+          message:"First Name must be not empty"
+        })
+      }
+      if(isLastNameEmpty(row[3])){
+        result.guard = false;
+        result.errors.push({
+          message:"Last Name must be not empty"
+        })
+      }
+      if(!isEmail(row[7])){
+        result.guard = false;
+        result.errors.push({
+          message:"E-Mail must an email"
+        })
+      }
+      if(!isSpeciality1RelationExist(row[5], row[8])){
+        result.guard = false;
+        result.errors.push({
+          message:"The Specialty License 1 field and the Specialty field are dependent"
+        })
+      }
+      if(!isSpeciality2RelationExist(row[6], row[9])){
+        result.guard = false;
+        result.errors.push({
+          message:"The Specialty License 2 field and the Specialty 2 field are dependent"
+        })
+      }
+      if(!( typeof LicenseNumber == 'number' ) && !( typeof SpecialtyLicense1 == 'number' ) && !( typeof SpecialtyLicense2 == 'number' ) ){
+        result.guard = false;
+        result.errors.push({
+          message:"Please enter at least one of the following fields License Number, Specialty License 1, Specialty License 2"
+        })
+      }
+      if( typeof LicenseNumber == 'string' && LicenseNumber != '-'  ){
+        result.guard = false;
+        result.errors.push({
+          message:"License Number must be a number"
+        })
+      }
+      if( typeof SpecialtyLicense1 == 'string' && SpecialtyLicense1 != '-' ){
+        result.guard = false;
+        result.errors.push({
+          message:"Specialty License 1 must be a number"
+        })
+      }
+      if( typeof SpecialtyLicense2 == 'string' && SpecialtyLicense2 != '-' ){
+        result.guard = false;
+        result.errors.push({
+          message:"Specialty License 2 must be a number"
+        })
+      }
+      return result;
+    }
+
+    async parseExcel(excel, session){
+      let isHeader = true;
+      let result = [];
+      let errors = [];
       let count = 1
+      const isEspecialityEmpty = this.isEmpty;
       for(let row of excel){
 
         if(!isHeader){
           let info = new DatabaseInfoDto();
-          if( !isBrandEmpty(row[0]) && !isIdEngageEmpty(row[1]) && !isNameEmpty(row[2]) 
-          && !isLastNameEmpty(row[3])
-          && isCedulaNumber(row[4]) && isEmail(row[7]) && ( !isEspecialityEmpty(row[8]) 
-          || !isEspecialityEmpty(row[9]) ) ){
+          let validations = this.excelValidations(row);
+          
+          if( validations.guard ){
             
             info.idengage = row[1];
             info.cedula = row[4];
@@ -227,7 +328,8 @@ export class DatabaseService {
               "SpecialtyLicense2":row[6],
               "EMail":row[7],
               "Specialty":row[8],
-              "Specialty2":row[9]
+              "Specialty2":row[9],
+              errors: validations.errors
             }
             errors.push(error);
           }

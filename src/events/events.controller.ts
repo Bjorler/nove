@@ -54,13 +54,14 @@ export class EventsController {
     }))
     async create(@UploadedFile() image,@Body() event: EventsCreateDto, @User()session ){
         
-
         if(event.event_date){
             const date = new Date(event.event_date).getTime();
             const curreentDate = new Date().getTime()
             if(date < curreentDate) throw new HttpException("You cannot schedule an event on past dates.",414)
         }
-
+        if(moment(event.hour_init,"HH:mm").isAfter(moment(event.hour_end,"HH:mm")) || moment(event.hour_init,"HH:mm").isSame(moment(event.hour_end,"HH:mm")) ){
+            throw new HttpException("You cannot schedule events with a start time equal to the end time, not an end time less than the start time",414)
+        }
 
         let image_name = "", path = ""
         let schema = Object.assign({}, event,{
