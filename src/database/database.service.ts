@@ -95,7 +95,7 @@ export class DatabaseService {
           email:"", 
           idengage:"",
           cedula:cedula,
-          register_type:""
+          register_type:"registered"
       }
       ];
       
@@ -138,8 +138,7 @@ export class DatabaseService {
         }
         TOTAL_REQUEST--;
       }
-      
-      if(result.items){
+      if(result.items && result.items.length ){
         let data = result.items[0];
         return {complete_name:`${data.nombre} ${data.paterno} ${data.materno}`,
         name:data.nombre,
@@ -148,7 +147,7 @@ export class DatabaseService {
         cedula:parseInt(data.idCedula),
         register_type:"internet"
         }
-      }
+      }else{ result = undefined }
       return result;
     
     }
@@ -214,11 +213,6 @@ export class DatabaseService {
       const SpecialtyLicense2 = row[6];
       let result = { guard: true, errors:[] };
 
-      !isBrandEmpty(row[0]) && !isIdEngageEmpty(row[1]) && !isNameEmpty(row[2]) 
-      && !isLastNameEmpty(row[3])
-      && isCedulaNumber(row[4]) && isEmail(row[7]) && ( !isEspecialityEmpty(row[8]) 
-      || !isEspecialityEmpty(row[9]) ) &&
-      isSpeciality2RelationExist(row[6], row[9]) && isSpeciality1RelationExist(row[5], row[8])
 
       if(isBrandEmpty(row[0])){
         result.guard = false,
@@ -262,6 +256,14 @@ export class DatabaseService {
           message:"The Specialty License 2 field and the Specialty 2 field are dependent"
         })
       }
+
+      if(!( typeof LicenseNumber == 'number' )){
+        result.guard = false;
+        result.errors.push({
+          message:"License Number must be not empty"
+        })
+      }
+
       if(!( typeof LicenseNumber == 'number' ) && !( typeof SpecialtyLicense1 == 'number' ) && !( typeof SpecialtyLicense2 == 'number' ) ){
         result.guard = false;
         result.errors.push({
