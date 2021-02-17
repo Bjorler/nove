@@ -32,7 +32,7 @@ export class AuthenticateService {
     }
 
     generateJWT(payload){
-        return this.jwt.sign(payload)
+        return this.jwt.sign(payload,{expiresIn:'8h'})
     }
 
     async lastLogin(userId:number){

@@ -22,7 +22,7 @@ import { EventsCreationDecorator, EventsListDecorator, EventsDeleteDecorator,
 EventsTimeLineDecorator, EventsImageDecorator, EventsUpdateDecorator, EventsDetailDecorator,
 EventsTodayListDecorator
 } from './decorators';
-import { METHOD, DOMAIN} from '../config';
+import { METHOD, DOMAIN, STATICS_EVENTS } from '../config';
 
 
 @ApiTags("Events")
@@ -39,7 +39,7 @@ export class EventsController {
     @EventsCreationDecorator()
     @UseInterceptors(FileInterceptor("image",{
         storage:diskStorage({
-            destination:path.join(__dirname,'../images'),//Si esta ruta presenta agun error remplazarla por ./images
+            destination:path.join(__dirname,STATICS_EVENTS),//Si esta ruta presenta agun error remplazarla por ./images
             filename: (req, file, callback)=>{
                 const name = new Date().getTime()
                 callback(null, `${name}_${file.originalname}`)
@@ -53,13 +53,24 @@ export class EventsController {
         }
     }))
     async create(@UploadedFile() image,@Body() event: EventsCreateDto, @User()session ){
-        
+        const EVENT_DATE_IS_BEFORE_CURRENT_DATE = moment(event.event_date).isBefore(moment(moment().format("YYYY-MM-DD")))
+        const EVENT_DATE_IS_SAME_CURRENT_DATE = moment(event.event_date).isSame(moment(moment().format("YYYY-MM-DD")))   
         if(event.event_date){
-            const date = new Date(event.event_date).getTime();
-            const curreentDate = new Date().getTime()
-            if(date < curreentDate) throw new HttpException("You cannot schedule an event on past dates.",414)
+            if(EVENT_DATE_IS_BEFORE_CURRENT_DATE) {
+                this.eventService.deleteImage(image.path)
+                throw new HttpException("You cannot schedule an event on past dates.",414)
+            }    
         }
-        if(moment(event.hour_init,"HH:mm").isAfter(moment(event.hour_end,"HH:mm")) || moment(event.hour_init,"HH:mm").isSame(moment(event.hour_end,"HH:mm")) ){
+        const IS_HOUR_END_BEFORE_CURRENTTIME = moment(event.hour_end,"HH:mm").isBefore(moment(moment().format("HH:mm"),"HH:mm"))
+        const IS_HOUR_INIT_BEFORE_HOUR_END = moment(event.hour_init,"HH:mm").isAfter(moment(event.hour_end,"HH:mm"))
+        const IS_HOUR_INIT_THE_SAME_AS_HOUR_END = moment(event.hour_init,"HH:mm").isSame(moment(event.hour_end,"HH:mm"))  
+        if( IS_HOUR_INIT_BEFORE_HOUR_END || IS_HOUR_INIT_THE_SAME_AS_HOUR_END 
+        ){
+            this.eventService.deleteImage(image.path)
+            throw new HttpException("You cannot schedule events with a start time equal to the end time, not an end time less than the start time",414)
+        }
+        if(EVENT_DATE_IS_SAME_CURRENT_DATE && IS_HOUR_END_BEFORE_CURRENTTIME){
+            this.eventService.deleteImage(image.path)
             throw new HttpException("You cannot schedule events with a start time equal to the end time, not an end time less than the start time",414)
         }
 
@@ -201,7 +212,7 @@ export class EventsController {
     @EventsUpdateDecorator()
     @UseInterceptors(FileInterceptor("image",{
         storage:diskStorage({
-            destination:path.join(__dirname,'../images'),//Si esta ruta presenta agun error remplazarla por ./images
+            destination:path.join(__dirname,STATICS_EVENTS),//Si esta ruta presenta agun error remplazarla por ./images
             filename: (req, file, callback)=>{
                 const name = new Date().getTime()
                 callback(null, `${name}_${file.originalname}`)

@@ -21,14 +21,12 @@ import { UserResponseDto } from './DTO/user-response.dto';
 import { UserCreationDecorator, UserListDecorato, UserDetailDecorator,
     UserUpdateDecorator, UserDeleteDecorator
  } from './decorators'
-import { METHOD, DOMAIN} from '../config';
+import { METHOD, DOMAIN, STATICS_URL } from '../config';
 
-import { ApiImplicitFormData } from './DTO/test.dto';
 
 @ApiTags("Users")
 @Controller('users')
 export class UsersController {
-
     constructor(
         private userService: UsersService,
         private logService: LogServices
@@ -39,7 +37,7 @@ export class UsersController {
     @UserCreationDecorator()
     @UseInterceptors(FileInterceptor("avatar",{
         storage:diskStorage({
-            destination:path.join(__dirname,'../images'),//Si esta ruta presenta agun error remplazarla por ./images
+            destination:path.join(__dirname,STATICS_URL),//Si esta ruta presenta agun error remplazarla por ./images
             filename: (req, file, callback)=>{
                 const name = new Date().getTime()
                 callback(null, `${name}_${file.originalname}`)
@@ -142,7 +140,7 @@ export class UsersController {
     @ApiConsumes('multipart/form-data')
     @UseInterceptors(FileInterceptor("avatar",{
         storage:diskStorage({
-            destination:path.join(__dirname,'../images'),//Si esta ruta presenta agun error remplazarla por ./images
+            destination:path.join(__dirname,STATICS_URL),//Si esta ruta presenta agun error remplazarla por ./images
             filename: (req, file, callback)=>{
                 console.log("1")
                 const name = new Date().getTime()
@@ -168,7 +166,9 @@ export class UsersController {
 
         if( user.email  ){
             const emailExit = await this.userService.findByEmail(user.email);
-            if(emailExit.length && ( user.userId != emailExit[0]['id'] ) ) throw new HttpException("Email already exist", 410)
+            const isEmailOwner = emailExit.find( e  => e.id == user.userId);
+            
+            if(emailExit.length && !isEmailOwner /*( user.userId != emailExit[0]['id'] )*/ ) throw new HttpException("Email already exist", 410)
         }
 
 
@@ -181,7 +181,8 @@ export class UsersController {
              * Esta validación se efectua en caso de que el usuario ya este dos veces registrado con diferente rol
              * Asi evitamos que cambie sus dos usuarios al mismo rol
              */
-            if(emailExit.length == 2){
+            const MAX_ROLE_ALLOWED = 2;
+            if(emailExit.length == MAX_ROLE_ALLOWED){
                 const validateUser = emailExit.find( e => e.id == user.userId)
                 if( RolesDto[user.role] != validateUser.role_id ) throw new HttpException("Your user already has 2 roles",411)
             }
@@ -212,11 +213,27 @@ export class UsersController {
         delete schema.userId;
         delete schema.role
         if (avatar){  
+            await this.userService.deletePreviousAvatar(user.userId);
             schema = Object.assign(schema,{
             avatar: avatar_name,
             path:path
         })}
         const updated = await this.userService.update(user.userId, schema);
+        /** PREPARE RESPONSE */
+        const user_updated = await this.userService.findById(user.userId);
+        let userDetail = new UserDetailDto();
+        userDetail.download_img = `${METHOD}://${DOMAIN}/users/image/${user_updated[0].id}`;
+        userDetail.default_img =  `${METHOD}://${DOMAIN}/users/image`;
+        userDetail.avatar = user_updated[0].avatar;
+        userDetail.name = user_updated[0].name;
+        userDetail.apellido_paterno = user_updated[0].apellido_paterno;
+        userDetail.apellido_materno = user_updated[0].apellido_materno;
+        userDetail.email = user_updated[0].email;
+        userDetail.password_length = user_updated[0].password_length;
+        userDetail.role = RolesDto[user_updated[0].role_id].toLowerCase()
+        userDetail.role = userDetail.role.replace(userDetail.role[0] ,userDetail.role.substr(0,1).toUpperCase())
+        userDetail.role_id = user_updated[0].role_id
+        userDetail.id = user_updated[0].id;
         
         /** CREATE LOG */
         let log = new LogDto();
@@ -227,7 +244,7 @@ export class UsersController {
         log.created_by = session.id;
         log.modified_by = session.id;
         await this.logService.createLog(log);
-        return user
+        return userDetail;
     }
 
 

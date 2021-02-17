@@ -8,6 +8,7 @@ import { ErrorDto, InternalServerErrrorDto, UnauthorizedDto, ForbiddenDto, NotFo
         ImageErrorDto, EmailErrorDto, RoleRepatErrorDto, PasswordRepatErrorDto
 } from '../../commons/DTO';
 import { UpdateUserDto } from '../DTO/updateuser.dto';
+import { UserDetailDto } from '../DTO/user-detail.dto';
 
 
 export function UserUpdateDecorator(){
@@ -28,7 +29,7 @@ export function UserUpdateDecorator(){
         ApiResponse({status:410, type:EmailErrorDto}),
         ApiResponse({status:411, type:RoleRepatErrorDto}),
         ApiResponse({status:412, type: PasswordRepatErrorDto}),
-        ApiResponse({status:200, type:UpdateUserDto, description:"The example is assuming that all the parameters are sent, in case of not sending all it would only return the sent ones."}),
+        ApiResponse({status:200, type:UserDetailDto}),
         UsePipes(new ValidationPipe),
         UseGuards(TokenGuard, MasterGuard)
     

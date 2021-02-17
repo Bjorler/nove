@@ -12,3 +12,7 @@ export const KEY_FILE = "/home/springlabs/certificados/springlabsdevs.net.key";
 export const CERT_FILE = "/home/springlabs/certificados/springlabsdevs.net.trust.cer";
 export const IS_DEVELOPMENT = true;
 export const API_PREFIX = "noveve-api"
+export const STATICS_URL = "../images"//"../../statics/users" //RUTA PARA GUARDAR LAS IMÁGENES DE USUARIOS
+export const STATICS_EVENTS = "../images"//"../../statics/events" // RUTA PARA GUARDAR LOAS IMÁGENES DE LOS EVENTOS
+export const STATICS_SIGNATURES = "../signatures" //"../../statics/signatures"
+export const STATICS_EXCEL = "../excel" //"../../statics/excel"

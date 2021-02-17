@@ -18,7 +18,7 @@ export class TokenGuard implements CanActivate{
         //@ts-ignore
         const user = await this.knex.table("users").where({id:decode.id})
         if(!user.length) throw new HttpException("Invalid token", HttpStatus.UNAUTHORIZED);
-
+        if(user[0]['is_deleted'] == 1) throw new HttpException("Invalid token", HttpStatus.UNAUTHORIZED);
         
         req.user = decode;
         

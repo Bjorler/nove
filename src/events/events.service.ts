@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectKnex, Knex } from 'nestjs-knex';
 import * as moment from 'moment';
+import * as fs from 'fs';
 import { AttendessService } from '../attendess/attendess.service';
 import { EventsResponse } from './DTO/events-response.dto';
 import { EventsPaginationDto } from './DTO/events-pagination.dto';
@@ -186,4 +187,10 @@ export class EventsService {
         return result;
     }
 
+    async deleteImage(path:string){
+        const existFile = fs.existsSync(path);
+        if(existFile && path ){
+            fs.unlinkSync(path)
+        }
+    }
 }

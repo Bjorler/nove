@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectKnex, Knex } from 'nestjs-knex';
 import * as bcrypt from 'bcrypt';
+import * as fs from 'fs';
 import { UsersDto } from './DTO/users.dto';
 import { METHOD, DOMAIN, PORT } from '../config';
 
@@ -82,5 +83,22 @@ export class UsersService {
         const deleted = await this.knex.table('users').update({is_deleted:1})
         .where({id:user_id});
         return deleted ;
+    }
+
+    async deletePreviousAvatar(userId:number):Promise<boolean>{
+        let result = false;
+        let userExist = await this.findById(userId);
+        if(!userExist.length) return false;
+        if(userExist.length && !userExist[0]['path']) return false;
+
+        let path = userExist[0]['path'];
+        let fileExist = fs.existsSync(path);
+        if(fileExist){
+            let deleted = fs.unlinkSync(path);
+            
+            result = true;
+        }
+
+        return result;
     }
 }

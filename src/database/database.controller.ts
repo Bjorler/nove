@@ -18,7 +18,7 @@ import { DatabaseUploadDto } from './DTO/database-upload.dto';
 import { DatabaseUploadDecorator, DataBaseLastUploadDecorator, DatabaseExcelDecorator,
 DatabaseHistoricalDecorator, DatabaseSearchDecorator
 } from './decorators';
-
+import { STATICS_EXCEL } from '../config';
 
 
 @ApiTags("Database Upload")
@@ -36,12 +36,12 @@ export class DatabaseController {
     @DatabaseUploadDecorator()
     @UseInterceptors(FileInterceptor('file',{
         storage:diskStorage({
-            destination:path.join(__dirname,'../excel'),//Si esta ruta presenta agun error remplazarla por ./images
+            destination:path.join(__dirname,STATICS_EXCEL),//Si esta ruta presenta agun error remplazarla por ./images
             filename: async (req, file, callback)=>{
-                fs.readdir(path.join(__dirname,'../excel'),(err, info)=>{
+                fs.readdir(path.join(__dirname,STATICS_EXCEL),(err, info)=>{
                     
                     for(let file of info){
-                        fs.unlinkSync(path.join(__dirname,'../excel/',file))
+                        fs.unlinkSync(path.join(__dirname,STATICS_EXCEL,file))
                     }
                     const name = new Date().getTime()
                     callback(null, `${name}_${file.originalname}`)

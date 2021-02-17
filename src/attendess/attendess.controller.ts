@@ -27,7 +27,7 @@ AttendeesAllPdfDecorator, AttendeesContractDecorator, AttendeesSignDecorator, At
 AttendeesDetailDecorator, AttendeesEventsDecorator
 } from './decorators';
 
-import {  METHOD, DOMAIN  } from '../config';
+import {  METHOD, DOMAIN, STATICS_SIGNATURES  } from '../config';
 
 
 @ApiTags("Attendees")
@@ -372,7 +372,7 @@ export class AttendessController {
     @AttendeesSignDecorator()
     @UseInterceptors(FileInterceptor("signature",{
         storage:diskStorage({
-            destination:path.join(__dirname,'../signatures'),//Si esta ruta presenta agun error remplazarla por ./images
+            destination:path.join(__dirname,STATICS_SIGNATURES),//Si esta ruta presenta agun error remplazarla por ./images
             filename: (req, file, callback)=>{
                 const name = new Date().getTime()
                 callback(null, `${name}_${file.originalname}`)

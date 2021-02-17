@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsNumber, IsDate, MinLength } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, IsDate, MinLength, Matches } from 'class-validator';
 
 export class EventsCreateDto{
 
@@ -8,6 +8,7 @@ export class EventsCreateDto{
         example:"Avances Tecnologicos de genética humana",
         required:true
     })
+    @Matches(/^[A-Z áéíóúñ]+$/i,{message:"name must not contain numbers"})
     @IsString()
     @IsNotEmpty()
     name:string;
