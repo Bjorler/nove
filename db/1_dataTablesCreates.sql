@@ -1,9 +1,67 @@
+-- --------------------------------------------------------
+-- Host:                         127.0.0.1
+-- Versión del servidor:         5.7.28-log - MySQL Community Server (GPL)
+-- SO del servidor:              Win64
+-- HeidiSQL Versión:             11.1.0.6116
+-- --------------------------------------------------------
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET NAMES utf8 */;
+/*!50503 SET NAMES utf8mb4 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 
 -- Volcando estructura de base de datos para noveve
 DROP DATABASE IF EXISTS `noveve`;
 CREATE DATABASE IF NOT EXISTS `noveve` /*!40100 DEFAULT CHARACTER SET latin1 */;
 USE `noveve`;
+
+-- Volcando estructura para tabla noveve.role
+CREATE TABLE IF NOT EXISTS `role` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(100) NOT NULL,
+  `permissions` text NOT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `is_deleted` tinyint(1) NOT NULL DEFAULT '0',
+  `created_on` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `created_by` int(11) NOT NULL,
+  `modified_on` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `modified_by` int(11) NOT NULL,
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
+
+-- La exportación de datos fue deseleccionada.
+
+-- Volcando estructura para tabla noveve.users
+CREATE TABLE IF NOT EXISTS `users` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `role_id` int(11) NOT NULL,
+  `apellido_materno` varchar(100) NOT NULL,
+  `apellido_paterno` varchar(100) NOT NULL,
+  `name` varchar(30) NOT NULL,
+  `email` varchar(100) NOT NULL,
+  `password` varchar(150) NOT NULL,
+  `salt` varchar(20) NOT NULL,
+  `avatar` varchar(250) NOT NULL,
+  `path` varchar(250) NOT NULL,
+  `lastlogin` timestamp NULL DEFAULT NULL,
+  `password_length` tinyint(4) DEFAULT '0',
+  `is_active` tinyint(1) NOT NULL DEFAULT '0',
+  `is_deleted` tinyint(1) NOT NULL DEFAULT '0',
+  `created_on` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `created_by` int(11) NOT NULL,
+  `modified_on` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `modified_by` int(11) NOT NULL,
+  PRIMARY KEY (`id`) USING BTREE,
+  KEY `role_id` (`role_id`) USING BTREE,
+  CONSTRAINT `FK_users_role` FOREIGN KEY (`role_id`) REFERENCES `role` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=63 DEFAULT CHARSET=utf8;
+
+-- La exportación de datos fue deseleccionada.
+
+
 
 -- Volcando estructura para tabla noveve.events
 CREATE TABLE IF NOT EXISTS `events` (
@@ -24,7 +82,7 @@ CREATE TABLE IF NOT EXISTS `events` (
   `modified_on` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `modified_by` tinyint(4) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=287 DEFAULT CHARSET=latin1;
 
 -- La exportación de datos fue deseleccionada.
 
@@ -52,7 +110,7 @@ CREATE TABLE IF NOT EXISTS `attendees` (
   PRIMARY KEY (`id`),
   KEY `FK_attendees_events` (`event_id`),
   CONSTRAINT `FK_attendees_events` FOREIGN KEY (`event_id`) REFERENCES `events` (`id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=119 DEFAULT CHARSET=latin1;
 
 -- La exportación de datos fue deseleccionada.
 
@@ -66,7 +124,7 @@ CREATE TABLE IF NOT EXISTS `data_upload` (
   `name` varchar(250) NOT NULL,
   `firstname` varchar(250) NOT NULL DEFAULT '',
   `lastname` varchar(250) NOT NULL DEFAULT '',
-  `speciality` varchar(250) NOT NULL,
+  `speciality` varchar(250) DEFAULT '',
   `speciality_2` varchar(250) DEFAULT '',
   `email` varchar(250) NOT NULL,
   `is_active` tinyint(4) NOT NULL DEFAULT '0',
@@ -77,7 +135,7 @@ CREATE TABLE IF NOT EXISTS `data_upload` (
   `modified_by` tinyint(4) NOT NULL DEFAULT '0',
   `brand` varchar(100) DEFAULT '',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=329 DEFAULT CHARSET=latin1;
 
 -- La exportación de datos fue deseleccionada.
 
@@ -95,7 +153,7 @@ CREATE TABLE IF NOT EXISTS `load_history` (
   `modified_on` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `modified_by` tinyint(4) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=47 DEFAULT CHARSET=latin1;
 
 -- La exportación de datos fue deseleccionada.
 
@@ -112,50 +170,13 @@ CREATE TABLE IF NOT EXISTS `login_and_modifications` (
   `modified_on` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `modified_by` int(11) NOT NULL,
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=426 DEFAULT CHARSET=utf8;
 
 -- La exportación de datos fue deseleccionada.
 
--- Volcando estructura para tabla noveve.role
-CREATE TABLE IF NOT EXISTS `role` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `name` varchar(100) NOT NULL,
-  `permissions` text NOT NULL,
-  `is_active` tinyint(1) NOT NULL DEFAULT '1',
-  `is_deleted` tinyint(1) NOT NULL DEFAULT '0',
-  `created_on` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `created_by` int(11) NOT NULL,
-  `modified_on` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `modified_by` int(11) NOT NULL,
-  PRIMARY KEY (`id`) USING BTREE
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 
--- La exportación de datos fue deseleccionada.
 
--- Volcando estructura para tabla noveve.users
-CREATE TABLE IF NOT EXISTS `users` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `role_id` int(11) NOT NULL,
-  `apellido_materno` varchar(100) NOT NULL,
-  `apellido_paterno` varchar(100) NOT NULL,
-  `name` varchar(30) NOT NULL,
-  `email` varchar(100) NOT NULL,
-  `password` varchar(150) NOT NULL,
-  `salt` varchar(20) NOT NULL,
-  `avatar` varchar(250) NOT NULL,
-  `path` varchar(250) NOT NULL,
-  `lastlogin` timestamp NULL DEFAULT NULL,
-  `password_length` tinyint(4) DEFAULT '0',
-  `is_active` tinyint(1) NOT NULL DEFAULT '0',
-  `is_deleted` tinyint(1) NOT NULL DEFAULT '0',
-  `created_on` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `created_by` int(11) NOT NULL,
-  `modified_on` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `modified_by` int(11) NOT NULL,
-  PRIMARY KEY (`id`) USING BTREE,
-  KEY `role_id` (`role_id`) USING BTREE,
-  CONSTRAINT `FK_users_role` FOREIGN KEY (`role_id`) REFERENCES `role` (`id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
-
--- La exportación de datos fue deseleccionada.
-
+/*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
+/*!40014 SET FOREIGN_KEY_CHECKS=IF(@OLD_FOREIGN_KEY_CHECKS IS NULL, 1, @OLD_FOREIGN_KEY_CHECKS) */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;

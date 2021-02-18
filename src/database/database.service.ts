@@ -217,75 +217,87 @@ export class DatabaseService {
       if(isBrandEmpty(row[0])){
         result.guard = false,
         result.errors.push({
-          message: "Therapy Area must be not empty"
+          message: "Therapy Area must be not empty",
+          number:1
         })
       }
       if(isIdEngageEmpty(row[1])){
         result.guard = false;
         result.errors.push({
-          message:"IMS ID must be not empty"
+          message:"IMS ID must be not empty",
+          number:2
         })
       }
       if(isNameEmpty(row[2])){
         result.guard = false;
         result.errors.push({
-          message:"First Name must be not empty"
+          message:"First Name must be not empty",
+          number:3
         })
       }
       if(isLastNameEmpty(row[3])){
         result.guard = false;
         result.errors.push({
-          message:"Last Name must be not empty"
+          message:"Last Name must be not empty",
+          number:4
         })
       }
       if(!isEmail(row[7])){
         result.guard = false;
         result.errors.push({
-          message:"E-Mail must an email"
+          message:"E-Mail must an email",
+          number:5
         })
       }
       if(!isSpeciality1RelationExist(row[5], row[8])){
         result.guard = false;
         result.errors.push({
-          message:"The Specialty License 1 field and the Specialty field are dependent"
+          message:"The Specialty License 1 field and the Specialty field are dependent",
+          number:6
         })
       }
       if(!isSpeciality2RelationExist(row[6], row[9])){
         result.guard = false;
         result.errors.push({
-          message:"The Specialty License 2 field and the Specialty 2 field are dependent"
+          message:"The Specialty License 2 field and the Specialty 2 field are dependent",
+          number:7
         })
       }
 
       if(!( typeof LicenseNumber == 'number' )){
         result.guard = false;
         result.errors.push({
-          message:"License Number must be not empty"
+          message:"License Number must be not empty",
+          number:8
         })
       }
 
       if(!( typeof LicenseNumber == 'number' ) && !( typeof SpecialtyLicense1 == 'number' ) && !( typeof SpecialtyLicense2 == 'number' ) ){
         result.guard = false;
         result.errors.push({
-          message:"Please enter at least one of the following fields License Number, Specialty License 1, Specialty License 2"
+          message:"Please enter at least one of the following fields License Number, Specialty License 1, Specialty License 2",
+          number:9
         })
       }
       if( typeof LicenseNumber == 'string' && LicenseNumber != '-'  ){
         result.guard = false;
         result.errors.push({
-          message:"License Number must be a number"
+          message:"License Number must be a number",
+          number:10
         })
       }
       if( typeof SpecialtyLicense1 == 'string' && SpecialtyLicense1 != '-' ){
         result.guard = false;
         result.errors.push({
-          message:"Specialty License 1 must be a number"
+          message:"Specialty License 1 must be a number",
+          number:11
         })
       }
       if( typeof SpecialtyLicense2 == 'string' && SpecialtyLicense2 != '-' ){
         result.guard = false;
         result.errors.push({
-          message:"Specialty License 2 must be a number"
+          message:"Specialty License 2 must be a number",
+          number:12
         })
       }
       return result;

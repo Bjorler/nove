@@ -4,7 +4,7 @@ import { Controller, Post, Get, Put, Delete, Body, Query, Param, UseInterceptors
 import { FileInterceptor } from '@nestjs/platform-express';
 import {  ApiTags, ApiConsumes } from '@nestjs/swagger';
 import { diskStorage } from 'multer';
-import * as moment from 'moment';
+import * as moment from 'moment-timezone';
 import * as path from 'path';
 import { EventsService } from './events.service';
 import { LogServices } from '../commons/services/log.service';
@@ -66,11 +66,11 @@ export class EventsController {
         const IS_HOUR_INIT_THE_SAME_AS_HOUR_END = moment(event.hour_init,"HH:mm").isSame(moment(event.hour_end,"HH:mm"))  
         if( IS_HOUR_INIT_BEFORE_HOUR_END || IS_HOUR_INIT_THE_SAME_AS_HOUR_END 
         ){
-            this.eventService.deleteImage(image.path)
+            if(image)this.eventService.deleteImage(image.path);
             throw new HttpException("You cannot schedule events with a start time equal to the end time, not an end time less than the start time",414)
         }
         if(EVENT_DATE_IS_SAME_CURRENT_DATE && IS_HOUR_END_BEFORE_CURRENTTIME){
-            this.eventService.deleteImage(image.path)
+            if(image)this.eventService.deleteImage(image.path);
             throw new HttpException("You cannot schedule events with a start time equal to the end time, not an end time less than the start time",414)
         }
 
@@ -230,16 +230,37 @@ export class EventsController {
         const eventId = parseInt(event.eventId);
 
         const eventExist = await this.eventService.findById(eventId);
-        if(!eventExist.length) throw new HttpException("EVENT NOT FOUND", HttpStatus.NOT_FOUND);
-
+        if(!eventExist.length) throw new HttpException("EVENT NOT FOUND", HttpStatus.NOT_FOUND);        
+        
+        /** EVENT DATE VALIDATIONS */
         if(event.event_date){
-            const date = new Date(event.event_date).getTime();
-            const curreentDate = new Date().getTime()
-            if(date < curreentDate) throw new HttpException("You cannot schedule an event on past dates",415)
+            let event_date_validation = event.event_date 
+            const EVENT_DATE_IS_BEFORE_CURRENT_DATE = moment(event_date_validation).isBefore(moment(moment().format("YYYY-MM-DD")))
+            const EVENT_DATE_IS_SAME_AS_CURRENT_DATE = moment(event_date_validation).isSame(moment(moment().format("YYYY-MM-DD")))   
+            
+            if(EVENT_DATE_IS_BEFORE_CURRENT_DATE) {throw new HttpException("You cannot schedule an event on past dates.",414)}  
+            if(EVENT_DATE_IS_SAME_AS_CURRENT_DATE){
+                let hour_end = event.hour_end || eventExist[0]['hour_end'];
+                const IS_HOUR_END_BEFORE_CURRENTTIME = moment(hour_end,"HH:mm").isBefore(moment(moment().format("HH:mm"),"HH:mm"))
+                if(IS_HOUR_END_BEFORE_CURRENTTIME)throw new HttpException("You cannot schedule events with a start time equal to the end time, not an end time less than the start time",414);
+            }  
         }
 
+        /** EVENT HOUR VALIDATIONS */
+        let hour_init_validation = event.hour_init  || eventExist[0]['hour_init'];
+        let hour_end_validation = event.hour_end || eventExist[0]['hour_end'];    
+        const IS_HOUR_INIT_BEFORE_HOUR_END = moment(hour_init_validation,"HH:mm").isAfter(moment(hour_end_validation,"HH:mm"))
+        const IS_HOUR_INIT_THE_SAME_AS_HOUR_END = moment(hour_init_validation,"HH:mm").isSame(moment(hour_end_validation,"HH:mm"))  
+        if( IS_HOUR_INIT_BEFORE_HOUR_END || IS_HOUR_INIT_THE_SAME_AS_HOUR_END 
+        ){
+            throw new HttpException("You cannot schedule events with a start time equal to the end time, not an end time less than the start time",414)
+        }
+
+
+
         let eschema = Object.assign({}, event, {modified_by: session.id, modified_on:new Date()});
-        if(event.event_date) {  eschema = Object.assign(eschema, { event_date: new Date(event.event_date) }) }
+        if(event.event_date){ eschema = Object.assign(eschema, { event_date: new Date(event.event_date) }) }
+
         delete eschema.eventId;
         
         let image_name = "", path = "";

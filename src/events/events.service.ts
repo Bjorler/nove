@@ -152,7 +152,7 @@ export class EventsService {
             info.event_date = event.event_date;
             info.hour_init = event.hour_init;
             info.hour_end = event.hour_end;
-            info.display_date = moment(event.event_date).format("MM-DD-YYYY")
+            info.display_date = moment(event.event_date).add(1,'d').format("MM-DD-YYYY")
             info.display_time = `${moment(event.hour_init,"HH:mm").format("HH:mm")} - ${moment(event.hour_end,"HH:mm").format("HH:mm")} Hrs`
             result.push(info);
         }
@@ -162,7 +162,7 @@ export class EventsService {
     async incrementAttendees(eventId:number, session){
         const event = await this.knex.table(this.TABLE).where({id:eventId});
         let count = event[0]['assistants']+1;
-        const updated = await this.knex.table(this.TABLE).update({assistants:count, modified_by:session.id});
+        const updated = await this.knex.table(this.TABLE).update({assistants:count, modified_by:session.id}).where({id:eventId});
         return updated;
     }
 
@@ -193,4 +193,5 @@ export class EventsService {
             fs.unlinkSync(path)
         }
     }
+    
 }

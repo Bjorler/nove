@@ -8,6 +8,7 @@
   "scripts": {
     "db": "mysql -u root -p < ./db/master.sql",
     "format:config": "node ./src/commons/format.js",
+    "prepare:data": "node ./src/commons/prepare_data.js",
     "prebuild": "rimraf dist",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
@@ -41,6 +42,7 @@
     "html-pdf": "^2.2.0",
     "knex": "^0.21.16",
     "moment": "^2.29.1",
+    "moment-timezone": "^0.5.33",
     "multer": "^1.4.2",
     "mysql": "^2.18.1",
     "nestjs-knex": "^1.0.1",

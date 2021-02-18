@@ -298,9 +298,12 @@ export class AttendessService {
         .table(this.TABLE)
         .select('events.event_date',`${this.TABLE}.speciality`)
         .innerJoin('events',`${this.TABLE}.event_id`,'events.id')
-        .where('events.created_on','>=',DATE)
-        .andWhere('events.created_on','<=', FINAL)
+        .where('events.event_date','>=',DATE)
+        .andWhere('events.event_date','<=', FINAL)
         .andWhere('events.is_deleted','=',0).andWhere(`${this.TABLE}.is_deleted`,'=',0)
+
+        
+
         return attendees;
     }
 
