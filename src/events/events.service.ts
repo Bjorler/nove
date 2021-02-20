@@ -138,6 +138,7 @@ export class EventsService {
         })
         .orderBy("event_date").orderBy('hour_init')
         
+
         
         const result = [];
         for( let event of events ){

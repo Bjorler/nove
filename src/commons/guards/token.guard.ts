@@ -13,7 +13,13 @@ export class TokenGuard implements CanActivate{
         const req = ctx.switchToHttp().getRequest();
         const { headers } = req;
         if(!headers.token) throw new HttpException("MISSING token", HttpStatus.UNAUTHORIZED);
-        const decode = this.jwt.decode(headers.token)
+        let decode;
+        try{
+            decode = this.jwt.verify(headers.token)
+        }catch(err){
+            throw new HttpException("EXPIRED token", HttpStatus.UNAUTHORIZED);
+        }
+        
         
         //@ts-ignore
         const user = await this.knex.table("users").where({id:decode.id})

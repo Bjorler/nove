@@ -14,6 +14,12 @@ npm run db
 npm run format:config
 ```
 
+- Create a dumy data
+
+```
+npm run prepare:data
+```
+
 # Config
 
 - Before run, you need to set a config.js file:

@@ -7,3 +7,4 @@ export { AttendeesSignDecorator } from './attendees-sign.decorator';
 export { AttendeesSignatureDecorator } from './attendees-signature.decorator';
 export { AttendeesDetailDecorator } from './attendees-detail.decorator';
 export { AttendeesEventsDecorator } from './attendees-events.decorator';
+export { AttendeesEmailDecorator } from './attendees-email.decorator';
