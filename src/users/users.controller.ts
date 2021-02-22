@@ -76,7 +76,7 @@ export class UsersController {
                     })
                     delete schema.role;
                    newUser = await this.userService.create(schema); 
-            }else{ throw new HttpException("User already exist", HttpStatus.BAD_REQUEST) }
+            }else{ throw new HttpException("User already exist", 421) }
             
         }
         let log = new LogDto();

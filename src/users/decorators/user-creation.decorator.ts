@@ -4,7 +4,7 @@ ApiUnauthorizedResponse, ApiForbiddenResponse
 } from '@nestjs/swagger';
 import { ValidationPipe } from '../../commons/validations/validations.pipe';
 import { TokenGuard, MasterGuard } from '../../commons/guards';
-import { ImageErrorDto,ErrorDto,NotFoundDto,UnauthorizedDto,ForbiddenDto } from '../../commons/DTO';
+import { ImageErrorDto,ErrorDto,NotFoundDto,UnauthorizedDto,ForbiddenDto, UserRepeatError } from '../../commons/DTO';
 import { UserDto } from '../DTO/user.dto';
 export function UserCreationDecorator(){
     return applyDecorators(
@@ -21,6 +21,7 @@ export function UserCreationDecorator(){
         }),
         ApiResponse({status:201,type:UserDto}),
         ApiResponse({status:413, type:ImageErrorDto}),
+        ApiResponse({status:421, type:UserRepeatError}),
         ApiBadRequestResponse({type:ErrorDto}),
         ApiNotFoundResponse({type:NotFoundDto}),
         ApiUnauthorizedResponse({type:UnauthorizedDto}),
