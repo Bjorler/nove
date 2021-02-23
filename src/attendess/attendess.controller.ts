@@ -168,11 +168,11 @@ export class AttendessController {
             const { width, height } = page.getSize()
             const TABLE_HEADER_Y = height-123;
             const CEDULA_X = 100 ;
-            const NAME_X = 200;
+            const NAME_X = 210//200;
             const FIRMA_X = width-75;
             const ID_X = 50
-            const EMAIL_X = 400
-            const SPECIALITY_X = 550
+            const EMAIL_X = 410//400
+            const SPECIALITY_X = 570//550
             let INIT_POSITION_Y = TABLE_HEADER_Y - 27;
             
             
@@ -189,7 +189,7 @@ export class AttendessController {
                     page.drawText(item.cedula,{y:Y_POSITIONS[count], x:CEDULA_X, size:8, font:helveticaBold, color:LIGHT_BLUE})    
                     page.drawText(item.name,{y:Y_POSITIONS[count], x:NAME_X-10, size:8,maxWidth:160, lineHeight:37, font:helveticaBold, color:DARK_BLUE})  
                     page.drawText(item.email,{y:Y_POSITIONS[count], x:EMAIL_X-20, maxWidth:100, size:8,  font:helveticaBold, color:DARK_BLUE})
-                    page.drawText(item.speciality,{y:Y_POSITIONS[count], x:SPECIALITY_X, maxWidth:200, lineHeight:37 ,size:6, font:helveticaBold, color:DARK_BLUE})
+                    page.drawText(item.speciality,{y:Y_POSITIONS[count], x:SPECIALITY_X, maxWidth:200, lineHeight:37 ,size:7, font:helveticaBold, color:DARK_BLUE})
                     if(item.signature){
                         const SIGNATURE = fs.readFileSync(item.signature);
                         let mimetype = item.signature.split(".")
