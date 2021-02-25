@@ -112,7 +112,39 @@ CREATE TABLE IF NOT EXISTS `attendees` (
   CONSTRAINT `FK_attendees_events` FOREIGN KEY (`event_id`) REFERENCES `events` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=119 DEFAULT CHARSET=latin1;
 
-  ALTER TABLE attendees ADD column  `confirm_signature` VARCHAR(250) NULL DEFAULT NULL;
+ALTER TABLE attendees ADD column  `confirm_signature` VARCHAR(250) NULL DEFAULT NULL;
+
+
+CREATE TABLE `temporal_attendees` (
+	`id` INT(11) NOT NULL AUTO_INCREMENT,
+	`cedula` INT(11) NOT NULL DEFAULT '0',
+	`name` VARCHAR(255) NOT NULL COLLATE 'latin1_swedish_ci',
+	`firstname` VARCHAR(255) NULL DEFAULT '' COLLATE 'latin1_swedish_ci',
+	`lastname` VARCHAR(255) NULL DEFAULT '' COLLATE 'latin1_swedish_ci',
+	`speciality` VARCHAR(100) NOT NULL COLLATE 'latin1_swedish_ci',
+	`email` VARCHAR(100) NOT NULL COLLATE 'latin1_swedish_ci',
+	`path` VARCHAR(250) NULL DEFAULT NULL COLLATE 'latin1_swedish_ci',
+	`pdf_path` VARCHAR(250) NULL DEFAULT NULL COLLATE 'latin1_swedish_ci',
+	`questions` TEXT NULL DEFAULT NULL COLLATE 'latin1_swedish_ci',
+	`idengage` VARCHAR(50) NULL DEFAULT '""' COLLATE 'latin1_swedish_ci',
+	`register_type` VARCHAR(50) NULL DEFAULT NULL COLLATE 'latin1_swedish_ci',
+	`event_id` INT(11) NOT NULL,
+	`is_active` TINYINT(4) NOT NULL DEFAULT '0',
+	`is_deleted` TINYINT(4) NOT NULL DEFAULT '0',
+	`created_on` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	`created_by` TINYINT(4) NOT NULL DEFAULT '0',
+	`modified_on` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+	`modified_by` TINYINT(4) NOT NULL DEFAULT '0',
+	`confirm_signature` VARCHAR(250) NULL DEFAULT NULL COLLATE 'latin1_swedish_ci',
+	PRIMARY KEY (`id`) USING BTREE,
+	INDEX `FK_temporal_attendees_events` (`event_id`) USING BTREE,
+	CONSTRAINT `FK_temporal_attendees_events` FOREIGN KEY (`event_id`) REFERENCES `noveve`.`events` (`id`) ON UPDATE RESTRICT ON DELETE RESTRICT
+)
+COLLATE='latin1_swedish_ci'
+ENGINE=InnoDB;
+
+
+
 -- La exportación de datos fue deseleccionada.
 
 -- Volcando estructura para tabla noveve.data_upload

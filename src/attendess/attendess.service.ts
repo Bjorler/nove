@@ -217,16 +217,18 @@ export class AttendessService {
 
         let dateField = form.getTextField(EVENT_DATE);
         dateField.setText(moment(event[0].event_date).format("DD-MM-YYYY"));
-
-        if(questions.question2){
+        
+        if(questions.question2.toLowerCase() == 'true'){
+            
             let question1yesField = form.getCheckBox(QUESTION_1_YES);
             question1yesField.check();
         }else{
+            
             let question1noField = form.getCheckBox(QUESTION_1_NO);
             question1noField.check();
         }
 
-        if(questions.question1){
+        if(questions.question1.toLowerCase() == 'true'){
             let question2yesField = form.getCheckBox(QUESTION_2_YES);
             question2yesField.check();
         }else{
@@ -236,7 +238,7 @@ export class AttendessService {
 
         
 
-        if(questions.question2){
+        if(questions.question2.toLowerCase() == 'true'){
             let publicField = form.getTextField(PUBLIC_ENTITY);
             publicField.setText(questions.institutionName)
 
