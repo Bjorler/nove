@@ -9,3 +9,4 @@ export { AttendeesDetailDecorator } from './attendees-detail.decorator';
 export { AttendeesEventsDecorator } from './attendees-events.decorator';
 export { AttendeesEmailDecorator } from './attendees-email.decorator';
 export { AttendeesConfirmSignDecorator } from './attendees-confirmsign.decorator';
+export { AttendeesTemporalDecorator } from './attendess-temporal.decorator';

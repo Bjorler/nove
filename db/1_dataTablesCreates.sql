@@ -112,6 +112,7 @@ CREATE TABLE IF NOT EXISTS `attendees` (
   CONSTRAINT `FK_attendees_events` FOREIGN KEY (`event_id`) REFERENCES `events` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=119 DEFAULT CHARSET=latin1;
 
+  ALTER TABLE attendees ADD column  `confirm_signature` VARCHAR(250) NULL DEFAULT NULL;
 -- La exportación de datos fue deseleccionada.
 
 -- Volcando estructura para tabla noveve.data_upload

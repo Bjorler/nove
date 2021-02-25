@@ -5,7 +5,7 @@ export class AttendeesDetailDto{
     @ApiProperty({
         type:Number,
         example:1,
-        description:"identifier of the attendance"
+        description:"identifier of the temporal attendance"
     })
     @IsNumber()
     id:number;

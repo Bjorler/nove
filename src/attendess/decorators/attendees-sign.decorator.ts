@@ -1,11 +1,11 @@
 import { applyDecorators, SetMetadata, UsePipes, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiHeader, ApiConsumes, ApiBody, ApiResponse, ApiNotFoundResponse,
-ApiUnauthorizedResponse, ApiForbiddenResponse, ApiInternalServerErrorResponse
+ApiUnauthorizedResponse, ApiForbiddenResponse, ApiInternalServerErrorResponse, ApiConflictResponse
 } from '@nestjs/swagger';
 import { ValidationPipe } from '../../commons/validations/validations.pipe';
 import { TokenGuard, MasterGuard } from '../../commons/guards';
 import { AttendeesNotFoundDto, PDFNotFoundDto, ImageErrorDto, SignatureErrorDto, UnauthorizedDto,
-ForbiddenDto, InternalServerErrrorDto
+ForbiddenDto, InternalServerErrrorDto, AttendeesDuplicateDto
 } from '../../commons/DTO';
 import { AttendeesSignatureDto } from '../DTO/attendees-signature.dto';
 import { AttendeesCreateResponseDto } from '../DTO/attendees-create-response.dto';
@@ -21,6 +21,7 @@ export function AttendeesSignDecorator(){
         }),
         ApiConsumes('multipart/form-data'),
         ApiBody({type:AttendeesSignatureDto}),
+        ApiConflictResponse({type:AttendeesDuplicateDto}),
         ApiResponse({status:200, type:AttendeesCreateResponseDto}),
         ApiNotFoundResponse({type: PDFNotFoundDto}),
         ApiNotFoundResponse({type:AttendeesNotFoundDto}),

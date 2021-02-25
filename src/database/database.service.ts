@@ -140,10 +140,11 @@ export class DatabaseService {
       }
       if(result.items && result.items.length ){
         let data = result.items[0];
+        
         return {complete_name:`${data.nombre} ${data.paterno} ${data.materno}`,
         name:data.nombre,
         lastname:`${data.paterno} ${data.materno}`, 
-        speciality:'', email:'', idengage:'',
+        speciality:data.titulo, email:'', idengage:'',
         cedula:parseInt(data.idCedula),
         register_type:"internet"
         }

@@ -25,6 +25,16 @@ export class AttendessService {
         return attendee;
     }
 
+    async createTemporal(attendees){
+        const attendee = await this.knex.table('temporal_attendees').insert(attendees);
+        return attendee;
+    } 
+    async updateTemporal(attendees, id){
+        await this.knex.table('temporal_attendees').delete().where({id});
+        const attendee = await this.knex.table('temporal_attendees').insert({id,...attendees})
+        return attendee;
+    }    
+
     async findByEvent(eventId:number, pagination: AttendeesPaginationDto){
         
         let page = parseInt(pagination.page)
@@ -81,6 +91,11 @@ export class AttendessService {
 
     async getById(id:number){
         const attendees = await this.knex.table(this.TABLE).where({is_deleted:0})
+        .andWhere({id})
+        return attendees;
+    }
+    async getTempoalById(id:number){
+        const attendees = await this.knex.table('temporal_attendees').where({is_deleted:0})
         .andWhere({id})
         return attendees;
     }
@@ -150,6 +165,11 @@ export class AttendessService {
 
     async setPdf(attendeesId:number, pdf_path:string, modified_by:number){
         const result = await this.knex.table(this.TABLE).update({pdf_path, modified_by}).where({id:attendeesId})
+        return result;
+    }
+
+    async setTemporalPdf(attendeesId:number, pdf_path:string, modified_by:number){
+        const result = await this.knex.table('temporal_attendees').update({pdf_path, modified_by}).where({id:attendeesId})
         return result;
     }
 

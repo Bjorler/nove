@@ -23,9 +23,11 @@ import { AttendeesItemDto } from './DTO/attendess-item.dto';
 import { AttendeesCreateResponseDto } from './DTO/attendees-create-response.dto';
 import { Excel } from '../commons/build-excel/excel';
 import { AttendeesEmailDto } from './DTO/attendees-email.dto';
+import { AttendeesTemporalDto } from './DTO/attendees-temporal.dto';
 import { AttendeesCreateDecorator, AttendeesListPdfDecorator, AttendeesListExcelDecorator,
 AttendeesAllPdfDecorator, AttendeesContractDecorator, AttendeesSignDecorator, AttendeesSignatureDecorator,
-AttendeesDetailDecorator, AttendeesEventsDecorator, AttendeesEmailDecorator, AttendeesConfirmSignDecorator
+AttendeesDetailDecorator, AttendeesEventsDecorator, AttendeesEmailDecorator, AttendeesConfirmSignDecorator,
+AttendeesTemporalDecorator
 } from './decorators';
 
 import {  METHOD, DOMAIN, STATICS_SIGNATURES  } from '../config';
@@ -46,6 +48,7 @@ export class AttendessController {
 
 
     @Post()
+    @ApiExcludeEndpoint()
     @AttendeesCreateDecorator()
     async create( @Body() attendees: AttendeesCreateDto, @User() session ){
 
@@ -106,6 +109,65 @@ export class AttendessController {
         log.created_by = session.id;
         log.modified_by = session.id;
         await this.logService.createLog(log);
+
+        let response = new AttendeesCreateResponseDto();
+        response.id = newAttendees[0];
+        response.path = `${METHOD}://${DOMAIN}/attendees/contract/${newAttendees[0]}`
+
+        return response;
+    }
+
+    @Post('/temporal')
+    @AttendeesTemporalDecorator()
+    @UseInterceptors(FileInterceptor("signature",{
+        storage:diskStorage({
+            destination:path.join(__dirname,STATICS_SIGNATURES),//Si esta ruta presenta agun error remplazarla por ./images
+            filename: (req, file, callback)=>{
+                const name = new Date().getTime()
+                callback(null, `${name}_${file.originalname}`)
+            }
+        }),
+        fileFilter:(req, file ,callback)=>{
+            const authorized = new Set(["image/png","image/jpeg", 'image/gif'])
+            if(authorized.has(file.mimetype)) return callback(null, true)
+            callback( new HttpException("Only image are allowed jpg/png/gif",413), false)
+        }
+    }))
+    async createTemporal(@UploadedFile() signature,@Body() attendees: AttendeesTemporalDto, @User() session){
+        if(!signature) throw new HttpException("The signature field is mandatory", 417); 
+        const eventExist = await this.eventService.findById(parseInt(attendees.eventId));
+        if(!eventExist.length) throw new HttpException("EVENT NOT FOUND",HttpStatus.NOT_FOUND);  
+        
+        let questions = {
+            question1:attendees.question1,
+            question2:attendees.question2,
+            question3: attendees.question3,
+            typeOfInstitution: attendees.typeOfInstitution,
+            institutionName: attendees.institutionName,
+            nameAndTitle: attendees.nameAndTitle,
+            authorization: attendees.authorization,
+            idengage: attendees.idengage
+        }
+        let schema = Object.assign({},{ 
+            cedula: parseInt(attendees.cedula),
+            name: `${attendees.name} ${attendees.lastname}`,
+            firstname: attendees.name,
+            lastname: attendees.lastname,
+            speciality: attendees.speciality,
+            email:attendees.email,
+            created_by: session.id,
+            modified_by: session.id,
+            event_id:parseInt(attendees.eventId),
+            register_type:attendees.register_type,
+            idengage: attendees.idengage,
+            questions:JSON.stringify(questions),
+            confirm_signature:signature.path
+        });
+
+        const newAttendees =  !attendees.id ? await this.attendessService.createTemporal(schema): await this.attendessService.updateTemporal(schema, parseInt(attendees.id)) 
+        
+        const pdf = await this.attendessService.fillPDFFisrtPart(questions,attendees.name, eventExist);
+        const updated = await this.attendessService.setTemporalPdf(newAttendees[0],pdf, session.id);
 
         let response = new AttendeesCreateResponseDto();
         response.id = newAttendees[0];
@@ -389,8 +451,19 @@ export class AttendessController {
     async signContract(@UploadedFile() signature,@Param() id:AttendeesDetailDto, @User() session ){
         if(!signature) throw new HttpException("The signature field is mandatory", 417); 
         
-        const existAttendees = await this.attendessService.getById(id.id);
+        let existAttendees = await this.attendessService.getTempoalById(id.id);
         if(!existAttendees.length) throw new HttpException("ATTENDEES NOT FOUND",HttpStatus.NOT_FOUND)
+        
+        const isAlreadyRegistered = await this.attendessService.isAlreadyRegistered(existAttendees[0].cedula, existAttendees[0].event_id);
+        if(isAlreadyRegistered.length) throw new HttpException("User already registered",HttpStatus.CONFLICT )
+
+        /** CREAR EL ASISTENTE */
+        let schema = existAttendees[0];
+        delete schema.id;
+        const newAttendees = await this.attendessService.create(schema);
+        const increment = await this.eventService.incrementAttendees(existAttendees[0].event_id, session.id);
+        
+        existAttendees = await this.attendessService.getById(newAttendees[0]);
 
         const hasPDF = existAttendees[0].pdf_path;
         if(!hasPDF) throw new HttpException("PDF NOT FOUND", HttpStatus.NOT_FOUND)
@@ -418,8 +491,28 @@ export class AttendessController {
         existAttendees[0].email,{filename:"registro_asistencia.pdf",path:existAttendees[0].pdf_path}, email_template)
         */
 
+
         /** CREATE LOG */
         let log = new LogDto();
+        log.new_change = "create";
+        log.type = "create";
+        log.element = newAttendees[0];
+        log.db_table = this.TABLE;
+        log.created_by = session.id;
+        log.modified_by = session.id;
+        await this.logService.createLog(log);
+
+        /** CREATE LOG EVENTS - INCREMENT ASSISTANTS */
+        log.new_change = "update";
+        log.type = "update";
+        log.element = existAttendees[0].event_id;
+        log.db_table = "events";
+        log.created_by = session.id;
+        log.modified_by = session.id;
+        await this.logService.createLog(log);
+
+        /** CREATE LOG */
+         log = new LogDto();
         log.new_change = "sign_pdf";
         log.type = "sign_pdf";
         log.element = 0;
@@ -437,6 +530,7 @@ export class AttendessController {
     }
 
     @Post('/sign-confirm/:id')
+    @ApiExcludeEndpoint()
     @AttendeesConfirmSignDecorator()
     @UseInterceptors(FileInterceptor("signature",{
         storage:diskStorage({
