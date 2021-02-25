@@ -157,6 +157,10 @@ export class AttendessService {
         const result = await this.knex.table(this.TABLE).update({path, modified_by}).where({id:attendeesId})
         return result;
     }
+    async setconfirmSinature(attendeesId:number, path:string, modified_by:number){
+        const result = await this.knex.table(this.TABLE).update({confirm_signature:path, modified_by}).where({id:attendeesId})
+        return result;
+    }
     async fillPDFFisrtPart(questions,doctor_name:string, event){
         const RUTA = "./pdf/template.pdf";
         //carga el archivo

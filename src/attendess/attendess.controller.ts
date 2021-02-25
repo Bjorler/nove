@@ -25,7 +25,7 @@ import { Excel } from '../commons/build-excel/excel';
 import { AttendeesEmailDto } from './DTO/attendees-email.dto';
 import { AttendeesCreateDecorator, AttendeesListPdfDecorator, AttendeesListExcelDecorator,
 AttendeesAllPdfDecorator, AttendeesContractDecorator, AttendeesSignDecorator, AttendeesSignatureDecorator,
-AttendeesDetailDecorator, AttendeesEventsDecorator, AttendeesEmailDecorator
+AttendeesDetailDecorator, AttendeesEventsDecorator, AttendeesEmailDecorator, AttendeesConfirmSignDecorator
 } from './decorators';
 
 import {  METHOD, DOMAIN, STATICS_SIGNATURES  } from '../config';
@@ -400,6 +400,7 @@ export class AttendessController {
         await this.attendessService.setSinature(existAttendees[0].id, signature.path, session.id)
         
         /** EMAIL SECTION */
+        /* Sección comentada por tentativa de cambio de flujo
         const event = await this.eventService.findById(existAttendees[0].event_id)
         
         let email_template = await this.emailService.readTemplate(path.join(__dirname,'../../src/commons/html-templates/email-attendees.html'));
@@ -415,7 +416,8 @@ export class AttendessController {
         ],email_template);
         await this.emailService.sendEmail(`Registro de asistencia`,
         existAttendees[0].email,{filename:"registro_asistencia.pdf",path:existAttendees[0].pdf_path}, email_template)
-        
+        */
+
         /** CREATE LOG */
         let log = new LogDto();
         log.new_change = "sign_pdf";
@@ -434,8 +436,47 @@ export class AttendessController {
 
     }
 
+    @Post('/sign-confirm/:id')
+    @AttendeesConfirmSignDecorator()
+    @UseInterceptors(FileInterceptor("signature",{
+        storage:diskStorage({
+            destination:path.join(__dirname,STATICS_SIGNATURES),//Si esta ruta presenta agun error remplazarla por ./images
+            filename: (req, file, callback)=>{
+                const name = new Date().getTime()
+                callback(null, `${name}_${file.originalname}`)
+            }
+        }),
+        fileFilter:(req, file ,callback)=>{
+            const authorized = new Set(["image/png","image/jpeg", 'image/gif'])
+            if(authorized.has(file.mimetype)) return callback(null, true)
+            callback( new HttpException("Only image are allowed jpg/png/gif",413), false)
+        }
+    }))
+    async confirmsignature(@UploadedFile() signature,@Param() id:AttendeesDetailDto, @User() session){
+        if(!signature) throw new HttpException("The signature field is mandatory", 417); 
+        
+        const existAttendees = await this.attendessService.getById(id.id);
+        if(!existAttendees.length) throw new HttpException("ATTENDEES NOT FOUND",HttpStatus.NOT_FOUND)
+        
+
+        const update = await this.attendessService.setconfirmSinature(existAttendees[0].id, signature.path, session.id)
+        
+        
+
+        /** CREATE LOG */
+        let log = new LogDto();
+        log.new_change = "signature_confirm";
+        log.type = "update";
+        log.element = existAttendees[0].id;
+        log.db_table = this.TABLE;
+        log.created_by = session.id;
+        log.modified_by = session.id;
+        await this.logService.createLog(log);
+        return {message:"success"}   
+    }
+
+
     @Get("/email")
-    @ApiExcludeEndpoint()
     @AttendeesEmailDecorator()
     async sendEmail(@Body() info:AttendeesEmailDto){
         
@@ -462,7 +503,7 @@ export class AttendessController {
         ],email_template);
         await this.emailService.sendEmail(`Registro de asistencia`,
         info.email,{filename:"registro_asistencia.pdf",path:existAttendees[0].pdf_path}, email_template)
-        return "E-mail sent"
+        return {message:"E-mail sent"}
     }
 
 
