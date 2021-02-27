@@ -127,14 +127,14 @@ export class AttendeesTemporalDto{
     @IsString()
     question3:string;
 
-    @ApiProperty({
+    /*@ApiProperty({
         enum:TypeOfInstitution,
         example:TypeOfInstitution.PRIVATE,
     })
     @IsEnum(TypeOfInstitution,{
         message:`typeOfInstitution must be a valid enum value [${TypeOfInstitution.PUBLIC}, ${TypeOfInstitution.PRIVATE}]`
     })
-    typeOfInstitution:string
+    typeOfInstitution:string*/
 
     @ApiProperty({
         type:String,

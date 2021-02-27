@@ -142,7 +142,7 @@ export class AttendessController {
             question1:attendees.question1,
             question2:attendees.question2,
             question3: attendees.question3,
-            typeOfInstitution: attendees.typeOfInstitution,
+            //typeOfInstitution: attendees.typeOfInstitution,
             institutionName: attendees.institutionName,
             nameAndTitle: attendees.nameAndTitle,
             authorization: attendees.authorization,
@@ -171,7 +171,7 @@ export class AttendessController {
 
         let response = new AttendeesCreateResponseDto();
         response.id = newAttendees[0];
-        response.path = `${METHOD}://${DOMAIN}/attendees/contract/${newAttendees[0]}`
+        response.path = `${METHOD}://${DOMAIN}/attendees/contract-temporal/${newAttendees[0]}`
 
         return response;
     }
@@ -431,6 +431,16 @@ export class AttendessController {
         res.status(200).send({pdf:fs.readFileSync(attendess[0].pdf_path,{encoding:'base64'})})
     }
     
+    @Get("/contract-temporal/:id")
+    @AttendeesContractDecorator()
+    async prepareContractTempora(@Param() id: AttendeesDetailDto, @Response() res){
+        
+        const attendess = await this.attendessService.getTempoalById(id.id);
+        if(!attendess.length) throw new  HttpException("PDF NOT FOUND", HttpStatus.NOT_FOUND)
+        
+        //res.download(attendess[0].pdf_path)
+        res.status(200).send({pdf:fs.readFileSync(attendess[0].pdf_path,{encoding:'base64'})})
+    }
 
     @Put('/sign/:id')
     @AttendeesSignDecorator()
@@ -523,8 +533,8 @@ export class AttendessController {
 
 
         let response = new AttendeesCreateResponseDto()
-        response.id = id.id;
-        response.path = `${METHOD}://${DOMAIN}/attendees/contract/${id.id}`;
+        response.id = newAttendees[0];
+        response.path = `${METHOD}://${DOMAIN}/attendees/contract/${newAttendees[0]}`;
         return response;
 
     }
@@ -572,7 +582,7 @@ export class AttendessController {
 
     @Get("/email")
     @AttendeesEmailDecorator()
-    async sendEmail(@Body() info:AttendeesEmailDto){
+    async sendEmail(@Query() info:AttendeesEmailDto){
         
         const existAttendees = await this.attendessService.getById(info.id);
         if(!existAttendees.length) throw new HttpException("ATTENDEES NOT FOUND",HttpStatus.NOT_FOUND)
