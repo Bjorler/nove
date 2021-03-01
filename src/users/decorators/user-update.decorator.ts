@@ -5,7 +5,8 @@ import { ApiHeader, ApiOperation, ApiBadRequestResponse, ApiInternalServerErrorR
 import { ValidationPipe } from '../../commons/validations/validations.pipe';
 import { TokenGuard, MasterGuard } from '../../commons/guards';
 import { ErrorDto, InternalServerErrrorDto, UnauthorizedDto, ForbiddenDto, NotFoundDto,
-        ImageErrorDto, EmailErrorDto, RoleRepatErrorDto, PasswordRepatErrorDto, UserUpdateForbiddenError
+        ImageErrorDto, EmailErrorDto, RoleRepatErrorDto, PasswordRepatErrorDto, UserUpdateForbiddenError,
+        UserUpdateAdminError
 } from '../../commons/DTO';
 import { UpdateUserDto } from '../DTO/updateuser.dto';
 import { UserDetailDto } from '../DTO/user-detail.dto';
@@ -31,6 +32,7 @@ export function UserUpdateDecorator(){
         ApiResponse({status:412, type: PasswordRepatErrorDto}),
         ApiResponse({status:200, type:UserDetailDto}),
         ApiResponse({status:422, type:UserUpdateForbiddenError}),
+        ApiResponse({status:423, type:UserUpdateAdminError}),
         UsePipes(new ValidationPipe),
         UseGuards(TokenGuard, MasterGuard)
     
