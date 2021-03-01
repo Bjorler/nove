@@ -163,6 +163,15 @@ export class UsersController {
         }
         const userExist = await this.userService.findById(user.userId);
         if(!userExist.length) throw new HttpException("USER NOT FOUND", HttpStatus.NOT_FOUND);
+        
+        
+        const isOtherMaster = (session.id != userExist[0].id) && userExist[0].role_id == 1;
+        if(isOtherMaster) throw new HttpException("You cannot update information for another master user",422)
+        
+        const isAdminValidations = (session.id != userExist[0].id) && userExist[0].role_id == 2 && this.userService.fildsForbiddenUpdate(user, avatar) ;
+        if(isAdminValidations) throw new HttpException("You cannot modify the information of an administrator, you can only modify the password", 423)
+
+
 
         if( user.email  ){
             const emailExit = await this.userService.findByEmail(user.email);

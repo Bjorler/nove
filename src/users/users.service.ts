@@ -74,10 +74,22 @@ export class UsersService {
         return pages
     }
 
+    fildsForbiddenUpdate(schema, avatar){
+        let result = false;
+        if(schema.name) result = true;
+        if(schema.apellido_materno) result = true;
+        if(schema.apellido_paterno) result = true;
+        if(schema.email) result = true;
+        if(schema.role) result = true;
+        if(avatar) result = true;
+        return result;
+    }
+
     async update(user_id:number, user){
         const updated = await this.knex.table('users').update(user).where({id:user_id});
         return updated;
     }
+
 
     async delete(user_id:number){
         const deleted = await this.knex.table('users').update({is_deleted:1})

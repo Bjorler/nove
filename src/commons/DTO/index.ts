@@ -22,3 +22,4 @@ export { DatabaseExcelErrorDto } from './database-excelerror.dto';
 export { AttendeesDuplicateDto } from './attendes-duplicate.dto';
 export { DatabaseFileErrorDto } from './database-fileerror.dto';
 export { UserRepeatError } from './user-repeat-error.dto';
+export { UserUpdateForbiddenError } from './user-updateforbbidenerror.dto';

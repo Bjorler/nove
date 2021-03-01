@@ -166,7 +166,7 @@ export class AttendessController {
 
         const newAttendees =  !attendees.id ? await this.attendessService.createTemporal(schema): await this.attendessService.updateTemporal(schema, parseInt(attendees.id)) 
         
-        const pdf = await this.attendessService.fillPDFFisrtPart(questions,attendees.name, eventExist);
+        const pdf = await this.attendessService.fillPDFFisrtPart(questions,`${attendees.name} ${attendees.lastname}`, eventExist);
         const updated = await this.attendessService.setTemporalPdf(newAttendees[0],pdf, session.id);
 
         let response = new AttendeesCreateResponseDto();
