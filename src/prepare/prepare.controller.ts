@@ -40,6 +40,7 @@ export class PrepareController {
     async fillAttendees(){
         let attendees  = await this.prepareService.getAllAttendees();
         for(let item of attendees){
+            console.log(item)
             const eventExist = await this.eventsService.findById(item.event_id);
             let question = JSON.parse(item.questions)
             let questions = {
