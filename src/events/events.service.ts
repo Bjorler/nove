@@ -134,10 +134,16 @@ export class EventsService {
         .andWhere(this.knex.raw("date_format(event_date,'%Y-%m-%d') > ? ",[moment().format("YYYY-MM-DD")]))
         .orWhere((builder) => {
             builder.where("hour_init", '>=', hour_init)
-            .andWhere(this.knex.raw("date_format(event_date,'%Y-%m-%d') = ?",[moment().format("YYYY-MM-DD")]))
+            .andWhere(this.knex.raw("date_format(event_date,'%Y-%m-%d') = ?",[moment().subtract(1,'day').format("YYYY-MM-DD")]))
+        })
+        .orWhere((builder) => {
+            builder.where("hour_end", '>', hour_init)
+            .andWhere(this.knex.raw("date_format(event_date,'%Y-%m-%d') = ?",[moment().subtract(1,'day').format("YYYY-MM-DD")]))
+            
         })
         .orderBy("event_date").orderBy('hour_init')
         
+              
 
         
         const result = [];
