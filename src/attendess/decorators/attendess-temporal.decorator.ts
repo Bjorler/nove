@@ -5,7 +5,7 @@ ApiUnauthorizedResponse, ApiForbiddenResponse, ApiInternalServerErrorResponse,Ap
 import { ValidationPipe } from '../../commons/validations/validations.pipe';
 import { TokenGuard, MasterGuard } from '../../commons/guards';
 import { ErrorDto, EventNotFound, UnauthorizedDto, ForbiddenDto, InternalServerErrrorDto, 
-AttendeesDuplicateDto
+AttendeesDuplicateDto, EventsOutOfTimeDto
 } from "../../commons/DTO";
 import { AttendeesCreateResponseDto } from '../DTO/attendees-create-response.dto';
 
@@ -24,7 +24,8 @@ export function AttendeesTemporalDecorator(){
         ApiNotFoundResponse({type:EventNotFound}),
         ApiUnauthorizedResponse({type:UnauthorizedDto}),
         ApiForbiddenResponse({type:ForbiddenDto}),
-        ApiInternalServerErrorResponse({type:InternalServerErrrorDto}),    
+        ApiInternalServerErrorResponse({type:InternalServerErrrorDto}),   
+        ApiResponse({status:423, type:EventsOutOfTimeDto}), 
         UseGuards(TokenGuard, MasterGuard),
         UsePipes(new ValidationPipe),
     )
