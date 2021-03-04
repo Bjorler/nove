@@ -216,7 +216,7 @@ export class AttendessService {
         eventnameField.setText(event[0].name);
 
         let dateField = form.getTextField(EVENT_DATE);
-        dateField.setText(moment(event[0].event_date).format("DD-MM-YYYY"));
+        dateField.setText(moment(event[0].event_date).add(1,'day').format("DD-MM-YYYY"));
         
         if(questions.question2.toLowerCase() == 'true'){
             

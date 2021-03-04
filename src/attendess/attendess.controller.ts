@@ -143,8 +143,8 @@ export class AttendessController {
         const EVENT_DATE_IS_BEFORE_CURRENT_DATE = moment(eventExist[0].event_date).add(1,'day').isBefore(moment(moment().format("YYYY-MM-DD")))
         if(EVENT_DATE_IS_BEFORE_CURRENT_DATE) throw new HttpException("EVENT OUT OF TIME", 423)
         /** VALIDACIONES SOBRE LAS HORAS */
-        //if(IS_HOUR_END_BEFORE_CURRENTTIME) throw new HttpException("EVENT OUT OF TIME", 423)
-        //if(IS_HOUR_INIT_AFTER_CURRENTTIME) throw new HttpException("EVENT OUT OF TIME", 423)
+        if(IS_HOUR_END_BEFORE_CURRENTTIME) throw new HttpException("EVENT OUT OF TIME", 423)
+        if(IS_HOUR_INIT_AFTER_CURRENTTIME) throw new HttpException("EVENT OUT OF TIME", 423)
         /** VALIDACIONES SOBRE LAS HORAS */
 
         let questions = {
