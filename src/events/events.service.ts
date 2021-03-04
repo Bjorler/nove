@@ -159,7 +159,7 @@ export class EventsService {
             info.event_date = event.event_date;
             info.hour_init = event.hour_init;
             info.hour_end = event.hour_end;
-            info.display_date = moment(event.event_date).add(1,'d').format("MM-DD-YYYY")
+            info.display_date = moment(event.event_date).add(1,'d').format("DD-MM-YYYY")
             info.display_time = `${moment(event.hour_init,"HH:mm").format("HH:mm")} - ${moment(event.hour_end,"HH:mm").format("HH:mm")} Hrs`
             result.push(info);
         }

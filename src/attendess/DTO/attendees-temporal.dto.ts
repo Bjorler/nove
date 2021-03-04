@@ -124,7 +124,7 @@ export class AttendeesTemporalDto{
         description:`Manifiesto con firma y fecha haber informado y en su caso, contar con autorización de mi superior para atender al Evento:`
     })
     @IsNotEmpty()
-    @IsString()
+    @IsOptional()
     question3:string;
 
     /*@ApiProperty({
@@ -142,7 +142,7 @@ export class AttendeesTemporalDto{
         description:"Nombre de la Entidad Pública"
     })
     @IsString()
-    @IsNotEmpty()
+    @IsOptional()
     institutionName:string;
 
     @ApiProperty({
@@ -151,7 +151,7 @@ export class AttendeesTemporalDto{
         description:"Nombre y Título del representante de la Entidad Pública"
     })
     @IsString()
-    @IsNotEmpty()
+    @IsOptional()
     nameAndTitle:string;
 
     @ApiProperty({

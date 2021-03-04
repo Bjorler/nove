@@ -238,7 +238,7 @@ export class AttendessService {
 
         
 
-        if(questions.question2.toLowerCase() == 'true'){
+        if(questions.question1.toLowerCase() == 'true'){
             let publicField = form.getTextField(PUBLIC_ENTITY);
             publicField.setText(questions.institutionName)
 
