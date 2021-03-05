@@ -189,7 +189,8 @@ export class DatabaseService {
     }
     private isEmail(email) {
       const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-      return re.test(String(email).toLowerCase());
+      if( !email ) return false
+      return re.test(email.toLowerCase());
     }
     private relationExist(dependence, dependent){
       
@@ -209,62 +210,61 @@ export class DatabaseService {
       const isEspecialityEmpty = this.isEmpty;
       const isSpeciality1RelationExist = this.relationExist;
       const isSpeciality2RelationExist = this.relationExist;
-      const LicenseNumber = row[4];
-      const SpecialtyLicense1 = row[5];
-      const SpecialtyLicense2 = row[6];
+      const LicenseNumber = row['License Number']//row[4];
+      const SpecialtyLicense1 = row['Specialty License 1']//[5];
+      const SpecialtyLicense2 = row['Specialty License 2']//[6];
       let result = { guard: true, errors:[] };
-
-
-      if(isBrandEmpty(row[0])){
+      if(isBrandEmpty(row['Therapy Area']/*[0]*/)){
         result.guard = false,
         result.errors.push({
           message: "Therapy Area must be not empty",
           number:1
         })
       }
-      if(isIdEngageEmpty(row[1])){
+      if(isIdEngageEmpty(row["IMS ID"]/*[1]*/)){
         result.guard = false;
         result.errors.push({
           message:"IMS ID must be not empty",
           number:2
         })
       }
-      if(isNameEmpty(row[2])){
+      if(isNameEmpty(row['First Name']/*[2]*/)){
         result.guard = false;
         result.errors.push({
           message:"First Name must be not empty",
           number:3
         })
       }
-      if(isLastNameEmpty(row[3])){
+      if(isLastNameEmpty(row['Last Name']/*[3]*/)){
         result.guard = false;
         result.errors.push({
           message:"Last Name must be not empty",
           number:4
         })
       }
-      if(!isEmail(row[7])){
+      
+      if(!isEmail(row['E-Mail']/*[7]*/)){
         result.guard = false;
         result.errors.push({
           message:"E-Mail must an email",
           number:5
         })
       }
-      if(!isSpeciality1RelationExist(row[5], row[8])){
+      if(!isSpeciality1RelationExist(row['Specialty License 1']/*[5]*/, row['Specialty']/*[8]*/)){
         result.guard = false;
         result.errors.push({
           message:"The Specialty License 1 field and the Specialty field are dependent",
           number:6
         })
       }
-      if(!isSpeciality2RelationExist(row[6], row[9])){
+      if(!isSpeciality2RelationExist(row['Specialty License 2']/*[6]*/, row['Specialty 2']/*[9]*/)){
         result.guard = false;
         result.errors.push({
           message:"The Specialty License 2 field and the Specialty 2 field are dependent",
           number:7
         })
       }
-
+      
       if(!( typeof LicenseNumber == 'number' )){
         result.guard = false;
         result.errors.push({
@@ -311,44 +311,44 @@ export class DatabaseService {
       let count = 1
       const isEspecialityEmpty = this.isEmpty;
       for(let row of excel){
-
-        if(!isHeader){
+        
+        //if(!isHeader){
           let info = new DatabaseInfoDto();
           let validations = this.excelValidations(row);
           
           if( validations.guard ){
             
-            info.idengage = row[1];
-            info.cedula = row[4];
-            if(row[5] && row[5] != '-' )info.cedula_2 = row[5];
-            if(row[6] && row[6] != '-' )info.cedula_3 = row[6];
-            info.name = `${row[2]} ${row[3]}`;
-            info.firstname = row[2];
-            info.lastname = row[3];
-            info.speciality = row[8];
-            if(!isEspecialityEmpty(row[9]))info.speciality_2 = row[9]
-            info.email = row[7];
+            info.idengage = row["IMS ID"]//[1];
+            info.cedula = row['License Number']//[4];
+            if(row['Specialty License 1']/*[5]*/ && row['Specialty License 1']/*[5]*/ != '-' )info.cedula_2 = row['Specialty License 1']/*[5]*/;
+            if(row['Specialty License 2']/*[6]*/ && row['Specialty License 2']/*[6]*/ != '-' )info.cedula_3 = row['Specialty License 2']/*[6]*/;
+            info.name = `${row['First Name']/*[2]*/} ${row['Last Name']/*[3]*/}`;
+            info.firstname = row['First Name']/*[2]*/;
+            info.lastname = row['Last Name']/*[3]*/;
+            info.speciality = row['Specialty']/*[8]*/;
+            if(!isEspecialityEmpty(row['Specialty 2']/*[9]*/))info.speciality_2 = row['Specialty 2']/*[9]*/
+            info.email = row['E-Mail']/*[7]*/;
             info.created_by = session.id;
-            info.brand = row[0];
+            info.brand = row['Therapy Area']/*[0]*/;
             result.push(info)
           }else{
             let error = {
               row:count,
-              "TherapyArea":row[0],
-              "IMSID":row[1],
-              "FirstName":row[2],
-              "LastName":row[3],
-              "LicenseNumber":row[4],
-              "SpecialtyLicense1":row[5],
-              "SpecialtyLicense2":row[6],
-              "EMail":row[7],
-              "Specialty":row[8],
-              "Specialty2":row[9],
+              "TherapyArea":row['Therapy Area']/*[0]*/,
+              "IMSID":row["IMS ID"]/*[1]*/,
+              "FirstName":row['First Name']/*[2]*/,
+              "LastName":row['Last Name']/*[3]*/,
+              "LicenseNumber":row['License Number']/*[4]*/,
+              "SpecialtyLicense1":row['Specialty License 1']/*[5]*/,
+              "SpecialtyLicense2":row['Specialty License 2']/*[6]*/,
+              "EMail":row['E-Mail']/*[7]*/,
+              "Specialty":row['Specialty']/*[8]*/,
+              "Specialty2":row['Specialty 2']/*[9]*/,
               errors: validations.errors
             }
             errors.push(error);
           }
-        }else{ isHeader = false; }
+        //}else{ isHeader = false; }
         count++;
       }
 

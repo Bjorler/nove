@@ -19,7 +19,7 @@ import { DatabaseUploadDecorator, DataBaseLastUploadDecorator, DatabaseExcelDeco
 DatabaseHistoricalDecorator, DatabaseSearchDecorator
 } from './decorators';
 import { STATICS_EXCEL } from '../config';
-
+import * as moment from 'moment'
 
 @ApiTags("Database Upload")
 @Controller('database')
@@ -59,22 +59,30 @@ export class DatabaseController {
     async loadExcel(@UploadedFile() file, @User() session){
         
         if(!file) throw new HttpException("The file parameter is required",418)
-
+        
+        
         let excelReader = new ExcelReader();
-        const rows = await excelReader.open(file.path);
+        const rows = await excelReader.open2(file.path);
+        
+        
+        //const rows = await excelReader.open(file.path);
+        
+        
         const deleted = await this.databaseService.deleteHistorical(session);
+        
         const { result:data, errors } = await this.databaseService.parseExcel(rows, session);
+        
         
         const saved = await this.databaseService.saveExcel(data);
 
         let res = new DatabaseUploadDto();
         if(saved){
+            
             let historial:DatabaseHistoricalDto = { file_name: file.originalname, file_path: file.path, created_by:session.id }
             const deletedAll = await this.databaseService.deleteAll();    
             const saved_historical = await this.databaseService.saveHistorical(historial);
             let response = await this.databaseService.lastUpload();
             
-            /** CREATE LOG DELETE FILES */
             let log = new LogDto();
             log.new_change = "delete";
             log.type = "delete";
@@ -84,7 +92,6 @@ export class DatabaseController {
             log.element = deletedAll;
             await this.logServices.createLog(log)
 
-            /** CREATE LOG UPLOAD FILE */
             log = new LogDto();
             log.new_change = "create";
             log.type = "create";
@@ -94,7 +101,6 @@ export class DatabaseController {
             log.element = saved[0];
             await this.logServices.createLog(log)
 
-            /** CREATE LOG SAVE HISTORICAL */
             log.db_table = this.TABLE_LOAD_HISTORY;
             log.element = saved_historical[0];
             await this.logServices.createLog(log);
@@ -105,8 +111,8 @@ export class DatabaseController {
         if(!saved) throw new HttpException("Wrong file format checks the data.",420);
 
         
-
         return res;
+        //return "HECHO"
         
     }    
 

@@ -64,7 +64,7 @@ export class EventsService {
                 builder.where("event_date",'>=', init_date).andWhere("event_date", '<=', final_date)
             }
         })
-        .andWhere({is_deleted:0}).orderBy('id','desc')
+        .andWhere({is_deleted:0}).orderBy('event_date','desc')
         return events;
     }
 
