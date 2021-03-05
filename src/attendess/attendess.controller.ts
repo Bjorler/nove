@@ -611,7 +611,7 @@ export class AttendessController {
         
         email_template = this.emailService.prepareTemplate([
             {key:"event_name", value:event[0].name},
-            {key:"event_date", value:moment(event[0].event_date).format("YYYY-MM-DD")},
+            {key:"event_date", value:moment(event[0].event_date).add(1,'day').format("YYYY-MM-DD")},
             {key:"logo", value:`<img src="${logo}" style="width: 100%; height: 100px; ">`},
             {key:"event_time", value:event_time},
             {key:"event_location", value:event[0].address}

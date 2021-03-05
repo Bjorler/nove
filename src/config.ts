@@ -1,7 +1,7 @@
 export const HOST = "localhost";
-export const USER = "";
-export const PASSWORD = "";
-export const DATABASE = "";
+export const USER = "root";
+export const PASSWORD = "QWE123asd$";
+export const DATABASE = "noveve";
 export const SECRET = "0c7Op12o2L$n0v3vE"
 export const METHOD = "http";
 export const DOMAIN = "localhost:4057/noveve-api";

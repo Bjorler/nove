@@ -7,7 +7,7 @@ import * as FormData from 'form-data';
 import { DatabaseInfoDto } from './DTO/database-info.dto';
 import { DatabaseLastUploadDto } from './DTO/database-lastloading.dto';
 import {  METHOD, DOMAIN } from '../config';
-
+import * as request from 'request';
 
 
 @Injectable()
