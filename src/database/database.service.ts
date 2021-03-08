@@ -190,12 +190,13 @@ export class DatabaseService {
     private isEmail(email) {
       const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
       if( !email ) return false
-      return re.test(email.toLowerCase());
+      return re.test(email.trim().toLowerCase());
     }
     private relationExist(dependence, dependent){
       
       if( ( typeof dependence == 'number' ) == dependent )return true;
       if( !( typeof dependence == 'number' ) == !dependent ) return true;
+      if( dependent ) return true;
 
       return false;
     }

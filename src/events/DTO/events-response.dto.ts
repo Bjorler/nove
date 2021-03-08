@@ -22,9 +22,15 @@ export class EventsResponse{
 
     @ApiProperty({
         type:String,
-        example:"05-11-2021"
+        example:"Sede Central"
     })
-    event_date:string;
+    sede:string;
+
+    @ApiProperty({
+        type:[String],
+        example:["2021-03-08T16:17:04.000Z"]
+    })
+    event_date:string[];
 
     @ApiProperty({
         type:Number,

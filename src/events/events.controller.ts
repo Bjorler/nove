@@ -53,15 +53,22 @@ export class EventsController {
         }
     }))
     async create(@UploadedFile() image,@Body() event: EventsCreateDto, @User()session ){
-        const EVENT_DATE_IS_BEFORE_CURRENT_DATE = moment(event.event_date).isBefore(moment(moment().format("YYYY-MM-DD")))
-        const EVENT_DATE_IS_SAME_CURRENT_DATE = moment(event.event_date).isSame(moment(moment().format("YYYY-MM-DD")))   
-        if(event.event_date){
-            if(EVENT_DATE_IS_BEFORE_CURRENT_DATE) {
-                this.eventService.deleteImage(image.path)
-                throw new HttpException("You cannot schedule an event on past dates.",414)
-            }    
-        }
-        const IS_HOUR_END_BEFORE_CURRENTTIME = moment(event.hour_end,"HH:mm").isBefore(moment(moment().format("HH:mm"),"HH:mm"))
+
+
+        let isDatesArray = this.eventService.parseToarray(event.event_date);
+        if(!isDatesArray.length) throw new HttpException("event_date must contain at least one valid date",424)
+        
+
+        //const EVENT_DATE_IS_BEFORE_CURRENT_DATE = moment(event.event_date).isBefore(moment(moment().format("YYYY-MM-DD")))
+        //const EVENT_DATE_IS_SAME_CURRENT_DATE = moment(event.event_date).isSame(moment(moment().format("YYYY-MM-DD")))  
+        const isEventDataInPastTime = this.eventService.validateDates(isDatesArray); 
+        
+        if( isEventDataInPastTime /*EVENT_DATE_IS_BEFORE_CURRENT_DATE*/) {
+            this.eventService.deleteImage(image.path)
+            throw new HttpException("You cannot schedule an event on past dates.",415)
+        }    
+        
+        //const IS_HOUR_END_BEFORE_CURRENTTIME = moment(event.hour_end,"HH:mm").isBefore(moment(moment().format("HH:mm"),"HH:mm"))
         const IS_HOUR_INIT_BEFORE_HOUR_END = moment(event.hour_init,"HH:mm").isAfter(moment(event.hour_end,"HH:mm"))
         const IS_HOUR_INIT_THE_SAME_AS_HOUR_END = moment(event.hour_init,"HH:mm").isSame(moment(event.hour_end,"HH:mm"))  
         if( IS_HOUR_INIT_BEFORE_HOUR_END || IS_HOUR_INIT_THE_SAME_AS_HOUR_END 
@@ -69,17 +76,17 @@ export class EventsController {
             if(image)this.eventService.deleteImage(image.path);
             throw new HttpException("You cannot schedule events with a start time equal to the end time, not an end time less than the start time",414)
         }
-        if(EVENT_DATE_IS_SAME_CURRENT_DATE && IS_HOUR_END_BEFORE_CURRENTTIME){
+        /*if(EVENT_DATE_IS_SAME_CURRENT_DATE && IS_HOUR_END_BEFORE_CURRENTTIME){
             if(image)this.eventService.deleteImage(image.path);
             throw new HttpException("You cannot schedule events with a start time equal to the end time, not an end time less than the start time",414)
-        }
-
+        }*/
         let image_name = "", path = ""
         let schema = Object.assign({}, event,{
-            event_date:new Date(event.event_date),
+            //event_date:new Date(event.event_date),
             created_by: session.id,
             modified_by:session.id
         });
+        delete schema.event_date
         if(image){
             image_name = image.originalname;
             path = image.path;
@@ -87,7 +94,9 @@ export class EventsController {
         }
 
         const newEvent = await this.eventService.save(schema);
-        
+        console.log(newEvent)
+        const event_dates = await this.eventService.saveEventDate(isDatesArray,newEvent[0], session);
+        console.log(event_dates)
 
         /** CREATE LOG */
         let log  = new LogDto();
@@ -99,6 +108,17 @@ export class EventsController {
         log.modified_by = session.id;
         await this.logService.createLog(log);
 
+        /** CREATE LOG EVENT DATE */
+         log  = new LogDto();
+        log.new_change = "create";
+        log.type = "create";
+        log.element = newEvent[0];
+        log.db_table = "events_date";
+        log.created_by = session.id;
+        log.modified_by = session.id;
+        await this.logService.createLog(log);
+        //@ts-ignore
+        event.event_date = isDatesArray
         return event;
     }
 
@@ -233,17 +253,20 @@ export class EventsController {
         if(!eventExist.length) throw new HttpException("EVENT NOT FOUND", HttpStatus.NOT_FOUND);        
         
         /** EVENT DATE VALIDATIONS */
+        let isDatesArray = []
         if(event.event_date){
             let event_date_validation = event.event_date 
-            const EVENT_DATE_IS_BEFORE_CURRENT_DATE = moment(event_date_validation).isBefore(moment(moment().format("YYYY-MM-DD")))
-            const EVENT_DATE_IS_SAME_AS_CURRENT_DATE = moment(event_date_validation).isSame(moment(moment().format("YYYY-MM-DD")))   
-            
-            if(EVENT_DATE_IS_BEFORE_CURRENT_DATE) {throw new HttpException("You cannot schedule an event on past dates.",414)}  
-            if(EVENT_DATE_IS_SAME_AS_CURRENT_DATE){
+            isDatesArray = this.eventService.parseToarray(event.event_date);
+            const isEventDataInPastTime = this.eventService.validateDates(isDatesArray); 
+            //const EVENT_DATE_IS_BEFORE_CURRENT_DATE = moment(event_date_validation).isBefore(moment(moment().format("YYYY-MM-DD")))
+            //const EVENT_DATE_IS_SAME_AS_CURRENT_DATE = moment(event_date_validation).isSame(moment(moment().format("YYYY-MM-DD")))   
+            if(!isDatesArray.length) throw new HttpException("event_date must contain at least one valid date",424)
+            if(isEventDataInPastTime) {throw new HttpException("You cannot schedule an event on past dates.",415)}  
+            /*if(EVENT_DATE_IS_SAME_AS_CURRENT_DATE){
                 let hour_end = event.hour_end || eventExist[0]['hour_end'];
                 const IS_HOUR_END_BEFORE_CURRENTTIME = moment(hour_end,"HH:mm").isBefore(moment(moment().format("HH:mm"),"HH:mm"))
                 if(IS_HOUR_END_BEFORE_CURRENTTIME)throw new HttpException("You cannot schedule events with a start time equal to the end time, not an end time less than the start time",414);
-            }  
+            }  */
         }
 
         /** EVENT HOUR VALIDATIONS */
@@ -262,6 +285,7 @@ export class EventsController {
         if(event.event_date){ eschema = Object.assign(eschema, { event_date: new Date(event.event_date) }) }
 
         delete eschema.eventId;
+        if( eschema.event_date ) delete eschema.event_date;
         
         let image_name = "", path = "";
         if(image){
@@ -272,6 +296,7 @@ export class EventsController {
         
         
         const updated = await this.eventService.update(eschema,eventId);
+        if(isDatesArray.length) await this.eventService.updateEventDates(isDatesArray, eventId, session);
         
 
         /** CREATE LOG */
@@ -283,7 +308,17 @@ export class EventsController {
         log.created_by = session.id;
         log.modified_by = session.id
         this.logService.createLog(log);
-
+        /** CREATE LOG EVENTS DATES */
+         log = new LogDto();
+        log.new_change = "update and save new dates";
+        log.type = "update";
+        log.element = eventId;
+        log.db_table = "events_date";
+        log.created_by = session.id;
+        log.modified_by = session.id
+        this.logService.createLog(log);
+        //@ts-ignore
+        if(isDatesArray.length) event.event_date = isDatesArray
         return event;
     }
 
@@ -303,8 +338,9 @@ export class EventsController {
         response.image_name = eventExist[0].image;
         response.name = eventExist[0].name;
         response.location = eventExist[0].address;
+        response.sede = eventExist[0].sede || ''
         response.description = eventExist[0].description;
-        response.event_date  = eventExist[0].event_date;
+        response.event_date  = this.eventService.displayDates(await this.eventService.getEventDates(eventExist[0].id)) //eventExist[0].event_date;
         response.hour_init = eventExist[0].hour_init;
         response.hour_end = eventExist[0].hour_end;
 

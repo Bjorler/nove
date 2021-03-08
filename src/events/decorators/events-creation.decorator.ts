@@ -4,8 +4,10 @@ import { ApiOperation, ApiHeader, ApiResponse, ApiBadRequestResponse,
 } from '@nestjs/swagger';
 import { ValidationPipe } from '../../commons/validations/validations.pipe';
 import { TokenGuard, MasterGuard } from '../../commons/guards';
-import { ImageErrorDto, EvetnDateErrorDto, ErrorDto, UnauthorizedDto, ForbiddenDto, InternalServerErrrorDto } from '../../commons/DTO';
-import { EventsCreateDto } from '../DTO/events-create.dto';
+import { ImageErrorDto, EvetnDateErrorDto, ErrorDto, UnauthorizedDto, ForbiddenDto, InternalServerErrrorDto,
+DatesErrorDto, StartTimeErrorDto
+} from '../../commons/DTO';
+import { EventsCreateDto, EventsResponseDates } from '../DTO/events-create.dto';
 export function EventsCreationDecorator(){
     return applyDecorators(
         ApiOperation({
@@ -20,9 +22,11 @@ export function EventsCreationDecorator(){
         }),
         UsePipes(new ValidationPipe),
         UseGuards(TokenGuard, MasterGuard),
-        ApiResponse({status:201,type:EventsCreateDto}),
+        ApiResponse({status:201,type:EventsResponseDates}),
         ApiResponse({status:413, type:ImageErrorDto}),
         ApiResponse({status:415, type:EvetnDateErrorDto}),
+        ApiResponse({status:414, type:StartTimeErrorDto}),
+        ApiResponse({status:424, type:DatesErrorDto}),
         ApiBadRequestResponse({type:ErrorDto}),
         ApiUnauthorizedResponse({type:UnauthorizedDto}),
         ApiForbiddenResponse({type:ForbiddenDto}),

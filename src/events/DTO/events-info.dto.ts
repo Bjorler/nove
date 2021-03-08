@@ -41,15 +41,24 @@ export class EventsInfoDto{
 
     @ApiProperty({
         type:String,
+        example:"Sede Central"
+    })
+    sede:string;
+
+    @ApiProperty({
+        type:String,
         example:"Vivamus aliquet magna dui, nec tincidunt dolor rutrum non. Nullam eleifend libero quis tortor consequat porttitor. In pulvinar sem nunc, egestas efficitur ante scelerisque quis. Donec et ultrices mi. Aenean a arcu ligula. Quisque ac feugiat eros. Nam nibh libero, commodo nec ex nec, aliquam sollicitudin erat. Cras et accumsan ex. Vestibulum non auctor leo. Pellentesque nec neque ut nulla pharetra sollicitudin. Suspendisse malesuada tellus quis augue fermentum tincidunt. Ut sed purus eu est vehicula volutpat. Mauris quis porttitor mi."
     })
     description:string;
 
     @ApiProperty({
-        type:String,
-        example:"05-06-2021"
+        type:[String],
+        example:[{
+            "dispay_date": "04-06-2021",
+            "event_date": "2021-04-06T05:00:00.000Z"
+        }]
     })
-    event_date:string;
+    event_date:string[];
 
     @ApiProperty({
         type:String,
@@ -63,11 +72,7 @@ export class EventsInfoDto{
     })
     hour_end:string; 
 
-    @ApiProperty({
-        type:String,
-        example:"05-06-2021"
-    })
-    display_date:string;
+    
 
     @ApiProperty({
         type:String,

@@ -25,3 +25,5 @@ export { UserRepeatError } from './user-repeat-error.dto';
 export { UserUpdateForbiddenError } from './user-updateforbbidenerror.dto';
 export { UserUpdateAdminError } from './user-updateadminerror.dto';
 export { EventsOutOfTimeDto } from './attendees-outoftimeerror.dto';
+export { DatesErrorDto } from './dates-error.dto';
+export { StartTimeErrorDto } from './starttime-error.dto';

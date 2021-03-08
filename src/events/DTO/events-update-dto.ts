@@ -35,6 +35,17 @@ export class EventsUpdateDto{
 
     @ApiProperty({
         type:String,
+        example:"Sede Central",
+        required:false
+    })
+    @IsString()
+    @IsNotEmpty()
+    @MinLength(1)
+    @IsOptional()
+    sede:string;
+
+    @ApiProperty({
+        type:String,
         example:`Vivamus aliquet magna dui, nec tincidunt dolor rutrum non. Nullam eleifend libero quis tortor consequat porttitor. In pulvinar sem nunc, egestas efficitur ante scelerisque quis. Donec et ultrices mi. Aenean a arcu ligula. Quisque ac feugiat eros. Nam nibh libero, commodo nec ex nec, aliquam sollicitudin erat. Cras et accumsan ex. Vestibulum non auctor leo. Pellentesque nec neque ut nulla pharetra sollicitudin. Suspendisse malesuada tellus quis augue fermentum tincidunt. Ut sed purus eu est vehicula volutpat. Mauris quis porttitor mi.`,
         required:false
     })
@@ -45,7 +56,7 @@ export class EventsUpdateDto{
 
     @ApiProperty({
         type:String,
-        example:"2021-06-02",
+        example:"2021-06-02,2021-06-05",
         required:false
     })
     @IsString()
@@ -86,4 +97,63 @@ export class EventsUpdateDto{
     })
     @IsOptional()
     image:any
+}
+export class EventsUpdateResponseDto{
+
+    @ApiProperty({
+        type:String,
+        example:"1",
+        required:true
+    })
+    eventId:string;
+
+    @ApiProperty({
+        type:String,
+        example:"Avances Tecnologicos de genética humana",
+        required:false
+    })
+    name:string;
+
+    @ApiProperty({
+        type:String,
+        example:"CDMX, México",
+        required:false
+    })
+    address:string;
+
+    @ApiProperty({
+        type:String,
+        example:"Sede Central",
+        required:false
+    })
+    sede:string;
+
+    @ApiProperty({
+        type:String,
+        example:`Vivamus aliquet magna dui, nec tincidunt dolor rutrum non. Nullam eleifend libero quis tortor consequat porttitor. In pulvinar sem nunc, egestas efficitur ante scelerisque quis. Donec et ultrices mi. Aenean a arcu ligula. Quisque ac feugiat eros. Nam nibh libero, commodo nec ex nec, aliquam sollicitudin erat. Cras et accumsan ex. Vestibulum non auctor leo. Pellentesque nec neque ut nulla pharetra sollicitudin. Suspendisse malesuada tellus quis augue fermentum tincidunt. Ut sed purus eu est vehicula volutpat. Mauris quis porttitor mi.`,
+        required:false
+    })
+    description:string;
+
+    @ApiProperty({
+        type:[String],
+        example:["2021-06-02"],
+        required:false
+    })
+    event_date:string[];
+
+    @ApiProperty({
+        type:String,
+        example:"12:00",
+        required:false
+    })
+    hour_init:string;
+    
+    @ApiProperty({
+        type:String,
+        example:"13:00",
+        required:false
+    })
+    hour_end:string;
+
 }

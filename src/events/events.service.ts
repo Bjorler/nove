@@ -20,6 +20,7 @@ export class EventsService {
         const newEvent = await this.knex.table(this.TABLE).insert(event);
         return newEvent;
     }
+    
 
     async findAll(pagination:EventsPaginationDto):Promise<EventsResponse[]>{
         let page = parseInt(pagination.page)
@@ -34,7 +35,9 @@ export class EventsService {
             info.id = event.id;
             info.name = event.name;
             info.location = event.address;
-            info.event_date = event.event_date//moment(event.event_date).format("DD-MM-YYYY");
+            info.event_date = await this.getEventDates(event.id);
+            info.sede = event.sede || ''
+            //event.event_date//moment(event.event_date).format("DD-MM-YYYY");
             //const total = await this.attendeesService.findTotalAttendeesByEvent(event.id);
             
             info.assistance = event.assistants;
@@ -43,10 +46,22 @@ export class EventsService {
         return result;
     }
 
+    async getEventDates(event_id:number){
+        const dates = await this.knex.table("events_date").where({event_id, is_deleted:0})
+        
+        let result = []
+        for(let date of dates){
+            result.push(date.event_date)
+        }
+        return result
+    }
+
     private async getQuery(filter:string, limit:number, offset:number, init_date:string, final_date:string){
         let events = []
 
-        events = await this.knex.table(this.TABLE).limit(limit).offset(offset)
+        events = await this.knex.select(this.knex.raw(`distinct ${this.TABLE}.* `)).table(this.TABLE)
+        .innerJoin("events_date",'events.id','events_date.event_id')
+        .limit(limit).offset(offset)
         .where((builder) => {
             console.log({filter, init_date, final_date})
             if(filter){
@@ -61,16 +76,20 @@ export class EventsService {
         }).
         andWhere((builder) => {
             if(init_date && final_date){
-                builder.where("event_date",'>=', init_date).andWhere("event_date", '<=', final_date)
+                builder.where("events_date.event_date",'>=', init_date).andWhere("events_date.event_date", '<=', final_date)
             }
         })
-        .andWhere({is_deleted:0}).orderBy('event_date','desc')
+        .andWhere(`${this.TABLE}.is_deleted`,'=',0)
+        .orderBy('.events_date.event_date','desc')
+        
         return events;
     }
 
     private async getQueryTotalPages(filter:string,  init_date:string, final_date:string){
         let events = []
-        events = await this.knex.table(this.TABLE).count("id",{as:'total'})
+        events = await this.knex.select(this.knex.raw(`count(distinct ${this.TABLE}.id) as total `))
+        .table(this.TABLE)//.count("events.id",{as:'total'})
+        .innerJoin("events_date",'events.id','events_date.event_id')
         .where((builder) => {
             if(filter){
                 if(isNaN(parseInt(filter))){
@@ -86,11 +105,10 @@ export class EventsService {
         }).
         andWhere((builder) => {
             if(init_date && final_date){
-                builder.where("event_date",'>=', init_date).andWhere("event_date", '<=', final_date)
+                builder.where("events_date.event_date",'>=', init_date).andWhere("events_date.event_date", '<=', final_date)
             }
         })
-        .andWhere({is_deleted:0})
-
+        .andWhere(`${this.TABLE}.is_deleted`,'=',0)
 
         return events;
     }
@@ -125,29 +143,34 @@ export class EventsService {
 
     async futureEvents(){
         const hour_init = moment().format("HH:00");
-        /*const events = await this.knex.table(this.TABLE).where({is_deleted:0})
-        .andWhere('event_date','>', moment().format("YYYY-MM-DD")) 
-        .orderBy("event_date")*/
-        // Si se require regresar a que este servicio solo muestre los eventos futuros eliminar la query events y descomentar la query events
-
-        const events = await this.knex.table(this.TABLE).where({is_deleted:0})
-        .andWhere(this.knex.raw("date_format(event_date,'%Y-%m-%d') > ? ",[moment().format("YYYY-MM-DD")]))
+        let events = await this.knex.select(`${this.TABLE}.*`).table(this.TABLE)
+        .innerJoin("events_date",'events.id','events_date.event_id')
+        .where(`${this.TABLE}.is_deleted`,'=',0)
+        .andWhere(this.knex.raw("date_format(events_date.event_date,'%Y-%m-%d') > ? ",[moment().format("YYYY-MM-DD")]))
         .orWhere((builder) => {
             builder.where("hour_init", '>=', hour_init)
-            .andWhere(this.knex.raw("date_format(event_date,'%Y-%m-%d') = ?",[moment().subtract(1,'day').format("YYYY-MM-DD")]))
+            .andWhere(this.knex.raw("date_format(events_date.event_date,'%Y-%m-%d') = ?",[moment().format("YYYY-MM-DD")]))
         })
         .orWhere((builder) => {
             builder.where("hour_end", '>', hour_init)
-            .andWhere(this.knex.raw("date_format(event_date,'%Y-%m-%d') = ?",[moment().subtract(1,'day').format("YYYY-MM-DD")]))
+            .andWhere(this.knex.raw("date_format(events_date.event_date,'%Y-%m-%d') = ?",[moment().format("YYYY-MM-DD")]))
             
         })
-        .orderBy("event_date").orderBy('hour_init')
+        .orderBy("events_date.event_date").orderBy('hour_init')
+        
+
+        let data = [];
+        for(let e of events){
+            const isInData = data.find(d => d.id == e.id)
+            if(!isInData) data.push(e);
+        }
+        
         
               
 
         
         const result = [];
-        for( let event of events ){
+        for( let event of data ){
             let info = new EventsInfoDto();
             info.download_img = `${METHOD}://${DOMAIN}/events/image/${event.id}`;
             info.default_img = `${METHOD}://${DOMAIN}/events/image`;
@@ -155,11 +178,11 @@ export class EventsService {
             info.image_name = event.image;
             info.name = event.name;
             info.location = event.address;
+            info.sede = event.sede || ''
             info.description = event.description;
-            info.event_date = event.event_date;
+            info.event_date =  this.displayDates(await this.getEventDates(event.id)) //event.event_date;
             info.hour_init = event.hour_init;
             info.hour_end = event.hour_end;
-            info.display_date = moment(event.event_date).add(1,'d').format("DD-MM-YYYY")
             info.display_time = `${moment(event.hour_init,"HH:mm").format("HH:mm")} - ${moment(event.hour_end,"HH:mm").format("HH:mm")} Hrs`
             result.push(info);
         }
@@ -179,9 +202,31 @@ export class EventsService {
         let FINAL_YEAR = moment(year).endOf("year")
         let FINAL = moment(FINAL_YEAR).format("YYYY-MM-DD")
         
-        const events = await this.knex.table(this.TABLE).where('event_date','>=',DATE)
+        /*const events = await this.knex.table(this.TABLE)
+        .innerJoin("events_date",'events.id','events_date.event_id')
+        .where('event_date','>=',DATE)
         .andWhere('event_date','<=', FINAL)
-        .andWhere({is_deleted:0})
+        .andWhere({is_deleted:0})*/
+
+        const events = await this.knex.select(
+            this.knex.raw(`
+            events.id, events.name, events.address, 
+            (
+            
+            SELECT  event_date FROM events_date
+            WHERE event_id = events.id  AND is_deleted = 0 
+            ORDER BY id LIMIT 1
+             
+            ) AS event_date  
+            `)
+        ).table(this.TABLE)
+        .innerJoin("events_date",'events.id','events_date.event_id')
+        .where('events_date.event_date','>=',DATE)
+        .andWhere('events_date.event_date','<=', FINAL)
+        .andWhere(`${this.TABLE}.is_deleted`,'=',0).groupBy('events.id')
+
+        
+
         return events;
     }
 
@@ -200,5 +245,43 @@ export class EventsService {
             fs.unlinkSync(path)
         }
     }
-    
+    parseToarray(dates:string){
+        let dates_Array = dates.split(",");
+        let result = []
+        for(let e of dates_Array){
+            if(moment(e).isValid()) result.push(e)
+        }
+        return result;
+    }
+    validateDates(dates:string[]){
+        let guard = false;
+        for(let date of dates){
+            const EVENT_DATE_IS_BEFORE_CURRENT_DATE = moment(date).isBefore(moment(moment().format("YYYY-MM-DD")))
+            const EVENT_DATE_IS_SAME_CURRENT_DATE = moment(date).isSame(moment(moment().format("YYYY-MM-DD")))   
+            if(EVENT_DATE_IS_BEFORE_CURRENT_DATE || EVENT_DATE_IS_SAME_CURRENT_DATE) guard = true;
+        }
+        return guard;
+    }
+    async saveEventDate(dates:string[], event_id:number, session){
+        let data = [];
+        for(let date of dates){
+            data.push({event_date: date, event_id, created_by:session.id});
+        }
+        const event_dates = await this.knex.table('events_date').insert(data);
+        return event_dates;
+
+    }
+    async updateEventDates(dates:string[], event_id:number, session){
+        const deleted  = await this.knex.table('events_date')
+        .update({is_deleted:1}).where({event_id, is_deleted:0});
+        const newDates = await this.saveEventDate(dates, event_id, session);
+        return newDates;
+    }
+    displayDates(dates:string[]){
+        let result = []
+        for(let date of dates){
+            result.push({display_date:moment(date).format("MM-DD-YYYY"), event_date:date})
+        }
+        return result
+    }
 }
