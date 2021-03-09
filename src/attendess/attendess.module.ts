@@ -11,7 +11,9 @@ import { SECRET } from '../config';
 @Module({
   controllers: [AttendessController],
   providers: [AttendessService, LogServices, EmailServices],
-  imports:[ JwtModule.register({ secret:SECRET }), forwardRef(()=>EventsModule), HttpModule, DatabaseModule ],
+  imports:[ JwtModule.register({ secret:SECRET }), forwardRef(()=>EventsModule), 
+    HttpModule, 
+    forwardRef(()=>DatabaseModule) ],
   exports: [ AttendessService ]
 })
 export class AttendessModule {}

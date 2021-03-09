@@ -24,10 +24,11 @@ import { AttendeesCreateResponseDto } from './DTO/attendees-create-response.dto'
 import { Excel } from '../commons/build-excel/excel';
 import { AttendeesEmailDto } from './DTO/attendees-email.dto';
 import { AttendeesTemporalDto } from './DTO/attendees-temporal.dto';
+import { AttendanceSignature } from './DTO/attendance-signature.dto';
 import { AttendeesCreateDecorator, AttendeesListPdfDecorator, AttendeesListExcelDecorator,
 AttendeesAllPdfDecorator, AttendeesContractDecorator, AttendeesSignDecorator, AttendeesSignatureDecorator,
 AttendeesDetailDecorator, AttendeesEventsDecorator, AttendeesEmailDecorator, AttendeesConfirmSignDecorator,
-AttendeesTemporalDecorator
+AttendeesTemporalDecorator, AttendanceSignatureDecorator
 } from './decorators';
 
 import {  METHOD, DOMAIN, STATICS_SIGNATURES  } from '../config';
@@ -483,7 +484,13 @@ export class AttendessController {
         delete schema.id;
         const newAttendees = await this.attendessService.create(schema);
         const increment = await this.eventService.incrementAttendees(existAttendees[0].event_id, session.id);
-        
+        const attendaceSignature = await this.attendessService.saveAttendanceSignature({
+            attendees_id: newAttendees[0],
+            path_sign:existAttendees[0].pdf_path,
+            event_id : existAttendees[0].event_id,
+            created_by : session.id
+        })
+
         existAttendees = await this.attendessService.getById(newAttendees[0]);
 
         const hasPDF = existAttendees[0].pdf_path;
@@ -619,6 +626,41 @@ export class AttendessController {
         await this.emailService.sendEmail(`Registro de asistencia`,
         info.email,{filename:"registro_asistencia.pdf",path:existAttendees[0].pdf_path}, email_template)
         return {message:"E-mail sent"}
+    }
+
+    @Post('/signature/:id')
+    @AttendanceSignatureDecorator()
+    @UseInterceptors(FileInterceptor("signature",{
+        storage:diskStorage({
+            destination:path.join(__dirname,STATICS_SIGNATURES),//Si esta ruta presenta agun error remplazarla por ./images
+            filename: (req, file, callback)=>{
+                const name = new Date().getTime()
+                callback(null, `${name}_${file.originalname}`)
+            }
+        }),
+        fileFilter:(req, file ,callback)=>{
+            const authorized = new Set(["image/png","image/jpeg", 'image/gif'])
+            if(authorized.has(file.mimetype)) return callback(null, true)
+            callback( new HttpException("Only image are allowed jpg/png/gif",413), false)
+        }
+    }))
+    async uploadSignature(@UploadedFile() signature, @Param() id:AttendeesDetailDto, @User() session){
+        if(!signature) throw new HttpException("The signature field is mandatory", 417);     
+
+        const existAttendees = await this.attendessService.getById(id.id)
+               
+        if(!existAttendees.length) throw new HttpException("ATTENDEES NOT FOUND", HttpStatus.NOT_FOUND);
+
+        const attendanceSignature = await this.attendessService.saveAttendanceSignature({
+            attendees_id:id.id,
+            path_sign:signature.path,
+            event_id:existAttendees[0]['event_id'],
+            created_by:session.id
+        }) 
+        /*FALTA AGREGAR QUE CUANDO UN ASISTENTE FIRME LA NUEVA ASISTENCIA SE GUARDE EN LA BASE
+        EL HORARIO DEL EVENTO AL QUE ESTA ASISTIENDO
+        */
+        return attendanceSignature;
     }
 
 

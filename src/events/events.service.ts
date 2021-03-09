@@ -257,8 +257,9 @@ export class EventsService {
         let guard = false;
         for(let date of dates){
             const EVENT_DATE_IS_BEFORE_CURRENT_DATE = moment(date).isBefore(moment(moment().format("YYYY-MM-DD")))
-            const EVENT_DATE_IS_SAME_CURRENT_DATE = moment(date).isSame(moment(moment().format("YYYY-MM-DD")))   
-            if(EVENT_DATE_IS_BEFORE_CURRENT_DATE || EVENT_DATE_IS_SAME_CURRENT_DATE) guard = true;
+            const EVENT_DATE_IS_SAME_CURRENT_DATE = moment(date).isSame(moment(moment().format("YYYY-MM-DD"))) 
+            
+            if(EVENT_DATE_IS_BEFORE_CURRENT_DATE ) guard = true;
         }
         return guard;
     }

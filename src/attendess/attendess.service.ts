@@ -8,6 +8,7 @@ import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import { AttendeesCreateDto } from './DTO/attendees-create.dto';
 import { AttendeesListDto } from './DTO/attendees-list.dto';
 import { AttendeesPaginationDto } from './DTO/attendees-pagination.dto';
+import { AttendanceSignature } from './DTO/attendance-signature.dto';
 import { METHOD, DOMAIN, PORT } from '../config';
 
 
@@ -339,4 +340,15 @@ export class AttendessService {
         return result;
     }
 
+    async saveAttendanceSignature(data:AttendanceSignature){
+        const signature = await this.knex.table("attendees_sign").insert(data);
+        return signature;
+    }
+
+    async findByCedula(cedula:number){
+        const attendees = await this.knex.table(this.TABLE).where({
+            is_deleted:0,cedula
+        })
+        return attendees;
+    }
 }

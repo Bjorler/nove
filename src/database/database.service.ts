@@ -4,10 +4,10 @@ import { InjectKnex, Knex } from 'nestjs-knex';
 import * as moment from 'moment';
 import * as _ from 'underscore';
 import * as FormData from 'form-data';
+import { AttendessService } from '../attendess/attendess.service';
 import { DatabaseInfoDto } from './DTO/database-info.dto';
 import { DatabaseLastUploadDto } from './DTO/database-lastloading.dto';
 import {  METHOD, DOMAIN } from '../config';
-import * as request from 'request';
 
 
 @Injectable()
@@ -22,7 +22,8 @@ export class DatabaseService {
 
     constructor(
       @InjectKnex() private knex: Knex,
-      private httpService: HttpService
+      private httpService: HttpService,
+      private attendeesService: AttendessService
     ){}
 
 
@@ -79,7 +80,8 @@ export class DatabaseService {
         email:data.email, 
         idengage:data.idengage,
         cedula,
-        register_type:"excel"
+        register_type:"excel",
+        attendees_id:0
       }]
       return info;
     }
@@ -95,20 +97,38 @@ export class DatabaseService {
           email:"", 
           idengage:"",
           cedula:cedula,
-          register_type:"registered"
+          register_type:"registered",
+          attendees_id:0
       }
       ];
+
+      const attendees = await this.attendeesService.findByCedula(cedula);
       
-      const excel = await this.findByCedula(cedula);
-      console.log(excel)
       
-      if( !excel.length ){
+      let excel = []
+      if(!attendees.length){
+        excel = await this.findByCedula(cedula);
+        if(excel.length) info = this.parseDataExcel(excel, cedula);
+      }
+      
+      if( !excel.length && !attendees.length ){
         let result = await this.getProfesionalLicensePrototype(cedula);
         
         if(result) info = [result];
 
-      }else{ 
-        info = this.parseDataExcel(excel, cedula);
+      }
+      if(attendees.length) { 
+        info[0] = {
+          complete_name:attendees[0].name,
+          name:attendees[0].firstname,
+          lastname:attendees[0].lastname, 
+          speciality:attendees[0].speciality,
+          email:attendees[0].email, 
+          idengage:attendees[0].idengage,
+          cedula:cedula,
+          register_type:"attendees",
+          attendees_id: attendees[0].id
+      }
       }
       return info[0];
     }
@@ -146,7 +166,8 @@ export class DatabaseService {
         lastname:`${data.paterno} ${data.materno}`, 
         speciality:data.titulo, email:'', idengage:'',
         cedula:parseInt(data.idCedula),
-        register_type:"internet"
+        register_type:"internet",
+        attendees_id:0
         }
       }else{ result = undefined }
       return result;
