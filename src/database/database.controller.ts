@@ -11,7 +11,7 @@ import { User } from '../commons/decoratos/user.decorator';
 import { DatabaseService } from './database.service';
 import { LogServices } from '../commons/services/log.service';
 import {  LogDto } from '../commons/DTO';
-import { DatabaseCedulaDto } from './DTO/database-cedula.dto';
+import { DatabaseCedulaDto, EventIdRequest } from './DTO/database-cedula.dto';
 import { DatabaseResponseByCedulaDto } from './DTO/database-responsebycedula.dto';
 import { DatabaseHistoricalDto } from './DTO/database-historical.dto';
 import { DatabaseUploadDto } from './DTO/database-upload.dto';
@@ -146,13 +146,13 @@ export class DatabaseController {
 
     @Get("/:cedula")
     @DatabaseSearchDecorator()
-    async findDoctorByCedula(@Param() cedula:DatabaseCedulaDto){
+    async findDoctorByCedula(@Param() cedula:DatabaseCedulaDto,@Query() event: EventIdRequest){
         
         const id = parseInt(cedula.cedula);
         if(isNaN(id)) throw new HttpException("Internal server error", 500)
         
         let response= new DatabaseResponseByCedulaDto()
-        response = await this.databaseService.findDoctorByCedula(id)
+        response = await this.databaseService.findDoctorByCedula(id, parseInt(event.event_id))
         
         return response;
     }

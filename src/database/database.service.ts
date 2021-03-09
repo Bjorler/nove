@@ -86,7 +86,7 @@ export class DatabaseService {
       return info;
     }
 
-    async findDoctorByCedula(cedula:number){
+    async findDoctorByCedula(cedula:number, event_id:number){
       
       let info = [
         {
@@ -102,7 +102,7 @@ export class DatabaseService {
       }
       ];
 
-      const attendees = await this.attendeesService.findByCedula(cedula);
+      const attendees = await this.attendeesService.findByCedula(cedula,event_id);
       
       
       let excel = []

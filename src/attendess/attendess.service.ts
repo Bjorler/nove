@@ -339,13 +339,25 @@ export class AttendessService {
         let FINAL_YEAR = moment(year).endOf("year")
         let FINAL = moment(FINAL_YEAR).format("YYYY-MM-DD")
         
-        const attendees = await this.knex
+        /*const attendees = await this.knex
         .table(this.TABLE)
         .select('events.event_date',`${this.TABLE}.speciality`)
         .innerJoin('events',`${this.TABLE}.event_id`,'events.id')
         .where('events.event_date','>=',DATE)
         .andWhere('events.event_date','<=', FINAL)
-        .andWhere('events.is_deleted','=',0).andWhere(`${this.TABLE}.is_deleted`,'=',0)
+        .andWhere('events.is_deleted','=',0).andWhere(`${this.TABLE}.is_deleted`,'=',0)*/
+
+        const attendees = await this.knex
+        .table(this.TABLE)
+        .select('events_date.event_date',`${this.TABLE}.speciality`, this.knex.raw("ifnull(attendees.brand,'')  AS brand"))
+        .innerJoin('events_date',`${this.TABLE}.event_id`,'events_date.event_id')
+        .where('events_date.event_date','>=',DATE)
+        .andWhere('events_date.event_date','<=', FINAL)
+        .andWhere('events_date.is_deleted','=',0).andWhere(`${this.TABLE}.is_deleted`,'=',0)
+        .groupBy("attendees.id")
+
+
+
 
         
 
@@ -363,9 +375,9 @@ export class AttendessService {
         return signature;
     }
 
-    async findByCedula(cedula:number){
+    async findByCedula(cedula:number, event_id:number){
         const attendees = await this.knex.table(this.TABLE).where({
-            is_deleted:0,cedula
+            is_deleted:0,cedula, event_id
         })
         return attendees;
     }

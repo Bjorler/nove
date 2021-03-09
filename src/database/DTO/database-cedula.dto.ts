@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {  IsString } from 'class-validator';
+import {  IsNotEmpty, IsNumber, IsString } from 'class-validator';
 
 export class DatabaseCedulaDto{
     @ApiProperty({
@@ -9,4 +9,14 @@ export class DatabaseCedulaDto{
     })
     @IsString()
     cedula:string;
+}
+
+export class EventIdRequest{
+    @ApiProperty({
+        type:String,
+        example:1
+    })
+    @IsString()
+    @IsNotEmpty()
+    event_id:string;
 }
