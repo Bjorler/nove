@@ -14,6 +14,15 @@ export class EventsCreateDto{
 
     @ApiProperty({
         type:String,
+        example:"Haemophilia",
+        required:true
+    })
+    @IsString()
+    @IsNotEmpty()
+    brand:string;
+
+    @ApiProperty({
+        type:String,
         example:"Avances Tecnologicos de genética humana",
         required:true
     })
@@ -78,6 +87,8 @@ export class EventsCreateDto{
         required:false
     })
     image:any
+
+
 }
 
 export class EventsResponseDates {
@@ -87,6 +98,13 @@ export class EventsResponseDates {
         required:true
     })
     sede:string;
+
+    @ApiProperty({
+        type:String,
+        example:"Haemophilia",
+        required:true
+    })
+    brand:string;
     
     @ApiProperty({
         type:String,

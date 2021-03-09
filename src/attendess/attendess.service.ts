@@ -36,6 +36,21 @@ export class AttendessService {
         return attendee;
     }    
 
+    prepareSignatures(event_dates){
+        let result = []
+        for(let date of event_dates){
+            result.push({
+                event_date: date.event_date || '',
+                download_signature: `${METHOD}://${DOMAIN}/attendees/signature/${date.id}`
+            })
+        }
+        return result;
+    }
+    async getEventDateEventAndAttendees(event_id:number, attendess_id:number){
+        const event_dates = await this.knex.table('attendees_sign')
+        .where({attendees_id:attendess_id, event_id, is_deleted:0});
+        return event_dates;
+    }
     async findByEvent(eventId:number, pagination: AttendeesPaginationDto){
         
         let page = parseInt(pagination.page)
@@ -54,10 +69,14 @@ export class AttendessService {
 
         let result = [];
         for(let item of attendees){
+
+            let event_dates = await this.getEventDateEventAndAttendees(eventId, item.id);
+            let signatures = this.prepareSignatures(event_dates);
+
             let info = new AttendeesListDto();
             info.cedula = item.cedula,
             info.name = `${item.name}`;
-            info.download_signature = `${METHOD}://${DOMAIN}/attendees/signature/${item.id}`;
+            info.download_signature = signatures //`${METHOD}://${DOMAIN}/attendees/signature/${item.id}`;
             info.id = item.id;
             info.register_type = item.register_type;
             info.speciality = item.speciality;
@@ -146,7 +165,6 @@ export class AttendessService {
         const ID = "ID";
         const EMAIL = "Correo";
         const SPECIALITY = "Especialidad";
-        console.log({width, height})
         page.drawText(DATE,{x:WIDTH+50, y:HEIGHT-60 , size: 10, maxWidth:400,
             font:helvetica, color:AEA99F, 
         })
@@ -182,7 +200,7 @@ export class AttendessService {
         const result = await this.knex.table(this.TABLE).update({confirm_signature:path, modified_by}).where({id:attendeesId})
         return result;
     }
-    async fillPDFFisrtPart(questions,doctor_name:string, event){
+    async fillPDFFisrtPart(questions,doctor_name:string, event, currentEvent){
         const RUTA = "./pdf/template.pdf";
         //carga el archivo
         const pdfDoc = await PDFDocument.load(fs.readFileSync(RUTA));
@@ -217,7 +235,7 @@ export class AttendessService {
         eventnameField.setText(event[0].name);
 
         let dateField = form.getTextField(EVENT_DATE);
-        dateField.setText(moment(event[0].event_date).add(1,'day').format("DD-MM-YYYY"));
+        dateField.setText(moment(currentEvent.event_date).format("DD-MM-YYYY"));
         
         if(questions.question2.toLowerCase() == 'true'){
             
@@ -350,5 +368,22 @@ export class AttendessService {
             is_deleted:0,cedula
         })
         return attendees;
+    }
+
+    async getEventDate(event_id:number){
+        const event = await this.getById(event_id);
+
+    }
+
+    async findAttendanceSignature(event_id:number, event_date, attendees_id:number){
+        const aSignature = await this.knex.table("attendees_sign")
+        .where({event_id,event_date, attendees_id, is_deleted:0});
+
+        return aSignature;
+    }
+    async getAttendeesSignById(id:number){
+        const sign = await this.knex.table('attendees_sign')
+        .where({id});
+        return sign;
     }
 }

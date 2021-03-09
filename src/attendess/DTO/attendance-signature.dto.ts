@@ -3,4 +3,5 @@ export interface AttendanceSignature{
     path_sign:string;
     event_id:number;
     created_by:number;
+    event_date:string;
 }

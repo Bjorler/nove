@@ -46,6 +46,18 @@ export class EventsUpdateDto{
 
     @ApiProperty({
         type:String,
+        example:"Haemophilia",
+        required:false
+    })
+    @IsString()
+    @IsNotEmpty()
+    @IsOptional()
+    brand:string;
+
+
+
+    @ApiProperty({
+        type:String,
         example:`Vivamus aliquet magna dui, nec tincidunt dolor rutrum non. Nullam eleifend libero quis tortor consequat porttitor. In pulvinar sem nunc, egestas efficitur ante scelerisque quis. Donec et ultrices mi. Aenean a arcu ligula. Quisque ac feugiat eros. Nam nibh libero, commodo nec ex nec, aliquam sollicitudin erat. Cras et accumsan ex. Vestibulum non auctor leo. Pellentesque nec neque ut nulla pharetra sollicitudin. Suspendisse malesuada tellus quis augue fermentum tincidunt. Ut sed purus eu est vehicula volutpat. Mauris quis porttitor mi.`,
         required:false
     })
@@ -127,6 +139,13 @@ export class EventsUpdateResponseDto{
         required:false
     })
     sede:string;
+
+    @ApiProperty({
+        type:String,
+        example:"Haemophilia",
+        required:false
+    })
+    brand:string;
 
     @ApiProperty({
         type:String,

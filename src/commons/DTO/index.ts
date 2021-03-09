@@ -27,3 +27,4 @@ export { UserUpdateAdminError } from './user-updateadminerror.dto';
 export { EventsOutOfTimeDto } from './attendees-outoftimeerror.dto';
 export { DatesErrorDto } from './dates-error.dto';
 export { StartTimeErrorDto } from './starttime-error.dto';
+export { AttendeesAreadyConfirmDto } from './attendees-alreadyconfirm.dto';

@@ -21,10 +21,12 @@ export class AttendeesListDto{
     cedula:number;
 
     @ApiProperty({
-        type:String,
-        example:"http://116.24.56.9:8080/attendees/signature/1"
+        type:[String],
+        example:[{
+            event_date:"2021-03-09T06:00:00.000Z",
+            download_signature:"http://116.24.56.9:8080/attendees/signature/1"}]
     })
-    download_signature:string;
+    download_signature:string[];
 
     @ApiProperty({
         type:String,

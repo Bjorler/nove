@@ -24,7 +24,7 @@ import { AttendeesCreateResponseDto } from './DTO/attendees-create-response.dto'
 import { Excel } from '../commons/build-excel/excel';
 import { AttendeesEmailDto } from './DTO/attendees-email.dto';
 import { AttendeesTemporalDto } from './DTO/attendees-temporal.dto';
-import { AttendanceSignature } from './DTO/attendance-signature.dto';
+import { attendanceResponse } from './DTO/attendance-response.dto';
 import { AttendeesCreateDecorator, AttendeesListPdfDecorator, AttendeesListExcelDecorator,
 AttendeesAllPdfDecorator, AttendeesContractDecorator, AttendeesSignDecorator, AttendeesSignatureDecorator,
 AttendeesDetailDecorator, AttendeesEventsDecorator, AttendeesEmailDecorator, AttendeesConfirmSignDecorator,
@@ -87,8 +87,10 @@ export class AttendessController {
 
 
         const newAttendees = await this.attendessService.create(schema);
+        const event_dates = await this.eventService.getEventDatesByEvent(attendees.eventId);
+        const currentEvent = await this.eventService.getCurrentEvent(event_dates);
         const increment = await this.eventService.incrementAttendees(attendees.eventId, session.id);
-        const pdf = await this.attendessService.fillPDFFisrtPart(questions,attendees.name, eventExist);
+        const pdf = await this.attendessService.fillPDFFisrtPart(questions,attendees.name, eventExist, currentEvent);
         const updated = await this.attendessService.setPdf(newAttendees[0],pdf, session.id);
         
 
@@ -140,10 +142,13 @@ export class AttendessController {
         const eventExist = await this.eventService.findById(parseInt(attendees.eventId));
         
         if(!eventExist.length) throw new HttpException("EVENT NOT FOUND",HttpStatus.NOT_FOUND);  
-        
+        const event_dates = await this.eventService.getEventDatesByEvent(parseInt(attendees.eventId));
+        const currentEvent = await this.eventService.getCurrentEvent(event_dates);
+        if(!currentEvent)throw new HttpException("EVENT OUT OF TIME", 423)
+
         const IS_HOUR_END_BEFORE_CURRENTTIME = moment(eventExist[0].hour_end,"HH:mm").isBefore(moment(moment().format("HH"),"HH:mm"))
         const IS_HOUR_INIT_AFTER_CURRENTTIME = moment(eventExist[0].hour_init,"HH").isAfter(moment(moment().format("HH"),"HH:mm"))
-        const EVENT_DATE_IS_BEFORE_CURRENT_DATE = moment(eventExist[0].event_date).add(1,'day').isBefore(moment(moment().format("YYYY-MM-DD")))
+        const EVENT_DATE_IS_BEFORE_CURRENT_DATE = moment(currentEvent.event_date).isBefore(moment(moment().format("YYYY-MM-DD")))
         if(EVENT_DATE_IS_BEFORE_CURRENT_DATE) throw new HttpException("EVENT OUT OF TIME", 423)
         /** VALIDACIONES SOBRE LAS HORAS */
         if(IS_HOUR_END_BEFORE_CURRENTTIME) throw new HttpException("EVENT OUT OF TIME", 423)
@@ -173,12 +178,15 @@ export class AttendessController {
             register_type:attendees.register_type,
             idengage: attendees.idengage,
             questions:JSON.stringify(questions),
-            confirm_signature:signature.path
+            confirm_signature:signature.path,
+            brand: eventExist[0].brand
         });
 
         const newAttendees =  !attendees.id ? await this.attendessService.createTemporal(schema): await this.attendessService.updateTemporal(schema, parseInt(attendees.id)) 
         
-        const pdf = await this.attendessService.fillPDFFisrtPart(questions,`${attendees.name} ${attendees.lastname}`, eventExist);
+        
+
+        const pdf = await this.attendessService.fillPDFFisrtPart(questions,`${attendees.name} ${attendees.lastname}`, eventExist, currentEvent);
         const updated = await this.attendessService.setTemporalPdf(newAttendees[0],pdf, session.id);
 
         let response = new AttendeesCreateResponseDto();
@@ -484,11 +492,15 @@ export class AttendessController {
         delete schema.id;
         const newAttendees = await this.attendessService.create(schema);
         const increment = await this.eventService.incrementAttendees(existAttendees[0].event_id, session.id);
+        const event_dates = await this.eventService.getEventDatesByEvent(existAttendees[0].event_id);
+        const currentEventDate = this.eventService.getCurrentEvent(event_dates);
+        
         const attendaceSignature = await this.attendessService.saveAttendanceSignature({
             attendees_id: newAttendees[0],
             path_sign:existAttendees[0].pdf_path,
             event_id : existAttendees[0].event_id,
-            created_by : session.id
+            created_by : session.id,
+            event_date: currentEventDate.event_date
         })
 
         existAttendees = await this.attendessService.getById(newAttendees[0]);
@@ -651,26 +663,48 @@ export class AttendessController {
                
         if(!existAttendees.length) throw new HttpException("ATTENDEES NOT FOUND", HttpStatus.NOT_FOUND);
 
+        const event_dates = await this.eventService.getEventDatesByEvent(existAttendees[0].event_id);
+        const currentEventDate = this.eventService.getCurrentEvent(event_dates);
+        
+        const isAlreadySign = await this.attendessService.findAttendanceSignature(currentEventDate.event_id,
+            currentEventDate.event_date, id.id);
+        if(isAlreadySign.length) throw new HttpException("The user has previously confirmed their attendance at the event",425)   
+        
         const attendanceSignature = await this.attendessService.saveAttendanceSignature({
             attendees_id:id.id,
             path_sign:signature.path,
             event_id:existAttendees[0]['event_id'],
-            created_by:session.id
+            created_by:session.id,
+            event_date: currentEventDate.event_date
         }) 
-        /*FALTA AGREGAR QUE CUANDO UN ASISTENTE FIRME LA NUEVA ASISTENCIA SE GUARDE EN LA BASE
-        EL HORARIO DEL EVENTO AL QUE ESTA ASISTIENDO
-        */
-        return attendanceSignature;
+
+        /** CREATE LOG */
+        let log = new LogDto();
+        log.new_change = "signature_confirm";
+        log.type = "create";
+        log.element = attendanceSignature[0];
+        log.db_table = 'attendees_sign';
+        log.created_by = session.id;
+        log.modified_by = session.id;
+        await this.logService.createLog(log);
+                  
+
+        let response: attendanceResponse = {
+            id:id.id,
+            signature:`${METHOD}://${DOMAIN}/attendees/signature/${attendanceSignature[0]}`
+        }
+        
+        return response;
     }
 
 
     @Get('/signature/:id')
     @AttendeesSignatureDecorator()
     async download(@Response() res ,@Param('id') id:number){
-        const attendees = await this.attendessService.findByid(id)
+        const attendees = await this.attendessService.getAttendeesSignById(id)
         if(!attendees.length) throw new HttpException('IMAGE NOT FOUND', HttpStatus.NOT_FOUND);
         
-        const path = attendees[0].path;
+        const path = attendees[0].path_sign;
         res.download(path)
     }
 

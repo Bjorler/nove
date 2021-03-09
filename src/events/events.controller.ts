@@ -94,9 +94,9 @@ export class EventsController {
         }
 
         const newEvent = await this.eventService.save(schema);
-        console.log(newEvent)
+       
         const event_dates = await this.eventService.saveEventDate(isDatesArray,newEvent[0], session);
-        console.log(event_dates)
+        
 
         /** CREATE LOG */
         let log  = new LogDto();
@@ -338,7 +338,8 @@ export class EventsController {
         response.image_name = eventExist[0].image;
         response.name = eventExist[0].name;
         response.location = eventExist[0].address;
-        response.sede = eventExist[0].sede || ''
+        response.sede = eventExist[0].sede || '';
+        response.brand = eventExist[0].brand || '';
         response.description = eventExist[0].description;
         response.event_date  = this.eventService.displayDates(await this.eventService.getEventDates(eventExist[0].id)) //eventExist[0].event_date;
         response.hour_init = eventExist[0].hour_init;

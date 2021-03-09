@@ -27,6 +27,12 @@ export class EventsResponse{
     sede:string;
 
     @ApiProperty({
+        type:String,
+        example:"Haemophilia"
+    })
+    brand:string;
+
+    @ApiProperty({
         type:[String],
         example:["2021-03-08T16:17:04.000Z"]
     })

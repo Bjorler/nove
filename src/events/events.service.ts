@@ -37,6 +37,7 @@ export class EventsService {
             info.location = event.address;
             info.event_date = await this.getEventDates(event.id);
             info.sede = event.sede || ''
+            info.brand = event.brand || ''
             //event.event_date//moment(event.event_date).format("DD-MM-YYYY");
             //const total = await this.attendeesService.findTotalAttendeesByEvent(event.id);
             
@@ -284,5 +285,27 @@ export class EventsService {
             result.push({display_date:moment(date).format("MM-DD-YYYY"), event_date:date})
         }
         return result
+    }
+
+    async getEventDatesByEvent(eventId:number){
+        const event_dates = await this.knex.table('events_date')
+        .where({event_id: eventId, is_deleted:0});
+        return event_dates;
+    }
+
+    getCurrentEvent(event_dates){
+        let event;
+        const current = moment().format("YYYY-MM-DD")
+        for(let date of event_dates){
+            const isCurrentDate = moment(current).isSame(moment(date.event_date));
+            
+            if(isCurrentDate) event = date;
+        }
+        return event;
+    }
+    async getEventDateEventAndAttendees(event_id:number, attendess_id:number){
+        const event_dates = await this.knex.table('attendees_sign')
+        .where({attendess_id, event_id, is_deleted:0});
+        return event_dates;
     }
 }

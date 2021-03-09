@@ -53,7 +53,9 @@ export class PrepareController {
                 authorization: question.authorization,
                 idengage: question.idengage
             }
-            let pdf = await this.attendeesService.fillPDFFisrtPart(questions, item.name, eventExist);
+            const event_dates = await this.eventsService.getEventDatesByEvent(item.event_id);
+            const currentEvent = await this.eventsService.getCurrentEvent(event_dates);
+            let pdf = await this.attendeesService.fillPDFFisrtPart(questions, item.name, eventExist, currentEvent);
             
             const updated = await this.attendeesService.setPdf(item.id, pdf, 1);
             
