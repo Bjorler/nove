@@ -883,7 +883,7 @@ export class AttendessController {
     const attendaceSignature = await this.attendessService.saveAttendanceSignature(
       {
         attendees_id: newAttendees[0],
-        path_sign: existAttendees[0].pdf_path,
+        path_sign: signature.path,
         event_id: existAttendees[0].event_id,
         created_by: session.id,
         event_date: currentEventDate.event_date,
