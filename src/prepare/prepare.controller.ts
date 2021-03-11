@@ -61,7 +61,7 @@ export class PrepareController {
       console.log(eventExist);*/
       const date = await this.prepareService.getCurrentDate(item.event_id);
       //eventExist[0].event_date = date[0].event_date;
-      console.log({ eventExist, item });
+
       const currentEvent = Object.assign(eventExist[0], {
         event_date: date[0].event_date,
       });

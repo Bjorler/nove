@@ -383,6 +383,12 @@ export class PrepareService {
         info.event_id = event.id;
         await this.knex.table('temporal_attendees').insert(info);
         await this.knex.table('attendees').insert(info);
+        const att = await this.knex.table('events').where({ id: event.id });
+        const count = att[0]['assistants'] + 1;
+        await this.knex
+          .table('events')
+          .update({ assistants: count })
+          .where({ id: event.id });
       }
     }
   }
