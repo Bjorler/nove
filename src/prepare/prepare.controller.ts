@@ -59,11 +59,17 @@ export class PrepareController {
         event_dates,
       );
       console.log(eventExist);*/
+      const date = await this.prepareService.getCurrentDate(item.event_id);
+      //eventExist[0].event_date = date[0].event_date;
+      console.log({ eventExist, item });
+      const currentEvent = Object.assign(eventExist[0], {
+        event_date: date[0].event_date,
+      });
       let pdf = await this.attendeesService.fillPDFFisrtPart(
         questions,
         item.name,
         eventExist,
-        eventExist,
+        currentEvent,
       );
 
       const updated = await this.attendeesService.setPdf(item.id, pdf, 1);

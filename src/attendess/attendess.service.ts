@@ -278,6 +278,8 @@ export class AttendessService {
     eventnameField.setText(event[0].name);
 
     let dateField = form.getTextField(EVENT_DATE);
+    console.log(moment(currentEvent.event_date).format('DD-MM-YYYY'));
+    console.log(currentEvent);
     dateField.setText(moment(currentEvent.event_date).format('DD-MM-YYYY'));
 
     if (questions.question2.toLowerCase() == 'true') {

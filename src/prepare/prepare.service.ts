@@ -414,4 +414,14 @@ export class PrepareService {
     await this.knex.table('events_date').delete();
     await this.knex.table('events').delete();
   }
+
+  async getCurrentDate(event_id: number) {
+    const date = await this.knex
+      .table('events_date')
+      .where({ event_id })
+      .orderBy('event_date')
+      .limit(1);
+
+    return date;
+  }
 }
