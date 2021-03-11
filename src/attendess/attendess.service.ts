@@ -458,4 +458,14 @@ export class AttendessService {
       .where({ event_id, attendees_id, is_deleted: 0 });
     return sign;
   }
+
+  async findAll() {
+    const attendees = await this.knex
+      .select(this.knex.raw(`attendees.*`))
+      .table(this.TABLE)
+      .innerJoin('events', 'attendees.event_id', 'events.id')
+      .where('events.is_deleted', '=', 0)
+      .andWhere('attendees.is_deleted', '=', 0);
+    return attendees;
+  }
 }
