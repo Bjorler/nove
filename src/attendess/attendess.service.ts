@@ -203,6 +203,28 @@ export class AttendessService {
       color: DARK_BLUE,
     });
 
+    const pdf_signature = path.resolve(__dirname, '../../defaults/logo.png');
+    console.log(pdf_signature);
+    let img = fs.readFileSync(pdf_signature);
+
+    let imgEmbed = await pdfDoc.embedPng(img);
+    const WHITE = rgb(RGB_PARSE * 255, RGB_PARSE * 255, RGB_PARSE * 255);
+    //const DARK_BLUE = rgb(RGB_PARSE * 0, RGB_PARSE * 25, RGB_PARSE * 101);
+    page.drawRectangle({
+      y: WIDTH + 533,
+      x: HEIGHT + 55,
+      color: WHITE,
+      //size: 40,
+      width: 100,
+      height: 60,
+    });
+    page.drawImage(imgEmbed, {
+      x: WIDTH + 687,
+      y: HEIGHT - 80,
+      width: 70,
+      height: 60,
+    });
+
     return pdfDoc;
   }
 

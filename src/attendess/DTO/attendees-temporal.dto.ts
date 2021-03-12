@@ -74,8 +74,6 @@ export class AttendeesTemporalDto {
     example: 'jimena.alonso@novonordisk.com',
     required: true,
   })
-  @IsEmail()
-  @IsNotEmpty()
   @IsOptional()
   email: string;
 
