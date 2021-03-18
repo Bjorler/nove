@@ -54,7 +54,15 @@ export class EventsUpdateDto{
     @IsOptional()
     brand:string;
 
-
+    @ApiProperty({
+        type:String,
+        example:true,
+        required:true
+    })
+    @IsString()
+    @IsNotEmpty()
+    @IsOptional()
+    is_internal:string;
 
     @ApiProperty({
         type:String,

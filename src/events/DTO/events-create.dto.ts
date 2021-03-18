@@ -1,7 +1,30 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsNumber, IsDate, MinLength, Matches, IsArray } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, IsDate, MinLength, Matches, IsArray, IsBoolean } from 'class-validator';
 
 export class EventsCreateDto{
+    
+
+    @ApiProperty({
+        type:String,
+        example:"Avances Tecnologicos de genética humana",
+        required:true
+    })
+    @Matches(/^[A-Z áéíóúñ]+$/i,{message:"name must not contain numbers"})
+    @IsString()
+    @IsNotEmpty()
+    name:string;
+
+    @ApiProperty({
+        type:String,
+        example:"CDMX, México",
+        required:true
+    })
+    @IsString()
+    @IsNotEmpty()
+    @MinLength(1)
+    address:string;
+
+    
 
     @ApiProperty({
         type:String,
@@ -23,23 +46,12 @@ export class EventsCreateDto{
 
     @ApiProperty({
         type:String,
-        example:"Avances Tecnologicos de genética humana",
-        required:true
-    })
-    @Matches(/^[A-Z áéíóúñ]+$/i,{message:"name must not contain numbers"})
-    @IsString()
-    @IsNotEmpty()
-    name:string;
-
-    @ApiProperty({
-        type:String,
-        example:"CDMX, México",
+        example:true,
         required:true
     })
     @IsString()
     @IsNotEmpty()
-    @MinLength(1)
-    address:string;
+    is_internal:string;
 
     @ApiProperty({
         type:String,

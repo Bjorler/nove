@@ -84,7 +84,8 @@ export class EventsController {
         let schema = Object.assign({}, event,{
             //event_date:new Date(event.event_date),
             created_by: session.id,
-            modified_by:session.id
+            modified_by:session.id,
+            is_internal: event.is_internal.toLowerCase() == 'true' ? 1 : 0,
         });
         delete schema.event_date
         if(image){
@@ -293,7 +294,10 @@ export class EventsController {
             path = image.path;
             eschema = Object.assign(eschema, { image:image_name, path });   
         }
-        
+        if(eschema.is_internal) {
+            //@ts-ignore
+            eschema.is_internal = eschema.is_internal.toLowerCase() == 'true' ? 1:0;
+        }
         
         const updated = await this.eventService.update(eschema,eventId);
         if(isDatesArray.length) await this.eventService.updateEventDates(isDatesArray, eventId, session);
