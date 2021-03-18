@@ -57,7 +57,7 @@ export class EventsUpdateDto{
     @ApiProperty({
         type:String,
         example:true,
-        required:true
+        required:false
     })
     @IsString()
     @IsNotEmpty()
