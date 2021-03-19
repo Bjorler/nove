@@ -544,7 +544,7 @@ export class DatabaseService {
     for (let month in result) {
       for (let day in result[month]) {
         for (let item of result[month][day]) {
-          item['time'] = moment(item.date).tz('America/Mexico_City').format('hh:mm');
+          item['time'] = moment(item.date).tz('America/Mexico_City').format('HH:mm');
           item['date'] = moment(item.date).format('YYYY-MM-DD');
         }
       }

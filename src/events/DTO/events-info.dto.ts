@@ -51,6 +51,13 @@ export class EventsInfoDto {
   brand: string;
 
   @ApiProperty({
+    type:Boolean,
+    example:true,
+    required:true
+  })
+  is_internal:boolean;
+
+  @ApiProperty({
     type: String,
     example:
       'Vivamus aliquet magna dui, nec tincidunt dolor rutrum non. Nullam eleifend libero quis tortor consequat porttitor. In pulvinar sem nunc, egestas efficitur ante scelerisque quis. Donec et ultrices mi. Aenean a arcu ligula. Quisque ac feugiat eros. Nam nibh libero, commodo nec ex nec, aliquam sollicitudin erat. Cras et accumsan ex. Vestibulum non auctor leo. Pellentesque nec neque ut nulla pharetra sollicitudin. Suspendisse malesuada tellus quis augue fermentum tincidunt. Ut sed purus eu est vehicula volutpat. Mauris quis porttitor mi.',

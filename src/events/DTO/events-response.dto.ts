@@ -39,6 +39,13 @@ export class EventsResponse{
     event_date:string[];
 
     @ApiProperty({
+        type:Boolean,
+        example:true,
+        required:true
+    })
+    is_internal:boolean;
+
+    @ApiProperty({
         type:Number,
         example:30
     })

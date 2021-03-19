@@ -348,6 +348,7 @@ export class EventsController {
         response.event_date  = this.eventService.displayDates(await this.eventService.getEventDates(eventExist[0].id)) //eventExist[0].event_date;
         response.hour_init = eventExist[0].hour_init;
         response.hour_end = eventExist[0].hour_end;
+        response.is_internal = eventExist[0].is_internal ? true:false
 
         return response;
     }

@@ -43,6 +43,7 @@ export class EventsService {
       info.event_date = await this.getEventDates(event.id);
       info.sede = event.sede || '';
       info.brand = event.brand || '';
+      info.is_internal = event.is_internal ? true: false
       //event.event_date//moment(event.event_date).format("DD-MM-YYYY");
       //const total = await this.attendeesService.findTotalAttendeesByEvent(event.id);
 
@@ -236,6 +237,7 @@ export class EventsService {
       info.event_date = this.displayDates(await this.getEventDates(event.id)); //event.event_date;
       info.hour_init = event.hour_init;
       info.hour_end = event.hour_end;
+      info.is_internal = event.is_internal ? true: false;
       info.display_time = `${moment(event.hour_init, 'HH:mm').tz('America/Mexico_City').format(
         'HH:mm',
       )} - ${moment(event.hour_end, 'HH:mm').tz('America/Mexico_City').format('HH:mm')} Hrs`;
