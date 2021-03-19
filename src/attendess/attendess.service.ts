@@ -300,8 +300,7 @@ export class AttendessService {
     eventnameField.setText(event[0].name);
 
     let dateField = form.getTextField(EVENT_DATE);
-    console.log(moment(currentEvent.event_date).format('DD-MM-YYYY'));
-    console.log(currentEvent);
+    
     dateField.setText(moment(currentEvent.event_date).format('DD-MM-YYYY'));
 
     if (questions.question2.toLowerCase() == 'true') {
@@ -327,8 +326,10 @@ export class AttendessService {
       let representativeField = form.getTextField(REPRESENTATIVE);
       representativeField.setText(questions.nameAndTitle);
     }
+    if(questions.question2.toLowerCase() == 'true'){
     let eventname2Field = form.getTextField(EVENT_NAME_2);
     eventname2Field.setText(event[0].name);
+    }
 
     let date2Field = form.getTextField(DATE);
     date2Field.setText(moment().format('DD-MM-YYYY'));
