@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectKnex, Knex } from 'nestjs-knex';
-import * as moment from 'moment';
+import * as moment from 'moment-timezone';
 import * as fs from 'fs';
 import { AttendessService } from '../attendess/attendess.service';
 import { EventsResponse } from './DTO/events-response.dto';
@@ -236,9 +236,9 @@ export class EventsService {
       info.event_date = this.displayDates(await this.getEventDates(event.id)); //event.event_date;
       info.hour_init = event.hour_init;
       info.hour_end = event.hour_end;
-      info.display_time = `${moment(event.hour_init, 'HH:mm').format(
+      info.display_time = `${moment(event.hour_init, 'HH:mm').tz('America/Mexico_City').format(
         'HH:mm',
-      )} - ${moment(event.hour_end, 'HH:mm').format('HH:mm')} Hrs`;
+      )} - ${moment(event.hour_end, 'HH:mm').tz('America/Mexico_City').format('HH:mm')} Hrs`;
       info.display_date = this.getCurrentDate(
         await this.getEventDates(event.id),
       );

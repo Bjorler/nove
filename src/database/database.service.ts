@@ -1,7 +1,7 @@
 import { Injectable, HttpService } from '@nestjs/common';
 import * as puppeteer from 'puppeteer';
 import { InjectKnex, Knex } from 'nestjs-knex';
-import * as moment from 'moment';
+import * as moment from 'moment-timezone';
 import * as _ from 'underscore';
 import * as FormData from 'form-data';
 import { AttendessService } from '../attendess/attendess.service';
@@ -544,7 +544,7 @@ export class DatabaseService {
     for (let month in result) {
       for (let day in result[month]) {
         for (let item of result[month][day]) {
-          item['time'] = moment(item.date).format('hh:mm');
+          item['time'] = moment(item.date).tz('America/Mexico_City').format('hh:mm');
           item['date'] = moment(item.date).format('YYYY-MM-DD');
         }
       }
