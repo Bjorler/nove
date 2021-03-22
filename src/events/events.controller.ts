@@ -54,10 +54,11 @@ export class EventsController {
     }))
     async create(@UploadedFile() image,@Body() event: EventsCreateDto, @User()session ){
 
-
+        if (!image)throw new HttpException('The image field is mandatory', 417);
+        
         let isDatesArray = this.eventService.parseToarray(event.event_date);
         if(!isDatesArray.length) throw new HttpException("event_date must contain at least one valid date",424)
-        
+        if(isDatesArray.length > 3) throw new HttpException("event_date must contain only 3 valid dates",425)
 
         //const EVENT_DATE_IS_BEFORE_CURRENT_DATE = moment(event.event_date).isBefore(moment(moment().format("YYYY-MM-DD")))
         //const EVENT_DATE_IS_SAME_CURRENT_DATE = moment(event.event_date).isSame(moment(moment().format("YYYY-MM-DD")))  
@@ -262,6 +263,7 @@ export class EventsController {
             //const EVENT_DATE_IS_BEFORE_CURRENT_DATE = moment(event_date_validation).isBefore(moment(moment().format("YYYY-MM-DD")))
             //const EVENT_DATE_IS_SAME_AS_CURRENT_DATE = moment(event_date_validation).isSame(moment(moment().format("YYYY-MM-DD")))   
             if(!isDatesArray.length) throw new HttpException("event_date must contain at least one valid date",424)
+            if(isDatesArray.length > 3) throw new HttpException("event_date must contain only 3 valid dates",425)
             if(isEventDataInPastTime) {throw new HttpException("You cannot schedule an event on past dates.",415)}  
             /*if(EVENT_DATE_IS_SAME_AS_CURRENT_DATE){
                 let hour_end = event.hour_end || eventExist[0]['hour_end'];

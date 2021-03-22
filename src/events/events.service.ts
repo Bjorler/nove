@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectKnex, Knex } from 'nestjs-knex';
 import * as moment from 'moment-timezone';
 import * as fs from 'fs';
@@ -13,6 +13,7 @@ export class EventsService {
   private TABLE = 'events';
   constructor(
     @InjectKnex() private knex: Knex,
+    @Inject(forwardRef(() => AttendessService))
     private attendeesService: AttendessService,
   ) {}
 

@@ -1,6 +1,6 @@
 export const HOST = 'localhost';
 export const USER = '';
-export const PASSWORD = '$';
+export const PASSWORD = '';
 export const DATABASE = '';
 export const SECRET = '0c7Op12o2L$n0v3vE';
 export const METHOD = 'http';

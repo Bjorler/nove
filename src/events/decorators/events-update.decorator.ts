@@ -5,7 +5,7 @@ ApiNotFoundResponse, ApiUnauthorizedResponse, ApiForbiddenResponse, ApiInternalS
 import { ValidationPipe } from '../../commons/validations/validations.pipe';
 import { TokenGuard, MasterGuard } from '../../commons/guards';
 import { EventNotFound,EvetnDateErrorDto,ErrorDto, UnauthorizedDto,ForbiddenDto, InternalServerErrrorDto,
-DatesErrorDto } from '../../commons/DTO';
+DatesErrorDto,EventsDateErrorDto } from '../../commons/DTO';
 import { EventsUpdateDto, EventsUpdateResponseDto } from '../DTO/events-update-dto'; 
 
 export function EventsUpdateDecorator(){
@@ -23,6 +23,7 @@ export function EventsUpdateDecorator(){
         ApiResponse({status:200, type:EventsUpdateResponseDto}),
         ApiResponse({status:415, type:EvetnDateErrorDto}),
         ApiResponse({status:424, type:DatesErrorDto}),
+        ApiResponse({status:425, type:EventsDateErrorDto}),
         ApiBadRequestResponse({type:ErrorDto}),
         ApiNotFoundResponse({type:EventNotFound}),
         ApiUnauthorizedResponse({type:UnauthorizedDto}),

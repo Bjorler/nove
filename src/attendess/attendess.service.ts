@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectKnex, Knex } from 'nestjs-knex';
 import * as moment from 'moment';
 import * as fs from 'fs';
 import * as path from 'path';
 import { degrees, PDFNumber } from 'pdf-lib';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import { EventsService } from '../events/events.service';
 import { AttendeesCreateDto } from './DTO/attendees-create.dto';
 import { AttendeesListDto } from './DTO/attendees-list.dto';
 import { AttendeesPaginationDto } from './DTO/attendees-pagination.dto';
@@ -14,7 +15,11 @@ import { METHOD, DOMAIN, PORT } from '../config';
 @Injectable()
 export class AttendessService {
   private TABLE = 'attendees';
-  constructor(@InjectKnex() private knex: Knex) {}
+  constructor(
+    @InjectKnex() private knex: Knex,
+    @Inject(forwardRef(()=> EventsService))
+    private eventService: EventsService
+  ) {}
 
   async create(attendees) {
     const attendee = await this.knex.table(this.TABLE).insert(attendees);
@@ -148,8 +153,8 @@ export class AttendessService {
     return attendees;
   }
 
-  async preparePDF(event_name: string) {
-    const RUTA = './pdf/Formato_asistencia_template.pdf';
+  async preparePDF(event_name: string, event_id:number, address:string, sede:string) {
+    const RUTA = './pdf/Formato_asistencia_template001.pdf';
     const pdfDoc = await PDFDocument.load(fs.readFileSync(RUTA));
     //carga el archivo
     const pages = pdfDoc.getPages();
@@ -158,34 +163,23 @@ export class AttendessService {
     //page.setRotation(degrees(90))
 
     const { width, height } = page.getSize();
-    const PATH_RESOURCE = './pdf/resources';
-    const ROTATION = degrees(90);
     const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
     const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const RGB_PARSE = 1 / 255;
-    const DARK_GRAY = rgb(RGB_PARSE * 217, RGB_PARSE * 217, RGB_PARSE * 217);
-    const LIGHT_GRAY = rgb(RGB_PARSE * 224, RGB_PARSE * 222, RGB_PARSE * 216);
-    const BLUE = rgb(RGB_PARSE * 53, RGB_PARSE * 71, RGB_PARSE * 140);
     const DARK_BLUE = rgb(RGB_PARSE * 0, RGB_PARSE * 25, RGB_PARSE * 101);
-    const BLACK_GARY = rgb(RGB_PARSE * 115, RGB_PARSE * 115, RGB_PARSE * 115);
     const AEA99F = rgb(RGB_PARSE * 174, RGB_PARSE * 169, RGB_PARSE * 159);
-    const A858997 = rgb(RGB_PARSE * 133, RGB_PARSE * 137, RGB_PARSE * 151);
 
-    const HEADER_Y = height - 80;
-    const logo = fs.readFileSync(`${PATH_RESOURCE}/novonordisk_2.png`);
-    const embedLogo = await pdfDoc.embedPng(logo);
     const WIDTH = width - width;
     const HEIGHT = height;
-    const DATE = moment().format('DD-MM-YYYY');
+    let event_dates = await this.eventService.getEventDates(event_id)
+    event_dates = event_dates.sort((a, b) => moment(a).diff(moment(b))).map((e) => moment(e).format('DD-MM-YYYY'))
+    
+    const DATE = event_dates.join(', ')//moment().format('DD-MM-YYYY');
     const EVENT_NAME = event_name;
-    const CEDULA = '# Cédula';
-    const NAME = 'Nombre del médico';
-    const FIRMA = 'Firma';
-    const ID = 'ID';
-    const EMAIL = 'Correo';
-    const SPECIALITY = 'Especialidad';
+    const ADDRESS = address;
+    const SEDE = sede;
     page.drawText(DATE, {
-      x: WIDTH + 50,
+      x: WIDTH + 50, 
       y: HEIGHT - 60,
       size: 10,
       maxWidth: 400,
@@ -200,6 +194,24 @@ export class AttendessService {
       size: 12,
       maxWidth: 507,
       font: helveticaBold,
+      color: DARK_BLUE,
+    });
+
+    page.drawText(ADDRESS, {
+      x: WIDTH + 50,
+      y: HEIGHT - 120,
+      size: 10,
+      maxWidth: 507,
+      font: helvetica,
+      color: DARK_BLUE,
+    });
+
+    page.drawText(SEDE, {
+      x: WIDTH + 50,
+      y: HEIGHT - 135,
+      size: 10,
+      maxWidth: 507,
+      font: helvetica,
       color: DARK_BLUE,
     });
 

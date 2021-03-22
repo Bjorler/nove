@@ -314,9 +314,9 @@ export class AttendessController {
     }
 
     const arrayPage = [];
-    const MAX_ROW_TO_DISPLAY = 14;
-    let numberOfPages = Math.ceil(result.length / MAX_ROW_TO_DISPLAY);
-
+    const MAX_ROW_TO_DISPLAY = 12;
+    let numberOfPages = Math.ceil(result.length / (MAX_ROW_TO_DISPLAY/2));
+    
     const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
     const RGB_PARSE = 1 / 255;
     const LIGHT_BLUE = rgb(RGB_PARSE * 0, RGB_PARSE * 159, RGB_PARSE * 218);
@@ -325,240 +325,258 @@ export class AttendessController {
     const WHITE = rgb(RGB_PARSE * 255, RGB_PARSE * 255, RGB_PARSE * 255);
 
     let pagina = 1;
+    let count_data = 0;
+    const total_users = result.length;
     for (let i = 0; i < numberOfPages; i++) {
-      let preparedPDF = await this.attendessService.preparePDF(
-        existEvent[0].name,
-      );
-      const [page] = await pdfDoc.copyPages(preparedPDF, [0]);
+      if(count_data < total_users){
+        let preparedPDF = await this.attendessService.preparePDF(
+          existEvent[0].name,existEvent[0].id,
+          existEvent[0].address, existEvent[0].sede
+        );
+        const [page] = await pdfDoc.copyPages(preparedPDF, [0]);
 
-      const { width, height } = page.getSize();
-      const TABLE_HEADER_Y = height - 123;
-      const CEDULA_X = 100;
-      const NAME_X = 210; //200;
-      const FIRMA_X = width - 75;
-      const ID_X = 50;
-      const EMAIL_X = 410; //400
-      const SPECIALITY_X = 570; //550
-      let INIT_POSITION_Y = TABLE_HEADER_Y - 27;
+        const { width, height } = page.getSize();
+        const TABLE_HEADER_Y = height - 123;
+        const CEDULA_X = 100;
+        const NAME_X = 210; //200;
+        const FIRMA_X = width - 75;
+        const ID_X = 50;
+        const EMAIL_X = 410; //400
+        const SPECIALITY_X = 570; //550
+        let INIT_POSITION_Y = TABLE_HEADER_Y - 70;
 
-      let current_row = 0;
-      const Y_POSITIONS = [
-        INIT_POSITION_Y,
-        INIT_POSITION_Y - 27,
-        INIT_POSITION_Y - 57,
-        INIT_POSITION_Y - 87,
-        INIT_POSITION_Y - 114,
-        INIT_POSITION_Y - 143,
-        INIT_POSITION_Y - 174,
-        INIT_POSITION_Y - 200,
-        INIT_POSITION_Y - 229,
-        INIT_POSITION_Y - 261,
-        INIT_POSITION_Y - 287,
-        INIT_POSITION_Y - 313,
-        INIT_POSITION_Y - 346,
-        INIT_POSITION_Y - 373,
-        INIT_POSITION_Y - 401,
-      ];
-      let count = 0;
-      for (let item of result) {
-        try {
-          page.drawText(item.id, {
-            y: Y_POSITIONS[count],
-            x: ID_X,
-            size: 8,
-            font: helveticaBold,
-            color: LIGHT_BLUE,
-          });
-          page.drawText(item.cedula, {
-            y: Y_POSITIONS[count],
-            x: CEDULA_X,
-            size: 8,
-            font: helveticaBold,
-            color: LIGHT_BLUE,
-          });
-          page.drawText(item.name, {
-            y: Y_POSITIONS[count],
-            x: NAME_X - 10,
-            size: 8,
-            maxWidth: 160,
-            lineHeight: 37,
-            font: helveticaBold,
-            color: DARK_BLUE,
-          });
-          page.drawText(item.email || '-----', {
-            y: Y_POSITIONS[count],
-            x: EMAIL_X - 20,
-            maxWidth: 100,
-            size: 8,
-            font: helveticaBold,
-            color: DARK_BLUE,
-          });
-          page.drawText(item.speciality, {
-            y: Y_POSITIONS[count],
-            x: SPECIALITY_X,
-            maxWidth: 200,
-            lineHeight: 37,
-            size: 7,
-            font: helveticaBold,
-            color: DARK_BLUE,
-          });
-          if (item.signatures.length) {
-            if (item.signatures[0]) {
-              const SIGNATURE = fs.readFileSync(
-                item.signatures[0]['path_sign'],
-              );
-              let mimetype = item.signature.split('.');
-              mimetype = mimetype[mimetype.length - 1];
+        let current_row = 0;
+        const Y_POSITIONS = [
+          INIT_POSITION_Y,
+          INIT_POSITION_Y - 27,
+          INIT_POSITION_Y - 57,
+          INIT_POSITION_Y - 87,
+          INIT_POSITION_Y - 114,
+          INIT_POSITION_Y - 143,
+          INIT_POSITION_Y - 174,
+          INIT_POSITION_Y - 200,
+          INIT_POSITION_Y - 229,
+          INIT_POSITION_Y - 261,
+          INIT_POSITION_Y - 287,
+          INIT_POSITION_Y - 313,
+          INIT_POSITION_Y - 346,
+          INIT_POSITION_Y - 373,
+          INIT_POSITION_Y - 401,
+        ];
+        let count = 0;
+        //for (let item of result) {
+        while(count_data < total_users ){  
+          try {
+            page.drawText(result[count_data].id, {
+              y: Y_POSITIONS[count],
+              x: ID_X,
+              size: 8,
+              font: helveticaBold,
+              color: LIGHT_BLUE,
+            });
+            page.drawText(result[count_data].cedula, {
+              y: Y_POSITIONS[count],
+              x: CEDULA_X,
+              size: 8,
+              font: helveticaBold,
+              color: LIGHT_BLUE,
+            });
+            page.drawText(result[count_data].name, {
+              y: Y_POSITIONS[count],
+              x: NAME_X - 10,
+              size: 8,
+              maxWidth: 160,
+              lineHeight: 37,
+              font: helveticaBold,
+              color: DARK_BLUE,
+            });
+            page.drawText(result[count_data].email || '-----', {
+              y: Y_POSITIONS[count],
+              x: EMAIL_X - 20,
+              maxWidth: 100,
+              size: 8,
+              font: helveticaBold,
+              color: DARK_BLUE,
+            });
+            page.drawText(result[count_data].speciality, {
+              y: Y_POSITIONS[count],
+              x: SPECIALITY_X,
+              maxWidth: 200,
+              lineHeight: 37,
+              size: 7,
+              font: helveticaBold,
+              color: DARK_BLUE,
+            });
+            if (result[count_data].signatures.length) {
+              if (result[count_data].signatures[0]) {
+                const SIGNATURE = fs.readFileSync(
+                  result[count_data].signatures[0]['path_sign'],
+                );
+                let mimetype = result[count_data].signature.split('.');
+                mimetype = mimetype[mimetype.length - 1];
 
-              const EMBEDDED_SIGNATURE =
-                mimetype == 'jpg'
-                  ? await pdfDoc.embedJpg(SIGNATURE)
-                  : await pdfDoc.embedPng(SIGNATURE);
+                const EMBEDDED_SIGNATURE =
+                  mimetype == 'jpg'
+                    ? await pdfDoc.embedJpg(SIGNATURE)
+                    : await pdfDoc.embedPng(SIGNATURE);
 
-              page.drawImage(EMBEDDED_SIGNATURE, {
-                y: Y_POSITIONS[count],
-                x: FIRMA_X - 45,
-                width: 40,
-                height: 15,
-              });
-              const event_date = moment(
-                item.signatures[0]['event_date'],
-              ).format('YYYY-MM-DD');
-              page.drawText(event_date, {
-                y: Y_POSITIONS[count] - 8,
-                x: FIRMA_X - 45,
-                size: 7,
-                font: helveticaBold,
-                color: DARK_BLUE,
-              });
+                page.drawImage(EMBEDDED_SIGNATURE, {
+                  y: Y_POSITIONS[count],
+                  x: FIRMA_X - 45,
+                  width: 40,
+                  height: 15,
+                });
+                const event_date = moment(
+                  result[count_data].signatures[0]['event_date'],
+                ).format('YYYY-MM-DD');
+                page.drawText(event_date, {
+                  y: Y_POSITIONS[count] - 8,
+                  x: FIRMA_X - 45,
+                  size: 7,
+                  font: helveticaBold,
+                  color: DARK_BLUE,
+                });
+              }
+              if (result[count_data].signatures[1]) {
+                const SIGNATURE = fs.readFileSync(
+                  result[count_data].signatures[1]['path_sign'],
+                );
+                let mimetype = result[count_data].signature.split('.');
+                mimetype = mimetype[mimetype.length - 1];
+
+                const EMBEDDED_SIGNATURE =
+                  mimetype == 'jpg'
+                    ? await pdfDoc.embedJpg(SIGNATURE)
+                    : await pdfDoc.embedPng(SIGNATURE);
+                page.drawImage(EMBEDDED_SIGNATURE, {
+                  y: Y_POSITIONS[count],
+                  x: FIRMA_X + 10,
+                  width: 40,
+                  height: 15,
+                });
+
+                const event_date = moment(
+                  result[count_data].signatures[1]['event_date'],
+                ).format('YYYY-MM-DD');
+                page.drawText(event_date, {
+                  y: Y_POSITIONS[count] - 8,
+                  x: FIRMA_X + 10,
+                  size: 7,
+                  font: helveticaBold,
+                  color: DARK_BLUE,
+                });
+              }
+              if (result[count_data].signatures[2] || result[count_data].signatures[3]) {
+                count++;
+                current_row++;
+                if(count >= Y_POSITIONS.length) count = Y_POSITIONS.length-1
+                
+              }
+
+              if (result[count_data].signatures[2]) {
+                const SIGNATURE = fs.readFileSync(
+                  result[count_data].signatures[2]['path_sign'],
+                );
+                let mimetype = result[count_data].signature.split('.');
+                mimetype = mimetype[mimetype.length - 1];
+
+                const EMBEDDED_SIGNATURE =
+                  mimetype == 'jpg'
+                    ? await pdfDoc.embedJpg(SIGNATURE)
+                    : await pdfDoc.embedPng(SIGNATURE);
+
+                page.drawImage(EMBEDDED_SIGNATURE, {
+                  y: Y_POSITIONS[count],
+                  x: FIRMA_X - 45,
+                  width: 40,
+                  height: 15,
+                });
+
+                const event_date = moment(
+                  result[count_data].signatures[2]['event_date'],
+                ).format('YYYY-MM-DD');
+                console.log(`${Y_POSITIONS[count]} - ${count} - ${event_date}`)
+                page.drawText(event_date, {
+                  y: Y_POSITIONS[count] - 8,
+                  x: FIRMA_X - 45,
+                  size: 7,
+                  font: helveticaBold,
+                  color: DARK_BLUE,
+                });
+              }
+
+              if (result[count_data].signatures[3]) {
+                const SIGNATURE = fs.readFileSync(
+                  result[count_data].signatures[3]['path_sign'],
+                );
+                let mimetype = result[count_data].signature.split('.');
+                mimetype = mimetype[mimetype.length - 1];
+
+                const EMBEDDED_SIGNATURE =
+                  mimetype == 'jpg'
+                    ? await pdfDoc.embedJpg(SIGNATURE)
+                    : await pdfDoc.embedPng(SIGNATURE);
+                page.drawImage(EMBEDDED_SIGNATURE, {
+                  y: Y_POSITIONS[count],
+                  x: FIRMA_X + 10,
+                  width: 40,
+                  height: 15,
+                });
+
+                const event_date = moment(
+                  result[count_data].signatures[3]['event_date'],
+                ).format('YYYY-MM-DD');
+                page.drawText(event_date, {
+                  y: Y_POSITIONS[count] - 8,
+                  x: FIRMA_X + 10,
+                  size: 7,
+                  font: helveticaBold,
+                  color: DARK_BLUE,
+                });
+              }
             }
-            if (item.signatures[1]) {
-              const SIGNATURE = fs.readFileSync(
-                item.signatures[1]['path_sign'],
-              );
-              let mimetype = item.signature.split('.');
-              mimetype = mimetype[mimetype.length - 1];
-
-              const EMBEDDED_SIGNATURE =
-                mimetype == 'jpg'
-                  ? await pdfDoc.embedJpg(SIGNATURE)
-                  : await pdfDoc.embedPng(SIGNATURE);
-              page.drawImage(EMBEDDED_SIGNATURE, {
-                y: Y_POSITIONS[count],
-                x: FIRMA_X + 10,
-                width: 40,
-                height: 15,
-              });
-
-              const event_date = moment(
-                item.signatures[1]['event_date'],
-              ).format('YYYY-MM-DD');
-              page.drawText(event_date, {
-                y: Y_POSITIONS[count] - 8,
-                x: FIRMA_X + 10,
-                size: 7,
-                font: helveticaBold,
-                color: DARK_BLUE,
-              });
+            console.log({current_row, count, page:1, count_data})
+            INIT_POSITION_Y -= 35;
+            /**
+             * Se le aplica un -1 al MAX_ROW_TO_DISPLAY ya que si el asistente tiene mas de 2 firmas
+             * afecta el conteo natural de las rows
+             */
+            count_data++;
+            if (current_row >= (MAX_ROW_TO_DISPLAY-1) ) {
+              break;
             }
-            if (item.signatures[2] || item.signatures[3]) count++;
-
-            if (item.signatures[2]) {
-              const SIGNATURE = fs.readFileSync(
-                item.signatures[2]['path_sign'],
-              );
-              let mimetype = item.signature.split('.');
-              mimetype = mimetype[mimetype.length - 1];
-
-              const EMBEDDED_SIGNATURE =
-                mimetype == 'jpg'
-                  ? await pdfDoc.embedJpg(SIGNATURE)
-                  : await pdfDoc.embedPng(SIGNATURE);
-
-              page.drawImage(EMBEDDED_SIGNATURE, {
-                y: Y_POSITIONS[count],
-                x: FIRMA_X - 45,
-                width: 40,
-                height: 15,
-              });
-
-              const event_date = moment(
-                item.signatures[2]['event_date'],
-              ).format('YYYY-MM-DD');
-              page.drawText(event_date, {
-                y: Y_POSITIONS[count] - 8,
-                x: FIRMA_X - 45,
-                size: 7,
-                font: helveticaBold,
-                color: DARK_BLUE,
-              });
-            }
-
-            if (item.signatures[3]) {
-              const SIGNATURE = fs.readFileSync(
-                item.signatures[3]['path_sign'],
-              );
-              let mimetype = item.signature.split('.');
-              mimetype = mimetype[mimetype.length - 1];
-
-              const EMBEDDED_SIGNATURE =
-                mimetype == 'jpg'
-                  ? await pdfDoc.embedJpg(SIGNATURE)
-                  : await pdfDoc.embedPng(SIGNATURE);
-              page.drawImage(EMBEDDED_SIGNATURE, {
-                y: Y_POSITIONS[count],
-                x: FIRMA_X + 10,
-                width: 40,
-                height: 15,
-              });
-
-              const event_date = moment(
-                item.signatures[3]['event_date'],
-              ).format('YYYY-MM-DD');
-              page.drawText(event_date, {
-                y: Y_POSITIONS[count] - 8,
-                x: FIRMA_X + 10,
-                size: 7,
-                font: helveticaBold,
-                color: DARK_BLUE,
-              });
-            }
+            current_row++;
+          } catch (err) {
+            console.log(err);
           }
-
-          INIT_POSITION_Y -= 35;
-          if (current_row == MAX_ROW_TO_DISPLAY) {
-            break;
-          }
-          current_row++;
-        } catch (err) {
-          console.log(err);
+          count++;
+          
         }
-        count++;
-      }
-      page.drawCircle({
-        y: height - height + 25,
-        x: width - 38,
-        color: WHITE,
-        size: 5,
-      });
-      page.drawText(`${pagina}`, {
-        y: height - height + 21,
-        x: width - 40,
-        size: 10,
-        font: helveticaBold,
-        color: AEA99F,
-      });
-      page.drawText(`${numberOfPages}`, {
-        y: height - height + 21,
-        x: width - 26,
-        size: 10,
-        font: helveticaBold,
-        color: AEA99F,
-      });
-      pdfDoc.addPage(page);
-      pagina++;
-    }
 
+        page.drawCircle({
+          y: height - height + 25,
+          x: width - 38,
+          color: WHITE,
+          size: 5,
+        });
+        page.drawText(`${pagina}/`, {
+          y: height - height + 21,
+          x: width - 40,
+          size: 10,
+          font: helveticaBold,
+          color: AEA99F,
+        });
+        page.drawText(`${numberOfPages}`, {
+          y: height - height + 21,
+          x: width - 26,
+          size: 10,
+          font: helveticaBold,
+          color: AEA99F,
+        });
+        pdfDoc.addPage(page);
+        pagina++;
+      }
+    }
     const pdfBytes = await pdfDoc.save();
     fs.writeFileSync('./pdf/lista_de_asistencia.pdf', pdfBytes);
     //res.download('./pdf/lista_de_asistencia.pdf');
@@ -598,11 +616,15 @@ export class AttendessController {
     let SHEET = await workbook.getSheet(1);
 
     /** SET EVENT DATE */
+    let event_dates = await this.eventService.getEventDates(parseInt(eventId.eventId))
+    event_dates = event_dates.sort((a, b) => moment(a).diff(moment(b))).map((e) => moment(e).format('DD-MM-YYYY'))
+    
+    const DATE = event_dates.join(', ')
     let EVENT_DATE_ROW = workbook.getRow(2, SHEET);
     let EVENT_DATE_CELL = workbook.getCell(1, EVENT_DATE_ROW);
     workbook.setValue(
       EVENT_DATE_CELL,
-      moment(existEvent[0].event_date).format('DD-MM-YYYY'),
+      DATE,
     );
     workbook.saveChanges(EVENT_DATE_ROW);
 
@@ -612,8 +634,20 @@ export class AttendessController {
     workbook.setValue(EVENT_NAME_CELL, existEvent[0].name);
     workbook.saveChanges(EVENT_NAME_ROW);
 
+    /** SET ADDRESS */
+    const ADDRESS_ROW = workbook.getRow(5, SHEET);
+    const ADDRESS_CELL = workbook.getCell(1, ADDRESS_ROW);
+    workbook.setValue(ADDRESS_CELL, existEvent[0].address || '');
+    workbook.saveChanges(ADDRESS_ROW);
+
+    /** SET SEDE */
+    const SEDE_ROW = workbook.getRow(5, SHEET);
+    const SEDE_CELL = workbook.getCell(1, SEDE_ROW);
+    workbook.setValue(SEDE_CELL, existEvent[0].sede || '');
+    workbook.saveChanges(SEDE_ROW);
+
     /** BUILD INFORMATION */
-    let INITIAL_ROW = 8;
+    let INITIAL_ROW = 9;
     for (let item of array) {
       const signatures = await this.attendessService.getAttendeesSignByEventAndAttendee(
         parseInt(eventId.eventId),

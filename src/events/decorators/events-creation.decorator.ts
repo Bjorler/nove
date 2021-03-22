@@ -5,7 +5,7 @@ import { ApiOperation, ApiHeader, ApiResponse, ApiBadRequestResponse,
 import { ValidationPipe } from '../../commons/validations/validations.pipe';
 import { TokenGuard, MasterGuard } from '../../commons/guards';
 import { ImageErrorDto, EvetnDateErrorDto, ErrorDto, UnauthorizedDto, ForbiddenDto, InternalServerErrrorDto,
-DatesErrorDto, StartTimeErrorDto
+DatesErrorDto, StartTimeErrorDto, EventsImageErrorDto, EventsDateErrorDto
 } from '../../commons/DTO';
 import { EventsCreateDto, EventsResponseDates } from '../DTO/events-create.dto';
 export function EventsCreationDecorator(){
@@ -26,7 +26,9 @@ export function EventsCreationDecorator(){
         ApiResponse({status:413, type:ImageErrorDto}),
         ApiResponse({status:415, type:EvetnDateErrorDto}),
         ApiResponse({status:414, type:StartTimeErrorDto}),
+        ApiResponse({status:417, type:EventsImageErrorDto}),
         ApiResponse({status:424, type:DatesErrorDto}),
+        ApiResponse({status:425, type:EventsDateErrorDto}),
         ApiBadRequestResponse({type:ErrorDto}),
         ApiUnauthorizedResponse({type:UnauthorizedDto}),
         ApiForbiddenResponse({type:ForbiddenDto}),
