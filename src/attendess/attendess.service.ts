@@ -172,8 +172,9 @@ export class AttendessService {
     const WIDTH = width - width;
     const HEIGHT = height;
     let event_dates = await this.eventService.getEventDates(event_id)
-    event_dates = event_dates.sort((a, b) => moment(a).diff(moment(b))).map((e) => moment(e).format('DD-MM-YYYY'))
-    
+    event_dates = event_dates.sort((a, b) => moment(a).diff(moment(b))).map((e,i) => {
+      if(i < 3){ return moment(e).format('DD-MM-YYYY')}
+    }).filter(e => e)
     const DATE = event_dates.join(', ')//moment().format('DD-MM-YYYY');
     const EVENT_NAME = event_name;
     const ADDRESS = address;
@@ -312,8 +313,16 @@ export class AttendessService {
     eventnameField.setText(event[0].name);
 
     let dateField = form.getTextField(EVENT_DATE);
-    
+    let event_dates = await this.eventService.getEventDates(currentEvent.event_id);
+    console.log(currentEvent)
+    event_dates = event_dates.sort((a, b) => moment(a).diff(moment(b)))
+    .map((e,i) => {
+      if(i < 3){ return moment(e).format('DD-MM-YYYY')}
+    }).filter(e => e)
+    const date = event_dates.join(', ')//moment().format('DD-MM-YYYY');
+    console.log({event_dates,date})
     dateField.setText(moment(currentEvent.event_date).format('DD-MM-YYYY'));
+    //dateField.setText(date);
 
     if (questions.question2.toLowerCase() == 'true') {
       let question1yesField = form.getCheckBox(QUESTION_1_YES);

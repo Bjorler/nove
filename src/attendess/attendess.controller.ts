@@ -412,7 +412,7 @@ export class AttendessController {
                 const SIGNATURE = fs.readFileSync(
                   result[count_data].signatures[0]['path_sign'],
                 );
-                let mimetype = result[count_data].signature.split('.');
+                let mimetype = result[count_data].signatures[0]['path_sign'].split('.');
                 mimetype = mimetype[mimetype.length - 1];
 
                 const EMBEDDED_SIGNATURE =
@@ -441,7 +441,7 @@ export class AttendessController {
                 const SIGNATURE = fs.readFileSync(
                   result[count_data].signatures[1]['path_sign'],
                 );
-                let mimetype = result[count_data].signature.split('.');
+                let mimetype = result[count_data].signatures[1]['path_sign'].split('.');
                 mimetype = mimetype[mimetype.length - 1];
 
                 const EMBEDDED_SIGNATURE =
@@ -477,7 +477,7 @@ export class AttendessController {
                 const SIGNATURE = fs.readFileSync(
                   result[count_data].signatures[2]['path_sign'],
                 );
-                let mimetype = result[count_data].signature.split('.');
+                let mimetype = result[count_data].signatures[2]['path_sign'].split('.');
                 mimetype = mimetype[mimetype.length - 1];
 
                 const EMBEDDED_SIGNATURE =
@@ -509,7 +509,7 @@ export class AttendessController {
                 const SIGNATURE = fs.readFileSync(
                   result[count_data].signatures[3]['path_sign'],
                 );
-                let mimetype = result[count_data].signature.split('.');
+                let mimetype = result[count_data].signatures[3]['path_sign'].split('.');
                 mimetype = mimetype[mimetype.length - 1];
 
                 const EMBEDDED_SIGNATURE =
@@ -617,8 +617,9 @@ export class AttendessController {
 
     /** SET EVENT DATE */
     let event_dates = await this.eventService.getEventDates(parseInt(eventId.eventId))
-    event_dates = event_dates.sort((a, b) => moment(a).diff(moment(b))).map((e) => moment(e).format('DD-MM-YYYY'))
-    
+    event_dates = event_dates.sort((a, b) => moment(a).diff(moment(b))).map((e,i) => {
+      if(i < 3){ return moment(e).format('DD-MM-YYYY')}
+    }).filter(e => e)
     const DATE = event_dates.join(', ')
     let EVENT_DATE_ROW = workbook.getRow(2, SHEET);
     let EVENT_DATE_CELL = workbook.getCell(1, EVENT_DATE_ROW);
