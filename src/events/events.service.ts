@@ -55,6 +55,7 @@ export class EventsService {
   }
 
   async getEventDates2(event_id:number){
+    console.log({event_id})
     const dates = await this.knex
       .table('events_date')
       .where({ event_id, is_deleted: 0 })
@@ -70,11 +71,13 @@ export class EventsService {
       const currentDate = moment().format('YYYY-MM-DD');
       if (moment(auxDate).isAfter(moment(currentDate))  ){
         aux = [sorted[i], ...aux ]
-        if(aux.length > 2){
+        if(aux.length >= 2){
+          
           const aux1 = aux[0];
           const aux2 = aux[1]
           const auxDate = moment(aux1).format('YYYY-MM-DD');
           const currentDate = moment(aux2).format('YYYY-MM-DD');
+          console.log({aux1,aux2})
           if(moment(auxDate).isAfter(currentDate)  
           && moment(currentDate).isAfter(moment().format('YYYY-MM-DD')) ){
             
