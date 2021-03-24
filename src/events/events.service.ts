@@ -54,6 +54,44 @@ export class EventsService {
     return result;
   }
 
+  async getEventDates2(event_id:number){
+    const dates = await this.knex
+      .table('events_date')
+      .where({ event_id, is_deleted: 0 })
+
+    let result = [];
+    for (let date of dates) {
+      result.push(date.event_date);
+    }
+    const sorted = result.sort((a, b) => moment(a).diff(moment(b)));
+    let aux = [];
+    for (let i =0; i< sorted.length; i++) {
+      const auxDate = moment(sorted[i]).format('YYYY-MM-DD');
+      const currentDate = moment().format('YYYY-MM-DD');
+      if (moment(auxDate).isAfter(moment(currentDate))  ){
+        aux = [sorted[i], ...aux ]
+        if(aux.length > 2){
+          const aux1 = aux[0];
+          const aux2 = aux[1]
+          const auxDate = moment(aux1).format('YYYY-MM-DD');
+          const currentDate = moment(aux2).format('YYYY-MM-DD');
+          if(moment(auxDate).isAfter(currentDate)  
+          && moment(currentDate).isAfter(moment().format('YYYY-MM-DD')) ){
+            
+            aux[0] = aux2;
+            aux[1] = aux1
+          }
+        }  
+        
+        
+        
+      }else{
+        aux.push(sorted[i])
+      }
+    }
+    return aux;
+  }
+
   async getEventDates(event_id: number) {
     const dates = await this.knex
       .table('events_date')
@@ -191,7 +229,7 @@ export class EventsService {
       .innerJoin('events_date', 'events.id', 'events_date.event_id')
       .where(`${this.TABLE}.is_deleted`, '=', 0)
       .andWhere(
-        this.knex.raw("date_format(events_date.event_date,'%Y-%m-%d') > ? ", [
+        this.knex.raw("date_format(events_date.event_date,'%Y-%m-%d') > ? and events_date.is_deleted=0 ", [
           moment().format('YYYY-MM-DD'),
         ]),
       )
@@ -200,7 +238,7 @@ export class EventsService {
           .where('hour_init', '>=', hour_init)
           .andWhere(
             this.knex.raw(
-              "date_format(events_date.event_date,'%Y-%m-%d') = ?",
+              "date_format(events_date.event_date,'%Y-%m-%d') = ? and events_date.is_deleted=0",
               [moment().format('YYYY-MM-DD')],
             ),
           );
@@ -210,14 +248,13 @@ export class EventsService {
           .where('hour_end', '>', hour_init)
           .andWhere(
             this.knex.raw(
-              "date_format(events_date.event_date,'%Y-%m-%d') = ?",
+              "date_format(events_date.event_date,'%Y-%m-%d') = ? and events_date.is_deleted=0",
               [moment().format('YYYY-MM-DD')],
             ),
           );
       })
       .orderBy('events_date.event_date')
       .orderBy('hour_init');
-
     let data = [];
     for (let e of events) {
       const isInData = data.find((d) => d.id == e.id);
@@ -235,7 +272,7 @@ export class EventsService {
       info.location = event.address;
       info.sede = event.sede || '';
       info.description = event.description;
-      info.event_date = this.displayDates(await this.getEventDates(event.id)); //event.event_date;
+      info.event_date = this.displayDates(await this.getEventDates2(event.id)); //event.event_date;
       info.hour_init = event.hour_init;
       info.hour_end = event.hour_end;
       info.is_internal = event.is_internal ? true: false;
@@ -268,7 +305,6 @@ export class EventsService {
       }
       result = aux[0];
     }
-    console.log(result);
     return result;
   }
 
