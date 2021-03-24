@@ -154,7 +154,7 @@ export class AttendessService {
   }
 
   async preparePDF(event_name: string, event_id:number, address:string, sede:string) {
-    const RUTA = './pdf/Formato_asistencia_template001.pdf';
+    const RUTA = './pdf/Formato_asistencia_template003.pdf';
     const pdfDoc = await PDFDocument.load(fs.readFileSync(RUTA));
     //carga el archivo
     const pages = pdfDoc.getPages();
@@ -280,7 +280,7 @@ export class AttendessService {
     return result;
   }
   async fillPDFFisrtPart(questions, doctor_name: string, event, currentEvent) {
-    const RUTA = './pdf/template.pdf';
+    const RUTA = './pdf/new_template.pdf';
     //carga el archivo
     const pdfDoc = await PDFDocument.load(fs.readFileSync(RUTA));
     const pages = pdfDoc.getPages();
@@ -314,15 +314,15 @@ export class AttendessService {
 
     let dateField = form.getTextField(EVENT_DATE);
     let event_dates = await this.eventService.getEventDates(currentEvent.event_id);
-    console.log(currentEvent)
+    
     event_dates = event_dates.sort((a, b) => moment(a).diff(moment(b)))
     .map((e,i) => {
       if(i < 3){ return moment(e).format('DD-MM-YYYY')}
     }).filter(e => e)
     const date = event_dates.join(', ')//moment().format('DD-MM-YYYY');
-    console.log({event_dates,date})
-    dateField.setText(moment(currentEvent.event_date).format('DD-MM-YYYY'));
-    //dateField.setText(date);
+    
+    //dateField.setText(moment(currentEvent.event_date).format('DD-MM-YYYY'));
+    dateField.setText(date);
 
     if (questions.question2.toLowerCase() == 'true') {
       let question1yesField = form.getCheckBox(QUESTION_1_YES);

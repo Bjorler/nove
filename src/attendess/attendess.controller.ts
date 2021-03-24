@@ -337,31 +337,31 @@ export class AttendessController {
 
         const { width, height } = page.getSize();
         const TABLE_HEADER_Y = height - 123;
-        const CEDULA_X = 100;
-        const NAME_X = 210; //200;
+        const CEDULA_X = 90;
+        const NAME_X = 180; //200;
         const FIRMA_X = width - 75;
         const ID_X = 50;
-        const EMAIL_X = 410; //400
-        const SPECIALITY_X = 570; //550
+        const EMAIL_X = 370; //400
+        const SPECIALITY_X = 530; //550
         let INIT_POSITION_Y = TABLE_HEADER_Y - 70;
 
         let current_row = 0;
         const Y_POSITIONS = [
-          INIT_POSITION_Y,
-          INIT_POSITION_Y - 27,
-          INIT_POSITION_Y - 57,
-          INIT_POSITION_Y - 87,
-          INIT_POSITION_Y - 114,
-          INIT_POSITION_Y - 143,
-          INIT_POSITION_Y - 174,
-          INIT_POSITION_Y - 200,
-          INIT_POSITION_Y - 229,
-          INIT_POSITION_Y - 261,
-          INIT_POSITION_Y - 287,
-          INIT_POSITION_Y - 313,
-          INIT_POSITION_Y - 346,
-          INIT_POSITION_Y - 373,
-          INIT_POSITION_Y - 401,
+          INIT_POSITION_Y+7,
+          INIT_POSITION_Y - 20,
+          INIT_POSITION_Y - 50,
+          INIT_POSITION_Y - 80,
+          INIT_POSITION_Y - 107,
+          INIT_POSITION_Y - 136,
+          INIT_POSITION_Y - 167,
+          INIT_POSITION_Y - 193,
+          INIT_POSITION_Y - 222,
+          INIT_POSITION_Y - 254,
+          INIT_POSITION_Y - 280,
+          INIT_POSITION_Y - 308,
+          INIT_POSITION_Y - 339,
+          INIT_POSITION_Y - 366,
+          INIT_POSITION_Y - 394,
         ];
         let count = 0;
         //for (let item of result) {
@@ -385,24 +385,24 @@ export class AttendessController {
               y: Y_POSITIONS[count],
               x: NAME_X - 10,
               size: 8,
-              maxWidth: 160,
-              lineHeight: 37,
+              maxWidth: 120,//160,
+              lineHeight: 7,
               font: helveticaBold,
               color: DARK_BLUE,
             });
             page.drawText(result[count_data].email || '-----', {
               y: Y_POSITIONS[count],
               x: EMAIL_X - 20,
-              maxWidth: 100,
-              size: 8,
+              maxWidth: 120,
+              size: 7,
               font: helveticaBold,
               color: DARK_BLUE,
             });
             page.drawText(result[count_data].speciality, {
               y: Y_POSITIONS[count],
               x: SPECIALITY_X,
-              maxWidth: 200,
-              lineHeight: 37,
+              maxWidth: 150,
+              lineHeight: 7,
               size: 7,
               font: helveticaBold,
               color: DARK_BLUE,
@@ -421,7 +421,7 @@ export class AttendessController {
                     : await pdfDoc.embedPng(SIGNATURE);
 
                 page.drawImage(EMBEDDED_SIGNATURE, {
-                  y: Y_POSITIONS[count],
+                  y: Y_POSITIONS[count]-5,
                   x: FIRMA_X - 45,
                   width: 40,
                   height: 15,
@@ -430,7 +430,7 @@ export class AttendessController {
                   result[count_data].signatures[0]['event_date'],
                 ).format('YYYY-MM-DD');
                 page.drawText(event_date, {
-                  y: Y_POSITIONS[count] - 8,
+                  y: Y_POSITIONS[count] - 11,
                   x: FIRMA_X - 45,
                   size: 7,
                   font: helveticaBold,
@@ -449,7 +449,7 @@ export class AttendessController {
                     ? await pdfDoc.embedJpg(SIGNATURE)
                     : await pdfDoc.embedPng(SIGNATURE);
                 page.drawImage(EMBEDDED_SIGNATURE, {
-                  y: Y_POSITIONS[count],
+                  y: Y_POSITIONS[count]-5,
                   x: FIRMA_X + 10,
                   width: 40,
                   height: 15,
@@ -459,7 +459,7 @@ export class AttendessController {
                   result[count_data].signatures[1]['event_date'],
                 ).format('YYYY-MM-DD');
                 page.drawText(event_date, {
-                  y: Y_POSITIONS[count] - 8,
+                  y: Y_POSITIONS[count] - 11,
                   x: FIRMA_X + 10,
                   size: 7,
                   font: helveticaBold,
@@ -486,7 +486,7 @@ export class AttendessController {
                     : await pdfDoc.embedPng(SIGNATURE);
 
                 page.drawImage(EMBEDDED_SIGNATURE, {
-                  y: Y_POSITIONS[count],
+                  y: Y_POSITIONS[count]-5,
                   x: FIRMA_X - 45,
                   width: 40,
                   height: 15,
@@ -497,7 +497,7 @@ export class AttendessController {
                 ).format('YYYY-MM-DD');
                 console.log(`${Y_POSITIONS[count]} - ${count} - ${event_date}`)
                 page.drawText(event_date, {
-                  y: Y_POSITIONS[count] - 8,
+                  y: Y_POSITIONS[count] - 11,
                   x: FIRMA_X - 45,
                   size: 7,
                   font: helveticaBold,
@@ -517,7 +517,7 @@ export class AttendessController {
                     ? await pdfDoc.embedJpg(SIGNATURE)
                     : await pdfDoc.embedPng(SIGNATURE);
                 page.drawImage(EMBEDDED_SIGNATURE, {
-                  y: Y_POSITIONS[count],
+                  y: Y_POSITIONS[count]-5,
                   x: FIRMA_X + 10,
                   width: 40,
                   height: 15,
@@ -527,7 +527,7 @@ export class AttendessController {
                   result[count_data].signatures[3]['event_date'],
                 ).format('YYYY-MM-DD');
                 page.drawText(event_date, {
-                  y: Y_POSITIONS[count] - 8,
+                  y: Y_POSITIONS[count] - 11,
                   x: FIRMA_X + 10,
                   size: 7,
                   font: helveticaBold,
@@ -535,7 +535,6 @@ export class AttendessController {
                 });
               }
             }
-            console.log({current_row, count, page:1, count_data})
             INIT_POSITION_Y -= 35;
             /**
              * Se le aplica un -1 al MAX_ROW_TO_DISPLAY ya que si el asistente tiene mas de 2 firmas

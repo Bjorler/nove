@@ -58,20 +58,42 @@ export class EventsService {
     console.log({event_id})
     const dates = await this.knex
       .table('events_date')
-      .where({ event_id, is_deleted: 0 })
+      .where({ event_id, is_deleted: 0 }).orderBy('event_date','desc')
 
-    let result = [];
+    let sorted = [];
     for (let date of dates) {
-      result.push(date.event_date);
+      sorted.push(date.event_date);
     }
-    const sorted = result.sort((a, b) => moment(a).diff(moment(b)));
+    //const sorted = result.sort((a, b) => moment(a).diff(moment(b)));
+
+    for(let i=0; i< sorted.length;i++){
+      if(i>0){
+        const d1 = sorted[0]
+        const d2 = sorted[i]
+        const date1 = moment(sorted[0]).format('YYYY-MM-DD');
+        const date2 = moment(sorted[i]).format('YYYY-MM-DD');
+        const current = moment().format('YYYY-MM-DD');
+        if(
+          (moment(date2).isSame(current) &&
+          moment(date2).isBefore(date1)) ||
+          (moment(date2).isAfter(current) && moment(date2).isBefore(date1)) 
+        ){
+          console.log({d1,d2})
+          sorted[0]= d2
+          sorted[i]= d1
+        }
+      }
+    }
+
     let aux = [];
     for (let i =0; i< sorted.length; i++) {
+      console.log(sorted[i])
       const auxDate = moment(sorted[i]).format('YYYY-MM-DD');
       const currentDate = moment().format('YYYY-MM-DD');
       if (moment(auxDate).isAfter(moment(currentDate))  ){
         aux = [sorted[i], ...aux ]
-        if(aux.length >= 2){
+        
+        /*if(aux.length >= 2){
           
           const aux1 = aux[0];
           const aux2 = aux[1]
@@ -79,12 +101,12 @@ export class EventsService {
           const currentDate = moment(aux2).format('YYYY-MM-DD');
           console.log({aux1,aux2})
           if(moment(auxDate).isAfter(currentDate)  
-          && moment(currentDate).isAfter(moment().format('YYYY-MM-DD')) ){
+          && (moment(currentDate).isAfter(moment().format('YYYY-MM-DD'))) ){
             
             aux[0] = aux2;
             aux[1] = aux1
           }
-        }  
+        }  */
         
         
         
@@ -92,7 +114,7 @@ export class EventsService {
         aux.push(sorted[i])
       }
     }
-    return aux;
+    return sorted;
   }
 
   async getEventDates(event_id: number) {
