@@ -17,8 +17,8 @@ export class AttendessService {
   private TABLE = 'attendees';
   constructor(
     @InjectKnex() private knex: Knex,
-    @Inject(forwardRef(()=> EventsService))
-    private eventService: EventsService
+    @Inject(forwardRef(() => EventsService))
+    private eventService: EventsService,
   ) {}
 
   async create(attendees) {
@@ -153,7 +153,12 @@ export class AttendessService {
     return attendees;
   }
 
-  async preparePDF(event_name: string, event_id:number, address:string, sede:string) {
+  async preparePDF(
+    event_name: string,
+    event_id: number,
+    address: string,
+    sede: string,
+  ) {
     const RUTA = './pdf/Formato_asistencia_template003.pdf';
     const pdfDoc = await PDFDocument.load(fs.readFileSync(RUTA));
     //carga el archivo
@@ -171,16 +176,21 @@ export class AttendessService {
 
     const WIDTH = width - width;
     const HEIGHT = height;
-    let event_dates = await this.eventService.getEventDates(event_id)
-    event_dates = event_dates.sort((a, b) => moment(a).diff(moment(b))).map((e,i) => {
-      if(i < 3){ return moment(e).format('DD-MM-YYYY')}
-    }).filter(e => e)
-    const DATE = event_dates.join(', ')//moment().format('DD-MM-YYYY');
+    let event_dates = await this.eventService.getEventDates(event_id);
+    event_dates = event_dates
+      .sort((a, b) => moment(a).diff(moment(b)))
+      .map((e, i) => {
+        if (i < 3) {
+          return moment(e).format('DD-MM-YYYY');
+        }
+      })
+      .filter((e) => e);
+    const DATE = event_dates.join(', '); //moment().format('DD-MM-YYYY');
     const EVENT_NAME = event_name;
     const ADDRESS = address;
     const SEDE = sede;
     page.drawText(DATE, {
-      x: WIDTH + 50, 
+      x: WIDTH + 50,
       y: HEIGHT - 60,
       size: 10,
       maxWidth: 400,
@@ -313,14 +323,20 @@ export class AttendessService {
     eventnameField.setText(event[0].name);
 
     let dateField = form.getTextField(EVENT_DATE);
-    let event_dates = await this.eventService.getEventDates(currentEvent.event_id);
-    
-    event_dates = event_dates.sort((a, b) => moment(a).diff(moment(b)))
-    .map((e,i) => {
-      if(i < 3){ return moment(e).format('DD-MM-YYYY')}
-    }).filter(e => e)
-    const date = event_dates.join(', ')//moment().format('DD-MM-YYYY');
-    
+    let event_dates = await this.eventService.getEventDates(
+      currentEvent.event_id,
+    );
+
+    event_dates = event_dates
+      .sort((a, b) => moment(a).diff(moment(b)))
+      .map((e, i) => {
+        if (i < 3) {
+          return moment(e).format('DD-MM-YYYY');
+        }
+      })
+      .filter((e) => e);
+    const date = event_dates.join(', '); //moment().format('DD-MM-YYYY');
+
     //dateField.setText(moment(currentEvent.event_date).format('DD-MM-YYYY'));
     dateField.setText(date);
 
@@ -347,9 +363,9 @@ export class AttendessService {
       let representativeField = form.getTextField(REPRESENTATIVE);
       representativeField.setText(questions.nameAndTitle);
     }
-    if(questions.question2.toLowerCase() == 'true'){
-    let eventname2Field = form.getTextField(EVENT_NAME_2);
-    eventname2Field.setText(event[0].name);
+    if (questions.question2.toLowerCase() == 'true') {
+      let eventname2Field = form.getTextField(EVENT_NAME_2);
+      eventname2Field.setText(event[0].name);
     }
 
     let date2Field = form.getTextField(DATE);
@@ -396,10 +412,10 @@ export class AttendessService {
 
   async pdfBundle(data, path) {
     const pdfDoc = await PDFDocument.create();
-
     for (let item of data) {
       if (item.pdf_path) {
         const pdf = await PDFDocument.load(fs.readFileSync(item.pdf_path));
+        pdf.getForm().flatten();
         const [page] = await pdfDoc.copyPages(pdf, [0]);
         pdfDoc.addPage(page);
       }
