@@ -589,7 +589,12 @@ export class AttendessController {
     }
     const pdfBytes = await pdfDoc.save();
     fs.writeFileSync('./pdf/lista_de_asistencia.pdf', pdfBytes);
-    res.download('./pdf/lista_de_asistencia.pdf');
+    var file = fs.createReadStream('./pdf/lista_de_asistencia.pdf');
+    var stat = fs.statSync('./pdf/lista_de_asistencia.pdf');
+    res.setHeader('Content-Length', stat.size);
+    res.setHeader('Content-type', 'application/pdf');
+    file.pipe(res);
+    //res.download('./pdf/lista_de_asistencia.pdf');
     /*res.status(200).send({
       pdf: fs.readFileSync('./pdf/lista_de_asistencia.pdf', {
         encoding: 'base64',
@@ -841,10 +846,15 @@ export class AttendessController {
     let name = `l${eventId.eventId}_${new Date().getTime()}`;
     const RUTA = `./pdf/bundle/${name}.pdf`;
     await this.attendessService.pdfBundle(attendees, RUTA);
+    var file = fs.createReadStream(RUTA);
+    var stat = fs.statSync(RUTA);
+    res.setHeader('Content-Length', stat.size);
+    res.setHeader('Content-type', 'application/pdf');
+    file.pipe(res);
     /*res
       .status(200)
       .send({ pdf: fs.readFileSync(RUTA, { encoding: 'base64' }) });*/
-    res.download(RUTA);
+    //res.download(RUTA);
   }
 
   @Get('/contract/:id')
