@@ -593,6 +593,10 @@ export class AttendessController {
     var stat = fs.statSync('./pdf/lista_de_asistencia.pdf');
     res.setHeader('Content-Length', stat.size);
     res.setHeader('Content-type', 'application/pdf');
+    res.setHeader(
+      'Content-disposition',
+      'inline; filename="' + 'lista_de_asistencia.pdf' + '"',
+    );
     file.pipe(res);
     //res.download('./pdf/lista_de_asistencia.pdf');
     /*res.status(200).send({
@@ -850,6 +854,10 @@ export class AttendessController {
     var stat = fs.statSync(RUTA);
     res.setHeader('Content-Length', stat.size);
     res.setHeader('Content-type', 'application/pdf');
+    res.setHeader(
+      'Content-disposition',
+      'inline; filename="' + name + '.pdf' + '"',
+    );
     file.pipe(res);
     /*res
       .status(200)
