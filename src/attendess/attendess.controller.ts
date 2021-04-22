@@ -315,8 +315,8 @@ export class AttendessController {
 
     const arrayPage = [];
     const MAX_ROW_TO_DISPLAY = 12;
-    let numberOfPages = Math.ceil(result.length / (MAX_ROW_TO_DISPLAY/2));
-    
+    let numberOfPages = Math.ceil(result.length / (MAX_ROW_TO_DISPLAY / 2));
+
     const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
     const RGB_PARSE = 1 / 255;
     const LIGHT_BLUE = rgb(RGB_PARSE * 0, RGB_PARSE * 159, RGB_PARSE * 218);
@@ -328,10 +328,12 @@ export class AttendessController {
     let count_data = 0;
     const total_users = result.length;
     for (let i = 0; i < numberOfPages; i++) {
-      if(count_data < total_users){
+      if (count_data < total_users) {
         let preparedPDF = await this.attendessService.preparePDF(
-          existEvent[0].name,existEvent[0].id,
-          existEvent[0].address, existEvent[0].sede
+          existEvent[0].name,
+          existEvent[0].id,
+          existEvent[0].address,
+          existEvent[0].sede,
         );
         const [page] = await pdfDoc.copyPages(preparedPDF, [0]);
 
@@ -347,7 +349,7 @@ export class AttendessController {
 
         let current_row = 0;
         const Y_POSITIONS = [
-          INIT_POSITION_Y+7,
+          INIT_POSITION_Y + 7,
           INIT_POSITION_Y - 20,
           INIT_POSITION_Y - 50,
           INIT_POSITION_Y - 80,
@@ -365,7 +367,7 @@ export class AttendessController {
         ];
         let count = 0;
         //for (let item of result) {
-        while(count_data < total_users ){  
+        while (count_data < total_users) {
           try {
             page.drawText(result[count_data].id, {
               y: Y_POSITIONS[count],
@@ -385,7 +387,7 @@ export class AttendessController {
               y: Y_POSITIONS[count],
               x: NAME_X - 10,
               size: 8,
-              maxWidth: 120,//160,
+              maxWidth: 120, //160,
               lineHeight: 7,
               font: helveticaBold,
               color: DARK_BLUE,
@@ -412,7 +414,9 @@ export class AttendessController {
                 const SIGNATURE = fs.readFileSync(
                   result[count_data].signatures[0]['path_sign'],
                 );
-                let mimetype = result[count_data].signatures[0]['path_sign'].split('.');
+                let mimetype = result[count_data].signatures[0][
+                  'path_sign'
+                ].split('.');
                 mimetype = mimetype[mimetype.length - 1];
 
                 const EMBEDDED_SIGNATURE =
@@ -421,7 +425,7 @@ export class AttendessController {
                     : await pdfDoc.embedPng(SIGNATURE);
 
                 page.drawImage(EMBEDDED_SIGNATURE, {
-                  y: Y_POSITIONS[count]-5,
+                  y: Y_POSITIONS[count] - 5,
                   x: FIRMA_X - 45,
                   width: 40,
                   height: 15,
@@ -441,7 +445,9 @@ export class AttendessController {
                 const SIGNATURE = fs.readFileSync(
                   result[count_data].signatures[1]['path_sign'],
                 );
-                let mimetype = result[count_data].signatures[1]['path_sign'].split('.');
+                let mimetype = result[count_data].signatures[1][
+                  'path_sign'
+                ].split('.');
                 mimetype = mimetype[mimetype.length - 1];
 
                 const EMBEDDED_SIGNATURE =
@@ -449,7 +455,7 @@ export class AttendessController {
                     ? await pdfDoc.embedJpg(SIGNATURE)
                     : await pdfDoc.embedPng(SIGNATURE);
                 page.drawImage(EMBEDDED_SIGNATURE, {
-                  y: Y_POSITIONS[count]-5,
+                  y: Y_POSITIONS[count] - 5,
                   x: FIRMA_X + 10,
                   width: 40,
                   height: 15,
@@ -466,18 +472,22 @@ export class AttendessController {
                   color: DARK_BLUE,
                 });
               }
-              if (result[count_data].signatures[2] || result[count_data].signatures[3]) {
+              if (
+                result[count_data].signatures[2] ||
+                result[count_data].signatures[3]
+              ) {
                 count++;
                 current_row++;
-                if(count >= Y_POSITIONS.length) count = Y_POSITIONS.length-1
-                
+                if (count >= Y_POSITIONS.length) count = Y_POSITIONS.length - 1;
               }
 
               if (result[count_data].signatures[2]) {
                 const SIGNATURE = fs.readFileSync(
                   result[count_data].signatures[2]['path_sign'],
                 );
-                let mimetype = result[count_data].signatures[2]['path_sign'].split('.');
+                let mimetype = result[count_data].signatures[2][
+                  'path_sign'
+                ].split('.');
                 mimetype = mimetype[mimetype.length - 1];
 
                 const EMBEDDED_SIGNATURE =
@@ -486,7 +496,7 @@ export class AttendessController {
                     : await pdfDoc.embedPng(SIGNATURE);
 
                 page.drawImage(EMBEDDED_SIGNATURE, {
-                  y: Y_POSITIONS[count]-5,
+                  y: Y_POSITIONS[count] - 5,
                   x: FIRMA_X - 45,
                   width: 40,
                   height: 15,
@@ -495,7 +505,7 @@ export class AttendessController {
                 const event_date = moment(
                   result[count_data].signatures[2]['event_date'],
                 ).format('YYYY-MM-DD');
-                console.log(`${Y_POSITIONS[count]} - ${count} - ${event_date}`)
+                console.log(`${Y_POSITIONS[count]} - ${count} - ${event_date}`);
                 page.drawText(event_date, {
                   y: Y_POSITIONS[count] - 11,
                   x: FIRMA_X - 45,
@@ -509,7 +519,9 @@ export class AttendessController {
                 const SIGNATURE = fs.readFileSync(
                   result[count_data].signatures[3]['path_sign'],
                 );
-                let mimetype = result[count_data].signatures[3]['path_sign'].split('.');
+                let mimetype = result[count_data].signatures[3][
+                  'path_sign'
+                ].split('.');
                 mimetype = mimetype[mimetype.length - 1];
 
                 const EMBEDDED_SIGNATURE =
@@ -517,7 +529,7 @@ export class AttendessController {
                     ? await pdfDoc.embedJpg(SIGNATURE)
                     : await pdfDoc.embedPng(SIGNATURE);
                 page.drawImage(EMBEDDED_SIGNATURE, {
-                  y: Y_POSITIONS[count]-5,
+                  y: Y_POSITIONS[count] - 5,
                   x: FIRMA_X + 10,
                   width: 40,
                   height: 15,
@@ -541,7 +553,7 @@ export class AttendessController {
              * afecta el conteo natural de las rows
              */
             count_data++;
-            if (current_row >= (MAX_ROW_TO_DISPLAY-1) ) {
+            if (current_row >= MAX_ROW_TO_DISPLAY - 1) {
               break;
             }
             current_row++;
@@ -549,7 +561,6 @@ export class AttendessController {
             console.log(err);
           }
           count++;
-          
         }
 
         page.drawCircle({
@@ -578,12 +589,12 @@ export class AttendessController {
     }
     const pdfBytes = await pdfDoc.save();
     fs.writeFileSync('./pdf/lista_de_asistencia.pdf', pdfBytes);
-    //res.download('./pdf/lista_de_asistencia.pdf');
-    res.status(200).send({
+    res.download('./pdf/lista_de_asistencia.pdf');
+    /*res.status(200).send({
       pdf: fs.readFileSync('./pdf/lista_de_asistencia.pdf', {
         encoding: 'base64',
       }),
-    });
+    });*/
   }
 
   @Get('/assists/list-excel/:eventId')
@@ -615,17 +626,21 @@ export class AttendessController {
     let SHEET = await workbook.getSheet(1);
 
     /** SET EVENT DATE */
-    let event_dates = await this.eventService.getEventDates(parseInt(eventId.eventId))
-    event_dates = event_dates.sort((a, b) => moment(a).diff(moment(b))).map((e,i) => {
-      if(i < 3){ return moment(e).format('DD-MM-YYYY')}
-    }).filter(e => e)
-    const DATE = event_dates.join(', ')
+    let event_dates = await this.eventService.getEventDates(
+      parseInt(eventId.eventId),
+    );
+    event_dates = event_dates
+      .sort((a, b) => moment(a).diff(moment(b)))
+      .map((e, i) => {
+        if (i < 3) {
+          return moment(e).format('DD-MM-YYYY');
+        }
+      })
+      .filter((e) => e);
+    const DATE = event_dates.join(', ');
     let EVENT_DATE_ROW = workbook.getRow(2, SHEET);
     let EVENT_DATE_CELL = workbook.getCell(1, EVENT_DATE_ROW);
-    workbook.setValue(
-      EVENT_DATE_CELL,
-      DATE,
-    );
+    workbook.setValue(EVENT_DATE_CELL, DATE);
     workbook.saveChanges(EVENT_DATE_ROW);
 
     /** SET EVENT NAME */
@@ -826,10 +841,10 @@ export class AttendessController {
     let name = `l${eventId.eventId}_${new Date().getTime()}`;
     const RUTA = `./pdf/bundle/${name}.pdf`;
     await this.attendessService.pdfBundle(attendees, RUTA);
-    res
+    /*res
       .status(200)
-      .send({ pdf: fs.readFileSync(RUTA, { encoding: 'base64' }) });
-    //res.download(RUTA);
+      .send({ pdf: fs.readFileSync(RUTA, { encoding: 'base64' }) });*/
+    res.download(RUTA);
   }
 
   @Get('/contract/:id')
