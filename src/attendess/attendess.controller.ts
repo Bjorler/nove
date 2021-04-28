@@ -299,10 +299,11 @@ export class AttendessController {
       );
       let id_string = `000${item.id}`;
       let info = {
-        id:
+        id: item.idengage,
+        /*id:
           item.id < 1000
             ? id_string.substring(id_string.length - 3, id_string.length)
-            : `${item.id}`,
+            : `${item.id}`,*/
         cedula: `${item.cedula}`,
         name: `${item.name}`,
         signature: item.path,
@@ -339,10 +340,10 @@ export class AttendessController {
 
         const { width, height } = page.getSize();
         const TABLE_HEADER_Y = height - 123;
-        const CEDULA_X = 90;
-        const NAME_X = 180; //200;
+        const CEDULA_X = 110; //90;
+        const NAME_X = 205; //200;
         const FIRMA_X = width - 75;
-        const ID_X = 50;
+        const ID_X = 25; //50;
         const EMAIL_X = 370; //400
         const SPECIALITY_X = 530; //550
         let INIT_POSITION_Y = TABLE_HEADER_Y - 70;
@@ -372,7 +373,7 @@ export class AttendessController {
             page.drawText(result[count_data].id, {
               y: Y_POSITIONS[count],
               x: ID_X,
-              size: 8,
+              size: 7,
               font: helveticaBold,
               color: LIGHT_BLUE,
             });
@@ -386,7 +387,7 @@ export class AttendessController {
             page.drawText(result[count_data].name, {
               y: Y_POSITIONS[count],
               x: NAME_X - 10,
-              size: 8,
+              size: 7,
               maxWidth: 120, //160,
               lineHeight: 7,
               font: helveticaBold,
@@ -682,10 +683,10 @@ export class AttendessController {
       const ID_ROW = workbook.getRow(INITIAL_ROW, SHEET);
       const ID_CELL = workbook.getCell(ID_CELL_POSITION, ID_ROW);
       let id_string = `000${item.id}`;
-      let id_to_display =
-        item.id < 1000
+      let id_to_display = item.idengage;
+      /*item.id < 1000
           ? id_string.substring(id_string.length - 3, id_string.length)
-          : `${item.id}`;
+          : `${item.id}`;*/
       workbook.setValue(ID_CELL, id_to_display);
       workbook.setColor('009FDA', ID_CELL);
       workbook.saveChanges(ID_ROW);

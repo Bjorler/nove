@@ -159,7 +159,7 @@ export class AttendessService {
     address: string,
     sede: string,
   ) {
-    const RUTA = './pdf/Formato_asistencia_template003.pdf';
+    const RUTA = './pdf/Formato_asistencia_template008.pdf';
     const pdfDoc = await PDFDocument.load(fs.readFileSync(RUTA));
     //carga el archivo
     const pages = pdfDoc.getPages();
