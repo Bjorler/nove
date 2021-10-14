@@ -932,7 +932,7 @@ export class AttendessController {
       existAttendees[0].cedula,
       existAttendees[0].event_id,
     );
-    if (isAlreadyRegistered.length)
+    if (isAlreadyRegistered.length && existAttendees[0].cedula)
       throw new HttpException('User already registered', HttpStatus.CONFLICT);
 
     /** CREAR EL ASISTENTE */
