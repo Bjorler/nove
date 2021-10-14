@@ -87,7 +87,7 @@ export class AttendessService {
       let signatures = this.prepareSignatures(event_dates);
 
       let info = new AttendeesListDto();
-      (info.cedula = item.cedula), (info.name = `${item.name}`);
+      (info.cedula = item.cedula || 'sin cédula'), (info.name = `${item.name}`);
       info.download_signature = signatures; //`${METHOD}://${DOMAIN}/attendees/signature/${item.id}`;
       info.id = item.id;
       info.register_type = item.register_type;

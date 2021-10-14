@@ -304,7 +304,7 @@ export class AttendessController {
           item.id < 1000
             ? id_string.substring(id_string.length - 3, id_string.length)
             : `${item.id}`,*/
-        cedula: `${item.cedula}`,
+        cedula: `${item.cedula || 'sin cédula'}`,
         name: `${item.name}`,
         signature: item.path,
         email: item.email,
@@ -695,7 +695,7 @@ export class AttendessController {
       const CEDULA_CELL_POSITION = 2;
       const CEDULA_ROW = workbook.getRow(INITIAL_ROW, SHEET);
       const CEDULA_CELL = workbook.getCell(CEDULA_CELL_POSITION, CEDULA_ROW);
-      workbook.setValue(CEDULA_CELL, item.cedula);
+      workbook.setValue(CEDULA_CELL, item.cedula || 'sin cédula' );
       workbook.setColor('009FDA', CEDULA_CELL);
       workbook.saveChanges(CEDULA_ROW);
 
