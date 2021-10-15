@@ -3,3 +3,4 @@ export { DataBaseLastUploadDecorator } from './database-lastupload.decorator';
 export { DatabaseExcelDecorator } from './database-excel.decorator';
 export { DatabaseHistoricalDecorator } from './database-historical.decorator';
 export { DatabaseSearchDecorator } from './database-search.decorator';
+export { DatabaseEmailSearchDecorator } from './database-emailsearch.decorator';

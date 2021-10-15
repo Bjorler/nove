@@ -197,6 +197,12 @@ export class AttendessController {
     const currentEvent = await this.eventService.getCurrentEvent(event_dates);
     if (!currentEvent) throw new HttpException('EVENT OUT OF TIME', 423);
 
+    const cedula = parseInt(attendees.cedula);
+    if (isNaN(cedula)) throw new HttpException('Formato de cédula incorrecto: El campo cédula solo admite números', HttpStatus.BAD_REQUEST);
+    const mail = attendees.email;
+    const hasCedula = cedula != 0;
+    if(!hasCedula && !mail) throw new HttpException('Los usuarios sin cédula deben proporcionar su correo electrónico', HttpStatus.BAD_REQUEST);
+
     const IS_HOUR_END_BEFORE_CURRENTTIME = moment(
       eventExist[0].hour_end,
       'HH:mm',
@@ -928,11 +934,21 @@ export class AttendessController {
     if (!existAttendees.length)
       throw new HttpException('ATTENDEES NOT FOUND', HttpStatus.NOT_FOUND);
 
-    const isAlreadyRegistered = await this.attendessService.isAlreadyRegistered(
-      existAttendees[0].cedula,
-      existAttendees[0].event_id,
-    );
-    if (isAlreadyRegistered.length && existAttendees[0].cedula)
+    let isAlreadyRegistered = []
+    const hasCedula = existAttendees[0].cedula;
+    if(hasCedula){
+      isAlreadyRegistered = await this.attendessService.isAlreadyRegistered(
+        existAttendees[0].cedula,
+        existAttendees[0].event_id,
+      );
+    }else{
+      isAlreadyRegistered = await this.attendessService.isAlreadyRegisteredByEmail(
+        existAttendees[0].email,
+        existAttendees[0].event_id,
+      );
+    }
+    
+    if (isAlreadyRegistered.length)
       throw new HttpException('User already registered', HttpStatus.CONFLICT);
 
     /** CREAR EL ASISTENTE */

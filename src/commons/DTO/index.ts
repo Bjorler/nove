@@ -30,3 +30,4 @@ export { StartTimeErrorDto } from './starttime-error.dto';
 export { AttendeesAreadyConfirmDto } from './attendees-alreadyconfirm.dto';
 export { EventsDateErrorDto } from './events-dateerror.dto';
 export { EventsImageErrorDto } from './events-imageerror.dto';
+export { AttendeesNoCedulaError, AttendeesFormatCedulaError } from './attendees-nocedula.error';

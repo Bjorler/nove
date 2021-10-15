@@ -477,9 +477,27 @@ export class AttendessService {
     return result;
   }
 
+  async isAlreadyRegisteredByEmail(email: string, eventId: number) {
+    const result = await this.knex
+      .table(this.TABLE)
+      .where({ email })
+      .andWhere({ event_id: eventId })
+      .andWhere({ is_deleted: 0 });
+    return result;
+  }
+
   async saveAttendanceSignature(data: AttendanceSignature) {
     const signature = await this.knex.table('attendees_sign').insert(data);
     return signature;
+  }
+
+  async findByEmail(email:string, event_id:number){
+    const attendees = await this.knex.table(this.TABLE).where({
+      is_deleted: 0,
+      email,
+      event_id,
+    });
+    return attendees;
   }
 
   async findByCedula(cedula: number, event_id: number) {

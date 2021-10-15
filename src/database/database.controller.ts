@@ -34,9 +34,11 @@ import {
   DatabaseExcelDecorator,
   DatabaseHistoricalDecorator,
   DatabaseSearchDecorator,
+  DatabaseEmailSearchDecorator,
 } from './decorators';
 import { STATICS_EXCEL } from '../config';
 import * as moment from 'moment';
+import { DatabaseEmailDto } from './DTO/database-email.dto';
 
 @ApiTags('Database Upload')
 @Controller('database')
@@ -157,6 +159,18 @@ export class DatabaseController {
   async getHistorical() {
     const historical = this.databaseService.findAllHistorical();
     return historical;
+  }
+
+  @Get('email')
+  @DatabaseEmailSearchDecorator()
+  async findDoctorByEmail(@Query() emailDto:DatabaseEmailDto){
+    let response = new DatabaseResponseByCedulaDto();
+    response = await this.databaseService.findDoctorByemail(
+      emailDto.mail,
+      parseInt(emailDto.event_id),
+    );
+
+    return response;
   }
 
   @Get('/:cedula')

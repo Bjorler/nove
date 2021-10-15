@@ -101,6 +101,40 @@ export class DatabaseService {
     return info;
   }
 
+  async findDoctorByemail(email:string, event_id:number){
+    let info = [
+      {
+        complete_name: '',
+        name: '',
+        lastname: '',
+        speciality: '',
+        email: email,
+        idengage: '',
+        cedula: 0,
+        register_type: 'registered',
+        attendees_id: 0,
+      },
+    ];
+    const attendees = await this.attendeesService.findByEmail(
+      email,
+      event_id,
+    );
+    if (attendees.length) {
+      info[0] = {
+        complete_name: attendees[0].name,
+        name: attendees[0].firstname,
+        lastname: attendees[0].lastname,
+        speciality: attendees[0].speciality,
+        email: attendees[0].email || email,
+        idengage: attendees[0].idengage,
+        cedula: attendees[0].cedula,
+        register_type: 'attendees',
+        attendees_id: attendees[0].id,
+      };
+    }
+    return info[0];
+  }
+
   async findDoctorByCedula(cedula: number, event_id: number) {
     let info = [
       {
