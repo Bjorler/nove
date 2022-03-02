@@ -202,24 +202,23 @@ export class DatabaseService {
     while (TOTAL_REQUEST > 0) {
       try {
         result = await this.requestSep(cedula);
-
-        if (result.items) break;
+        if (result?.items) break;
       } catch (err) {
-        console.log(err);
+        console.log(err.message);
       }
       TOTAL_REQUEST--;
     }
-    if (result.items && result.items.length) {
-      let data = result.items[0];
+    if (result?.items && result?.items?.length) {
+      let data = result?.items[0];
 
       return {
-        complete_name: `${data.nombre} ${data.paterno} ${data.materno}`,
-        name: data.nombre,
-        lastname: `${data.paterno} ${data.materno}`,
-        speciality: data.titulo,
+        complete_name: `${data?.nombre} ${data?.paterno} ${data?.materno}`,
+        name: data?.nombre,
+        lastname: `${data?.paterno} ${data?.materno}`,
+        speciality: data?.titulo,
         email: '',
         idengage: '',
-        cedula: parseInt(data.idCedula),
+        cedula: parseInt(data?.idCedula),
         register_type: 'internet',
         attendees_id: 0,
       };
@@ -243,7 +242,7 @@ export class DatabaseService {
         .post(
           'https://www.cedulaprofesional.sep.gob.mx/cedula/buscaCedulaJson.action',
           formData,
-          { headers: header, responseType: 'arraybuffer' },
+          { headers: header, responseType: 'arraybuffer', timeout:500 },
         )
         .toPromise()
         .then((e) => {
