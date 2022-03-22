@@ -101,7 +101,7 @@ export class DatabaseService {
     return info;
   }
 
-  async findDoctorByemail(email:string, event_id:number){
+  async findDoctorByemail(email: string, event_id: number) {
     let info = [
       {
         complete_name: '',
@@ -115,10 +115,7 @@ export class DatabaseService {
         attendees_id: 0,
       },
     ];
-    const attendees = await this.attendeesService.findByEmail(
-      email,
-      event_id,
-    );
+    const attendees = await this.attendeesService.findByEmail(email, event_id);
     if (attendees.length) {
       info[0] = {
         complete_name: attendees[0].name,
@@ -242,7 +239,7 @@ export class DatabaseService {
         .post(
           'https://www.cedulaprofesional.sep.gob.mx/cedula/buscaCedulaJson.action',
           formData,
-          { headers: header, responseType: 'arraybuffer', timeout:500 },
+          { headers: header, responseType: 'arraybuffer', timeout: 500 },
         )
         .toPromise()
         .then((e) => {
@@ -577,7 +574,9 @@ export class DatabaseService {
     for (let month in result) {
       for (let day in result[month]) {
         for (let item of result[month][day]) {
-          item['time'] = moment(item.date).tz('America/Mexico_City').format('HH:mm');
+          item['time'] = moment(item.date)
+            .tz('America/Mexico_City')
+            .format('HH:mm');
           item['date'] = moment(item.date).format('YYYY-MM-DD');
         }
       }
@@ -589,7 +588,9 @@ export class DatabaseService {
   noRepeat(rows) {
     let rows_2 = {};
     for (let row of rows) {
-      if (!rows_2[row['IMS ID']] && row['IMS ID']) {
+      const LicenseNumber = row['License Number']; //row[4];
+      const hasCedula = LicenseNumber && LicenseNumber != '-';
+      if (!rows_2[row['IMS ID']] && row['IMS ID'] && hasCedula) {
         rows_2[row['IMS ID']] = row;
       }
     }
