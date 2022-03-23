@@ -44,7 +44,7 @@ export class EventsService {
       info.event_date = await this.getEventDates(event.id);
       info.sede = event.sede || '';
       info.brand = event.brand || '';
-      info.is_internal = event.is_internal ? true: false
+      info.is_internal = event.is_internal ? true : false;
       //event.event_date//moment(event.event_date).format("DD-MM-YYYY");
       //const total = await this.attendeesService.findTotalAttendeesByEvent(event.id);
 
@@ -54,11 +54,12 @@ export class EventsService {
     return result;
   }
 
-  async getEventDates2(event_id:number){
-    console.log({event_id})
+  async getEventDates2(event_id: number) {
+    console.log({ event_id });
     const dates = await this.knex
       .table('events_date')
-      .where({ event_id, is_deleted: 0 }).orderBy('event_date','desc')
+      .where({ event_id, is_deleted: 0 })
+      .orderBy('event_date', 'desc');
 
     let sorted = [];
     for (let date of dates) {
@@ -66,33 +67,32 @@ export class EventsService {
     }
     //const sorted = result.sort((a, b) => moment(a).diff(moment(b)));
 
-    for(let i=0; i< sorted.length;i++){
-      if(i>0){
-        const d1 = sorted[0]
-        const d2 = sorted[i]
+    for (let i = 0; i < sorted.length; i++) {
+      if (i > 0) {
+        const d1 = sorted[0];
+        const d2 = sorted[i];
         const date1 = moment(sorted[0]).format('YYYY-MM-DD');
         const date2 = moment(sorted[i]).format('YYYY-MM-DD');
         const current = moment().format('YYYY-MM-DD');
-        if(
-          (moment(date2).isSame(current) &&
-          moment(date2).isBefore(date1)) ||
-          (moment(date2).isAfter(current) && moment(date2).isBefore(date1)) 
-        ){
-          console.log({d1,d2})
-          sorted[0]= d2
-          sorted[i]= d1
+        if (
+          (moment(date2).isSame(current) && moment(date2).isBefore(date1)) ||
+          (moment(date2).isAfter(current) && moment(date2).isBefore(date1))
+        ) {
+          console.log({ d1, d2 });
+          sorted[0] = d2;
+          sorted[i] = d1;
         }
       }
     }
 
     let aux = [];
-    for (let i =0; i< sorted.length; i++) {
-      console.log(sorted[i])
+    for (let i = 0; i < sorted.length; i++) {
+      console.log(sorted[i]);
       const auxDate = moment(sorted[i]).format('YYYY-MM-DD');
       const currentDate = moment().format('YYYY-MM-DD');
-      if (moment(auxDate).isAfter(moment(currentDate))  ){
-        aux = [sorted[i], ...aux ]
-        
+      if (moment(auxDate).isAfter(moment(currentDate))) {
+        aux = [sorted[i], ...aux];
+
         /*if(aux.length >= 2){
           
           const aux1 = aux[0];
@@ -107,11 +107,8 @@ export class EventsService {
             aux[1] = aux1
           }
         }  */
-        
-        
-        
-      }else{
-        aux.push(sorted[i])
+      } else {
+        aux.push(sorted[i]);
       }
     }
     return sorted;
@@ -254,16 +251,17 @@ export class EventsService {
       .innerJoin('events_date', 'events.id', 'events_date.event_id')
       .where(`${this.TABLE}.is_deleted`, '=', 0)
       .andWhere(
-        this.knex.raw("date_format(events_date.event_date,'%Y-%m-%d') > ? and events_date.is_deleted=0 ", [
-          moment().format('YYYY-MM-DD'),
-        ]),
+        this.knex.raw(
+          "date_format(events_date.event_date,'%Y-%m-%d') > ? and events_date.is_deleted=0 and events.is_deleted=0  ",
+          [moment().format('YYYY-MM-DD')],
+        ),
       )
       .orWhere((builder) => {
         builder
           .where('hour_init', '>=', hour_init)
           .andWhere(
             this.knex.raw(
-              "date_format(events_date.event_date,'%Y-%m-%d') = ? and events_date.is_deleted=0",
+              "date_format(events_date.event_date,'%Y-%m-%d') = ? and events_date.is_deleted=0 and events.is_deleted=0",
               [moment().format('YYYY-MM-DD')],
             ),
           );
@@ -273,7 +271,7 @@ export class EventsService {
           .where('hour_end', '>', hour_init)
           .andWhere(
             this.knex.raw(
-              "date_format(events_date.event_date,'%Y-%m-%d') = ? and events_date.is_deleted=0",
+              "date_format(events_date.event_date,'%Y-%m-%d') = ? and events_date.is_deleted=0 and events.is_deleted=0",
               [moment().format('YYYY-MM-DD')],
             ),
           );
@@ -300,10 +298,12 @@ export class EventsService {
       info.event_date = this.displayDates(await this.getEventDates2(event.id)); //event.event_date;
       info.hour_init = event.hour_init;
       info.hour_end = event.hour_end;
-      info.is_internal = event.is_internal ? true: false;
-      info.display_time = `${moment(event.hour_init, 'HH:mm').tz('America/Mexico_City').format(
-        'HH:mm',
-      )} - ${moment(event.hour_end, 'HH:mm').tz('America/Mexico_City').format('HH:mm')} Hrs`;
+      info.is_internal = event.is_internal ? true : false;
+      info.display_time = `${moment(event.hour_init, 'HH:mm')
+        .tz('America/Mexico_City')
+        .format('HH:mm')} - ${moment(event.hour_end, 'HH:mm')
+        .tz('America/Mexico_City')
+        .format('HH:mm')} Hrs`;
       info.display_date = this.getCurrentDate(
         await this.getEventDates(event.id),
       );
