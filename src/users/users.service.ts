@@ -55,11 +55,24 @@ export class UsersService {
             info.download_img = `${METHOD}://${DOMAIN}/users/image/${user.id}`
             info.default_img = `${METHOD}://${DOMAIN}/users/image`
             info.id = user.id
-            info.role = user.role_id == 1 ? "Master":"Administrador";
+            info.role = this.findRoleName(user?.role_id || 0);
             info.role_id = user.role_id
             result.push(info)
         }
         return result;
+    }
+
+    findRoleName(id: number) {
+        switch (id) {
+            case 1:
+                return "Master";
+            case 2:
+                return "Administrador";
+            case 3:
+                return "Administrador Menor";
+            default:
+                return "Rol no encontrado";
+        }
     }
 
     async pages(limit:number){
