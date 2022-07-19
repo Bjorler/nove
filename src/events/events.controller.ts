@@ -14,7 +14,7 @@ import { LogDto } from '../commons/DTO';
 import { EventsPaginationDto } from './DTO/events-pagination.dto';
 import { EventsDto } from './DTO/events.dto';
 import { EventsDeleteDto } from './DTO/events-delete.dto';
-import { EventsDetailDto } from './DTO/events-detaildto';
+import { EventsDetailDto, EventsTimelineDto } from './DTO/events-detaildto';
 import { EventsInfoDto } from './DTO/events-info.dto';
 import { EventsUpdateDto } from './DTO/events-update-dto';
 import { EventsTodaysListDto } from './DTO/events-todayslist.dto';
@@ -139,8 +139,6 @@ export class EventsController {
             if(date > curreentDate) throw new HttpException("The start date must be less than the end date",416)
         }
 
-
-
         const {pages, total} = await this.eventService.totalPages(pagination)
         const events = await this.eventService.findAll(pagination);
         
@@ -174,17 +172,16 @@ export class EventsController {
         return eventId
     }
 
-    @Get("/timeline")
+    @Get("/timeline/:timeZone")
     @EventsTimeLineDecorator()
-    async getTimeLine(){
-        
-        const events = await this.eventService.futureEvents() 
+    async getTimeLine(@Param() event: EventsTimelineDto){
+        const events = await this.eventService.futureEvents(event.timeZone) 
         return events;
     }
 
-    @Get('/todays-list')
+    @Get('/todays-list/:timeZone')
     @EventsTodayListDecorator()
-    async getTodaysList(){
+    async getTodaysList(@Param() event: EventsTimelineDto){
         const initial_date = moment().format("YYYY-MM-DD")
         const final_date = moment().add(1,'d')
         .format("YYYY-MM-DD")
@@ -192,16 +189,20 @@ export class EventsController {
         
         const events = await this.eventService.getTodaysList(initial_date, final_date, hour_init);
        
+        const timeZone = event?.timeZone || '-5:00';
         let result:EventsTodaysListDto[] = [];
         for(let event of events){
+            const datesArray = await this.eventService.getEventDates2(event.id);
+            const initHour = this.eventService.getInitHours(datesArray[0], event.hour_init, timeZone);
+            const endHour = this.eventService.getEndHours(datesArray[0], event.hour_end, timeZone);
             let info = new EventsTodaysListDto();
             info.id = event.id;
             info.event_date = moment(event.event_date).format("DD-MM-YYYY");
             info.event_name = event.name;
             info.description = event.description;
-            info.display_time = `${moment(event.hour_init,"HH:mm").format("HH:mm")} - ${moment(event.hour_end,"HH:mm").format("HH:mm")} Hrs`;
-            info.hour_init = event.hour_init;
-            info.hour_end = event.hour_end;
+            info.display_time = `${initHour} - ${endHour} Hrs`;
+            info.hour_init = initHour;
+            info.hour_end = endHour;
             info.download_img = `${METHOD}://${DOMAIN}/events/image/${event.id}`;
             info.default_img = `${METHOD}://${DOMAIN}/events/image`;
             info.ubication = event.address
@@ -328,14 +329,12 @@ export class EventsController {
         return event;
     }
 
-
-    @Get('/:eventId')
+    @Get('/:eventId/:timeZone')
     @EventsDetailDecorator()
-    async eventDetail(@Param() event:EventsDetailDto ){
+    async eventDetail(@Param() event:EventsDetailDto){
         
         const eventExist = await this.eventService.findById(parseInt(event.eventId));
         if(!eventExist.length) throw new HttpException("EVENT NOT FUND",HttpStatus.NOT_FOUND);
-        
 
         let response = new EventsInfoDto();
         response.eventId = eventExist[0].id;
@@ -347,7 +346,12 @@ export class EventsController {
         response.sede = eventExist[0].sede || '';
         response.brand = eventExist[0].brand || '';
         response.description = eventExist[0].description;
-        response.event_date  = this.eventService.displayDates(await this.eventService.getEventDates(eventExist[0].id)) //eventExist[0].event_date;
+        response.event_date  = this.eventService.displayDates2(
+            await this.eventService.getEventDates(eventExist[0].id),
+            eventExist[0].hour_init,
+            eventExist[0].hour_end,
+            event?.timeZone,
+            ) //eventExist[0].event_date;
         response.hour_init = eventExist[0].hour_init;
         response.hour_end = eventExist[0].hour_end;
         response.is_internal = eventExist[0].is_internal ? true:false

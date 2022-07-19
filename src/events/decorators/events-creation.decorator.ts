@@ -14,7 +14,7 @@ export function EventsCreationDecorator(){
             summary:"Api to create events",
             description:"Requires an image in png / jpeg / gif format and it must be sent in the image attribute"
         }),
-        SetMetadata('roles',["MASTER"]),
+        SetMetadata('roles',["MASTER","ADMINMENOR"]),
         SetMetadata('permission',['C']),
         ApiHeader({
             name:"token",

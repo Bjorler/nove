@@ -4,7 +4,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
-import { HOST, USER, PASSWORD, DATABASE, SECRET } from './config';
+import { HOST, USER, PASSWORD, DATABASE, SECRET, DATABASEPORT } from './config';
 import { AuthenticateModule } from './authenticate/authenticate.module';
 import { EventsModule } from './events/events.module';
 import { AttendessModule } from './attendess/attendess.module';
@@ -21,6 +21,7 @@ import { PrepareModule } from './prepare/prepare.module';
         connection:{
           host:HOST,
           user:USER,
+          port: DATABASEPORT,
           password:PASSWORD,
           database:DATABASE
         }

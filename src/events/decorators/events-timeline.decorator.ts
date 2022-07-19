@@ -10,7 +10,7 @@ import { EventsInfoDto } from '../DTO/events-info.dto';
 export function EventsTimeLineDecorator(){
     return applyDecorators(
         ApiOperation({summary:"Api to get the list of future events"}),
-        SetMetadata('roles',["MASTER","ADMIN"]),
+        SetMetadata('roles',["MASTER","ADMIN","ADMINMENOR"]),
         SetMetadata('permission',['R']),
         ApiHeader({
             name:"token",

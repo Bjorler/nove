@@ -51,11 +51,7 @@ export class UserDto{
     password:string;
 
     @IsEnum(RolesDto,{message:`role must be a valid enum value [ADMIN, MASTER]`})  
-    @ApiProperty(
-        {
-            enum:["ADMIN","MASTER"]
-        }
-    )  
+    @ApiProperty( { enum:RolesDto })  
     role?:RolesDto;
 
     @ApiProperty({
