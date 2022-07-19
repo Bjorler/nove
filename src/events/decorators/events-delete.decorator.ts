@@ -10,7 +10,7 @@ import { EventsDeleteDto } from '../DTO/events-delete.dto';
 export function EventsDeleteDecorator(){
     return applyDecorators(
         ApiOperation({summary:"Api to delete events"}),
-        SetMetadata('roles',["MASTER"]),
+        SetMetadata('roles',["MASTER","ADMINMENOR"]),
         SetMetadata('permission',['D']),
         ApiHeader({
             name:"token",

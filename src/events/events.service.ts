@@ -1,6 +1,7 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectKnex, Knex } from 'nestjs-knex';
 import * as moment from 'moment-timezone';
+import * as simpleMoment from 'moment';
 import * as fs from 'fs';
 import { AttendessService } from '../attendess/attendess.service';
 import { EventsResponse } from './DTO/events-response.dto';
@@ -243,7 +244,7 @@ export class EventsService {
     return updated;
   }
 
-  async futureEvents() {
+  async futureEvents(timeZone: string) {
     const hour_init = moment().format('HH:00');
     let events = await this.knex
       .select(`${this.TABLE}.*`)
@@ -286,6 +287,9 @@ export class EventsService {
 
     const result = [];
     for (let event of data) {
+      const datesArray = await this.getEventDates2(event.id);
+      const initHour = this.getInitHours(datesArray[0], event.hour_init, timeZone);
+      const endHour = this.getEndHours(datesArray[0], event.hour_end, timeZone);
       let info = new EventsInfoDto();
       info.download_img = `${METHOD}://${DOMAIN}/events/image/${event.id}`;
       info.default_img = `${METHOD}://${DOMAIN}/events/image`;
@@ -295,15 +299,11 @@ export class EventsService {
       info.location = event.address;
       info.sede = event.sede || '';
       info.description = event.description;
-      info.event_date = this.displayDates(await this.getEventDates2(event.id)); //event.event_date;
-      info.hour_init = event.hour_init;
-      info.hour_end = event.hour_end;
+      info.event_date = this.displayDates2(datesArray, event.hour_init, event.hour_end, timeZone); //event.event_date;
+      info.hour_init = initHour;
+      info.hour_end = endHour;
       info.is_internal = event.is_internal ? true : false;
-      info.display_time = `${moment(event.hour_init, 'HH:mm')
-        .tz('America/Mexico_City')
-        .format('HH:mm')} - ${moment(event.hour_end, 'HH:mm')
-        .tz('America/Mexico_City')
-        .format('HH:mm')} Hrs`;
+      info.display_time = `${initHour} - ${endHour} Hrs`;
       info.display_date = this.getCurrentDate(
         await this.getEventDates(event.id),
       );
@@ -446,6 +446,71 @@ export class EventsService {
       });
     }
     return result;
+  }
+
+  displayDates2(dates: string[], startDate: string, endDate: string, timeZone: string) {
+    let result = [];
+    for (let date of dates) {
+      let completeStartDate = `${simpleMoment(date).format('YYYY-MM-DD')} ${startDate}`;
+      let completeEndDate = `${simpleMoment(date).format('YYYY-MM-DD')} ${endDate}`;
+      let start_date;
+      let end_date;
+      let hoursInMinutes = this.hoursToMinutes(timeZone);
+      if(timeZone[0] === '-'){
+        start_date = simpleMoment(completeStartDate).utc().subtract(hoursInMinutes, 'minutes');
+        end_date = simpleMoment(completeEndDate).utc().subtract(hoursInMinutes, 'minutes');
+      } else {
+        start_date = simpleMoment(completeStartDate).utc().add(hoursInMinutes, 'minutes');
+        end_date = simpleMoment(completeEndDate).utc().add(hoursInMinutes, 'minutes');
+      }
+      result.push({
+        display_date: moment(date).format('DD-MM-YYYY'),
+        event_date: date,
+        start_date,
+        end_date,
+      });
+    }
+    return result;
+  }
+
+  getInitHours(dateBase: string, startDate: string, timeZone: string): string {
+    let completeStartDate = `${simpleMoment(dateBase).format('YYYY-MM-DD')} ${startDate}`;
+    let start_date;
+    let hoursInMinutes = this.hoursToMinutes(timeZone);
+    if(timeZone[0] === '-'){
+      start_date = simpleMoment(completeStartDate).utc().subtract(hoursInMinutes, 'minutes');
+    } else {
+      start_date = simpleMoment(completeStartDate).utc().add(hoursInMinutes, 'minutes');
+    }
+
+    return `${moment(start_date).format('HH:mm')}`
+  }
+
+  getEndHours(dateBase: string, endDate: string, timeZone: string): string {
+    let completeEndDate = `${simpleMoment(dateBase).format('YYYY-MM-DD')} ${endDate}`;
+    let end_date: any;
+    let hoursInMinutes = this.hoursToMinutes(timeZone);
+    if(timeZone[0] === '-'){
+      end_date = simpleMoment(completeEndDate).utc().subtract(hoursInMinutes, 'minutes');
+    } else {
+      end_date = simpleMoment(completeEndDate).utc().add(hoursInMinutes, 'minutes');
+    }
+
+    return `${moment(end_date).format('HH:mm')}`
+  }
+
+  hoursToMinutes(timeZone: string) {
+    let minutes = 0;
+    if(timeZone[0] === '-' || timeZone[0] === '+' ){
+      let unsignTimeZone = timeZone.slice(1);
+      let separedTime = unsignTimeZone.split(':');
+      minutes = (Number(separedTime[0]) * 60) + Number(separedTime[1]);
+    } else {
+      let separedTime = timeZone.split(':');
+      minutes = (Number(separedTime[0]) * 60) + Number(separedTime[1]);
+    }
+
+    return minutes;
   }
 
   async getEventDatesByEvent(eventId: number) {

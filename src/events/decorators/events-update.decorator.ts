@@ -14,7 +14,7 @@ export function EventsUpdateDecorator(){
             summary:"Api to update events",
             description:"submit only the fields that need to be updated, if it is required to update the image send it in the image attribute"
         }),
-        SetMetadata('roles',["MASTER"]),
+        SetMetadata('roles',["MASTER","ADMINMENOR"]),
         SetMetadata('permission',['U']),
         ApiHeader({
             name:"token",

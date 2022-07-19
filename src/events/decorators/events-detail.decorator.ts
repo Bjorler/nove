@@ -10,7 +10,7 @@ import { EventsInfoDto } from '../DTO/events-info.dto';
 export function EventsDetailDecorator(){
     return applyDecorators(
         ApiOperation({summary:"Api to obtain the information of a specific event"}),
-        SetMetadata('roles',["MASTER","ADMIN"]),
+        SetMetadata('roles',["MASTER","ADMIN","ADMINMENOR"]),
         SetMetadata('permission',['R']),
         ApiHeader({
             name:"token",

@@ -159,6 +159,7 @@ export class AttendessController {
 
   @Post('/temporal')
   @AttendeesTemporalDecorator()
+  @ApiConsumes('multipart/form-data')
   @UseInterceptors(
     FileInterceptor('signature', {
       storage: diskStorage({

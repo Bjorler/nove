@@ -10,7 +10,7 @@ import { EventsTodaysListDto } from '../DTO/events-todayslist.dto';
 export function EventsTodayListDecorator(){
     return applyDecorators(
         ApiOperation({summary:"Api to obtain the events that are occurring or that will occur on the current day"}),
-        SetMetadata('roles',["ADMIN"]),
+        SetMetadata('roles',["ADMIN","ADMINMENOR"]),
         SetMetadata('permission',['R']),
         ApiHeader({
             name:"token",

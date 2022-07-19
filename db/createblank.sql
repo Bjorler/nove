@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS `events` (
   `assistants` int(11) DEFAULT '0',
   `sede` varchar(200) DEFAULT NULL,
   `brand` varchar(200) DEFAULT NULL,
+  `is_internal` tinyint(4) NOT NULL DEFAULT '1',
   `is_active` tinyint(4) NOT NULL DEFAULT '0',
   `is_deleted` tinyint(4) NOT NULL DEFAULT '0',
   `created_on` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,

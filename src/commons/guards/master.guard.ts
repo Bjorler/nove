@@ -20,7 +20,6 @@ export class MasterGuard implements CanActivate{
         const roles = new Set(this.reflector.get("roles", ctx.getHandler()))
         const permission = this.reflector.get('permission', ctx.getHandler())
 
-        
         const role = RolesDto[req.user.role_id]
         if(!roles.has(role)) throw new HttpException("ACCESS DENIED", HttpStatus.FORBIDDEN)
         if(!req.user.permissions[path].toLowerCase().includes(permission.toString().toLowerCase())) throw new HttpException("ACCESS DENIED", HttpStatus.FORBIDDEN)
