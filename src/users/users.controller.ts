@@ -298,9 +298,8 @@ export class UsersController {
         userDetail.apellido_materno = user[0].apellido_materno;
         userDetail.email = user[0].email;
         userDetail.password_length = user[0].password_length;
-        userDetail.role = RolesDto[user[0].role_id].toLowerCase()
-        userDetail.role = userDetail.role.replace(userDetail.role[0] ,userDetail.role.substr(0,1).toUpperCase())
-        userDetail.role_id = user[0].role_id
+        userDetail.role = this.userService.findRoleName(user[0]?.role_id || 0);
+        userDetail.role_id = user[0].role_id;
         userDetail.id = user[0].id;
         return userDetail;
     }
