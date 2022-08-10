@@ -11,6 +11,7 @@ import { AttendessModule } from './attendess/attendess.module';
 import { DatabaseModule } from './database/database.module';
 import { GraphModule } from './graph/graph.module';
 import { PrepareModule } from './prepare/prepare.module';
+import { EmailsModule } from './emails/emails.module';
 
 
 @Module({
@@ -35,7 +36,8 @@ import { PrepareModule } from './prepare/prepare.module';
     AttendessModule,
     DatabaseModule,
     GraphModule,
-    PrepareModule
+    PrepareModule,
+    EmailsModule
   ],
   controllers: [],
   providers: [],
