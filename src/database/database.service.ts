@@ -234,12 +234,11 @@ export class DatabaseService {
       );
 
       let header = formData.getHeaders();
-
       this.httpService
         .post(
-          'https://www.cedulaprofesional.sep.gob.mx/cedula/buscaCedulaJson.action',
+          'https://cedulaprofesional.sep.gob.mx/cedula/buscaCedulaJson.action',
           formData,
-          { headers: header, responseType: 'arraybuffer', timeout: 500 },
+          { headers: header, responseType: 'arraybuffer', timeout: 5000 },
         )
         .toPromise()
         .then((e) => {
