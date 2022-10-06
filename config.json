@@ -1,0 +1,11 @@
+{
+    "HOST": "localhost",
+    "USER" : "",
+    "PASSWORD" : "",
+    "DATABASE" : "noveve",
+    "SECRET" : "0c7Op12o2L$n0v3vE",
+    "METHOD" : "http",
+    "DOMAIN" : "localhost:4057/noveve-api",
+    "PORT" : 4057,
+    "IS_DEVELOPMENT": true
+}
